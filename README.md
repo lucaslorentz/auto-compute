@@ -25,6 +25,8 @@ protected override void OnModelCreating(ModelBuilder modelBuilder)
 
 That's it! Now, all defined computed properties will be automatically updated during `dbContext.SaveChanges()`.
 
+Check [PersonDbContext](test/LLL.ComputedExpression.EFCore.Tests/PersonDbContext.cs) for a complete example.
+
 ## How it works
 
 This library operates by meticulously analyzing computed expressions and tracking all referenced data within them. It then traverses inverse navigations to pinpoint all entities that could be affected by changes to the referenced data.
