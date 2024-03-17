@@ -1,4 +1,4 @@
-# Computed Expression
+# Computed Expression ![CI](https://github.com/lucaslorentz/computed-expression/workflows/CI/badge.svg) [![Coverage Status](https://coveralls.io/repos/github/lucaslorentz/computed-expression/badge.svg?branch=main)](https://coveralls.io/github/lucaslorentz/computed-expression?branch=main)
 
 Computed Expression is a library designed to simplify the management of computed properties in .NET applications, particularly for Entity Framework Core projects. With Computed Expression, you can define computed properties using lambda expressions and ensure they are automatically updated whenever underlying data changes.
 
