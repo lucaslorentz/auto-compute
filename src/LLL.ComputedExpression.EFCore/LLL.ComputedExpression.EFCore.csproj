@@ -7,6 +7,10 @@
     <LangVersion>latest</LangVersion>
   </PropertyGroup>
 
+  <PropertyGroup>
+    <Description>Auto updated computed properties for EF Core</Description>
+  </PropertyGroup>
+
   <ItemGroup>
     <ProjectReference Include="..\LLL.ComputedExpression\LLL.ComputedExpression.csproj" />
   </ItemGroup>
