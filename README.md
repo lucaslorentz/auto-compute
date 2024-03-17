@@ -20,10 +20,10 @@ protected override void OnModelCreating(ModelBuilder modelBuilder)
     base.OnModelCreating(modelBuilder);
 
     var personBuilder = modelBuilder.Entity<Person>();
-    personBuilder.ComputedProperty(p => p.FullName, p => p.FirstName + " " + p.LastName);
-    personBuilder.ComputedProperty(p => p.NumberOfCats, p => p.Pets.Count(x => x.Type == "Cat"));
-    personBuilder.ComputedProperty(p => p.HasCats, p => p.Pets.Any(x => x.Type == "Cat"));
-    personBuilder.ComputedProperty(p => p.Description, p => p.FullName + " (" + p.Pets.Count() + " pets)");
+    personBuilder.ComputedProperty(person => person.FullName, person => person.FirstName + " " + person.LastName);
+    personBuilder.ComputedProperty(person => person.NumberOfCats, person => person.Pets.Count(pet => pet.Type == "Cat"));
+    personBuilder.ComputedProperty(person => person.HasCats, person => person.Pets.Any(pet => pet.Type == "Cat"));
+    personBuilder.ComputedProperty(person => person.Description, person => person.FullName + " (" + person.Pets.Count() + " pets)");
 }
 ```
 
@@ -38,7 +38,7 @@ This library operates by meticulously analyzing computed expressions and trackin
 ### Basic example
 Consider the following basic example:
 ```csharp
-personBuilder.ComputedProperty(p => p.FullName, p => p.FirstName + " " + p.LastName);
+personBuilder.ComputedProperty(person => person.FullName, person => person.FirstName + " " + person.LastName);
 ```
 In this scenario, the following data will be monitored for changes:
 - Person's FirstName property.
@@ -49,7 +49,7 @@ Whenever a change occurs in any of these monitored properties, the FullName prop
 ### Navigation example
 Let's explore a navigation example:
 ```csharp
-personBuilder.ComputedProperty(p => p.NumberOfCats, p => p.Pets.Count(x => x.Type == "Cat"));
+personBuilder.ComputedProperty(person => person.NumberOfCats, person => person.Pets.Count(pet => pet.Type == "Cat"));
 ```
 Here, the library will monitor changes in the following data:
 - Person's Pets collection, including changes made to the inverse reference in the Pets entities.
