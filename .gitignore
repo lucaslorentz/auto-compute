@@ -1,0 +1,31 @@
+# User-specific files
+*.suo
+*.user
+*.userosscache
+*.sln.docstates
+
+# Dotnet
+bin/
+obj/
+**/Properties/launchSettings.json
+
+# VS Code
+.vscode/*
+!.vscode/settings.json
+!.vscode/tasks.json
+!.vscode/launch.json
+!.vscode/extensions.json
+.history
+
+# Mono
+.mono
+
+# MacOS
+.DS_Store
+.AppleDouble
+.LSOverride
+
+# Minicover
+coverage-hits
+coverage-html
+coverage.json

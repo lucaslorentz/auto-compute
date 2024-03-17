@@ -1,0 +1,83 @@
+name: CI
+on:
+  push:
+env:
+  # Stop wasting time caching packages
+  DOTNET_SKIP_FIRST_TIME_EXPERIENCE: true
+  # Disable sending usage data to Microsoft
+  DOTNET_CLI_TELEMETRY_OPTOUT: true
+  # Official NuGet Feed settings
+  NUGET_FEED: https://api.nuget.org/v3/index.json
+  NUGET_KEY: ${{ secrets.NUGET_KEY }}
+  # Csproj variables
+  Authors: Lucas Lorentz
+  RepositoryUrl: https://github.com/lucaslorentz/computed-expression
+  PackageTags: Computed;Expression;Properties;EntityFramework;EFCore
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Setup .NET Core
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 8.0.x
+      - name: Restore
+        run: dotnet restore
+      - name: Build
+        run: dotnet build -c Release --no-restore
+      - name: Install Minicover
+        run: dotnet tool install -g minicover
+      - name: Instrument
+        run: |
+          minicover instrument
+      - name: Test
+        run: dotnet test -c Release --no-build
+      - name: Report coverage
+        run: |
+          minicover report --threshold 70
+
+          last_commit_message=$(git log -1 --pretty=format:"%s")
+          last_commit_author_name=$(git log -1 --pretty=format:"%an")
+          last_commit_author_email=$(git log -1 --pretty=format:"%ae")
+
+          minicover coverallsreport \
+            --service-name "github" \
+            --repo-token "$GITHUB_TOKEN" \
+            --service-job-id "$GITHUB_RUN_ID" \
+            --commit "$GITHUB_SHA" \
+            --commit-message "$last_commit_message" \
+            --commit-author-name "$last_commit_author_name" \
+            --commit-author-email "$last_commit_author_email" \
+            --branch "$GITHUB_REF"
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - name: Uninstrument
+        run: minicover uninstrument
+      - name: Pack
+        run: |
+          export Version=0.0.1-ci-$GITHUB_RUN_ID
+          dotnet pack -c Release --no-restore
+      - name: Upload Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: nupkg
+          path: ./src/**/*.nupkg
+  release:
+    needs: build
+    if: startsWith(github.ref, 'refs/tags/v')
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Setup .NET Core
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 8.0.x
+      - name: Create Release NuGet package
+        run: |
+          export Version=${GITHUB_REF:11}
+          echo Version: $Version
+          dotnet pack -c Release
+      - name: Push to NuGet Feed
+        run: dotnet nuget push "./src/**/*.nupkg" --source $NUGET_FEED --skip-duplicate --api-key $NUGET_KEY
