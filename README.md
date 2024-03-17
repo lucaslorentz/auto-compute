@@ -2,7 +2,7 @@
 
 Computed Expression is a library designed to automatically maintain derived data within .NET EF Core applications.
 
-Whether you're implementing denormalization strategies or handling any other form of derived data management in your EF Core projects, Computed Expression offers a straightforward solution. It tracks changes across related entities, automatically updating derived properties, thereby reducing complexity, maintenance overhead, and ensuring consistency throughout your application.
+Whether you're implementing denormalization strategies or handling any other form of derived data in your EF Core projects, Computed Expression offers a straightforward solution. It tracks changes across related entities, automatically updating derived properties, thereby reducing complexity, maintenance overhead, and ensuring consistency throughout your application.
 
 This library is basically an automatic implementation of the approach described by Microsoft in: https://learn.microsoft.com/en-us/ef/core/performance/modeling-for-performance#update-cache-columns-when-inputs-change
 
