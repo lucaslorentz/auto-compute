@@ -13,6 +13,17 @@ Install nuget package
 dotnet add package LLL.ComputedExpression.EFCore
 ```
 
+Enable by calling UseComputeds from DbContext OnConfiguring:
+```
+protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
+    => optionsBuilder.UseComputeds();
+```
+Or while adding DbContext to service collection:
+```
+services.AddDbContext<PersonDbContext>(
+    b => b.UseComputeds());
+```
+
 Next, define computed properties in your EF Core mappings. Here's a demonstration:
 ```csharp
 protected override void OnModelCreating(ModelBuilder modelBuilder)

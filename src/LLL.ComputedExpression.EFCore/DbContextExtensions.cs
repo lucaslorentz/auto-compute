@@ -8,10 +8,9 @@ namespace L3.Computed.EFCore;
 
 public static class DbContextExtensions
 {
-    public static DbContextOptionsBuilder<TContext> UseComputeds<TContext>(
-        this DbContextOptionsBuilder<TContext> optionsBuilder,
+    public static DbContextOptionsBuilder UseComputeds(
+        this DbContextOptionsBuilder optionsBuilder,
         Action<ComputedOptionsBuilder>? configureOptions = null)
-        where TContext : DbContext
     {
         var builder = new ComputedOptionsBuilder(optionsBuilder);
         configureOptions?.Invoke(builder);
