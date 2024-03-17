@@ -42,65 +42,46 @@ public class EFCoreEntityNavigationProvider(IModel model)
             var inverseNavigation = navigation.Inverse
                 ?? throw new InvalidOperationException($"No inverse for navigation '{navigation.DeclaringType.ShortName()}.{navigation.Name}'");
 
-            if (inverseNavigation.IsCollection)
-            {
-                return new CollectionEntityNavigationLoader(inverseNavigation);
-            }
-            else if (!inverseNavigation.IsCollection)
-            {
-                return new ReferenceEntityNavigationLoader(inverseNavigation);
-            }
-
-            throw new NotImplementedException("Unsupported navigation");
+            return new NavigationLoader(inverseNavigation);
         }
     }
 
-    class CollectionEntityNavigationLoader(INavigation inverseNavigation)
+    class NavigationLoader(INavigation navigation)
         : IEntityNavigationLoader<IInput>
     {
-        public Type TargetType => inverseNavigation.DeclaringEntityType.ClrType;
+        public Type TargetType => navigation.DeclaringEntityType.ClrType;
+
+        public string ToDebugString()
+        {
+            return $"{navigation.Name}";
+        }
 
         public async Task<IEnumerable<object>> LoadAsync(IInput input, IEnumerable<object> targetEntities)
         {
             var sourceEntities = new HashSet<object>();
             foreach (var targetEntity in targetEntities)
             {
-                var navigationEntry = input.DbContext.Entry(targetEntity).Navigation(inverseNavigation);
+                var navigationEntry = input.DbContext.Entry(targetEntity).Navigation(navigation);
                 if (!navigationEntry.IsLoaded)
                 {
                     await navigationEntry.LoadAsync();
                 }
-                if (navigationEntry.CurrentValue is IEnumerable enumerable)
+                if (navigation.IsCollection)
                 {
-                    foreach (var sourceEntity in enumerable)
+                    if (navigationEntry.CurrentValue is IEnumerable enumerable)
                     {
-                        sourceEntities.Add(sourceEntity);
+                        foreach (var sourceEntity in enumerable)
+                        {
+                            sourceEntities.Add(sourceEntity);
+                        }
                     }
                 }
-            }
-            return sourceEntities;
-        }
-    }
-
-
-    class ReferenceEntityNavigationLoader(INavigation inverseNavigation)
-        : IEntityNavigationLoader<IInput>
-    {
-        public Type TargetType => inverseNavigation.DeclaringEntityType.ClrType;
-
-        public async Task<IEnumerable<object>> LoadAsync(IInput input, IEnumerable<object> targetEntities)
-        {
-            var sourceEntities = new HashSet<object>();
-            foreach (var targetEntity in targetEntities)
-            {
-                var navigationEntry = input.DbContext.Entry(targetEntity).Navigation(inverseNavigation);
-                if (!navigationEntry.IsLoaded)
+                else
                 {
-                    await navigationEntry.LoadAsync();
-                }
-                if (navigationEntry.CurrentValue is not null)
-                {
-                    sourceEntities.Add(navigationEntry.CurrentValue);
+                    if (navigationEntry.CurrentValue is not null)
+                    {
+                        sourceEntities.Add(navigationEntry.CurrentValue);
+                    }
                 }
             }
             return sourceEntities;

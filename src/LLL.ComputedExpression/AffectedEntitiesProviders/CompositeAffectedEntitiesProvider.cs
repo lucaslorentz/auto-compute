@@ -10,6 +10,16 @@ public class CompositeAffectedEntitiesProvider
         _providers.Add(provider);
     }
 
+    public string ToDebugString()
+    {
+        if (_providers is [var provider])
+            return provider.ToDebugString();
+
+        var inner = string.Join(", ", _providers.Select(p => p.ToDebugString()));
+
+        return $"Concat({inner})";
+    }
+
     public async Task<IEnumerable<object>> GetAffectedEntitiesAsync(object input)
     {
         var entities = new HashSet<object>();

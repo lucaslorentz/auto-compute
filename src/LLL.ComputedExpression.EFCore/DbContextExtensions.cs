@@ -18,22 +18,21 @@ public static class DbContextExtensions
         return optionsBuilder;
     }
 
-    public static async Task<IEnumerable<object>> GetAffectedEntitiesAsync(
-        this DbContext dbContext, LambdaExpression computedExpression)
+    public static IAffectedEntitiesProvider GetAffectedEntitiesProvider(this DbContext dbContext, LambdaExpression computedExpression)
     {
         if (dbContext.Model.FindRuntimeAnnotation(ComputedAnnotationNames.ExpressionAnalyzer)?.Value is not IComputedExpressionAnalyzer analyzer)
             throw new Exception($"Cannot find {ComputedAnnotationNames.ExpressionAnalyzer} for model");
 
         var cache = dbContext.GetService<IAffectedEntitiesProviderCache>();
         var cacheKey = new AffectedEntitiesProviderCacheKey(computedExpression, analyzer, ExpressionEqualityComparer.Instance);
-        var affectedEntitiesProvider = cache.GetOrAdd(cacheKey, () => analyzer.CreateAffectedEntitiesProvider(computedExpression));
-        return await affectedEntitiesProvider.GetAffectedEntitiesAsync(new EFCoreAffectedEntitiesInput(dbContext));
+        return cache.GetOrAdd(cacheKey, () => analyzer.CreateAffectedEntitiesProvider(computedExpression));
     }
 
     public static async Task<IEnumerable<TEntity>> GetAffectedEntitiesAsync<TEntity, P>(
         this DbContext dbContext, Expression<Func<TEntity, P>> computedExpression)
     {
-        var affectedEntities = await dbContext.GetAffectedEntitiesAsync((LambdaExpression)computedExpression);
+        var affectedEntitiesProvider = dbContext.GetAffectedEntitiesProvider(computedExpression);
+        var affectedEntities = await affectedEntitiesProvider.GetAffectedEntitiesAsync(new EFCoreAffectedEntitiesInput(dbContext));
         return affectedEntities.OfType<TEntity>();
     }
 

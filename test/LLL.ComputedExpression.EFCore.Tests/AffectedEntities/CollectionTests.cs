@@ -1,9 +1,22 @@
-﻿using FluentAssertions;
+﻿using System.Linq.Expressions;
+using FluentAssertions;
 
 namespace L3.Computed.EFCore.Tests.AffectedEntities;
 
 public class CollectionTests
 {
+    private static Expression<Func<Person, int>> _computedExpression = (Person person) => person.Pets.Where(p => p.Type == "Cat" && p.Color == "Black").Count();
+
+    [Fact]
+    public async void TestDebugString()
+    {
+        using var context = await TestDbContext.Create<PersonDbContext>();
+
+        var affectedEntitiesProvider = context.GetAffectedEntitiesProvider(_computedExpression);
+        affectedEntitiesProvider.ToDebugString()
+            .Should().Be("Concat(EntitiesWithNavigationChange(Person, Pets), Load(Concat(EntitiesWithPropertyChange(Pet, Type), EntitiesWithPropertyChange(Pet, Color)), Owner))");
+    }
+
     [Fact]
     public async void TestCollectionElementAdded()
     {
@@ -13,8 +26,7 @@ public class CollectionTests
         var pet = new Pet { Type = "Cat" };
         person.Pets.Add(pet);
 
-        var affectedEntities = await context.GetAffectedEntitiesAsync(
-            (Person person) => person.Pets.Where(p => p.Type != null).Count());
+        var affectedEntities = await context.GetAffectedEntitiesAsync(_computedExpression);
 
         affectedEntities.Should().BeEquivalentTo([person]);
     }
@@ -28,8 +40,7 @@ public class CollectionTests
         var pet = new Pet { Type = "Cat", Owner = person };
         context.Add(pet);
 
-        var affectedEntities = await context.GetAffectedEntitiesAsync(
-            (Person person) => person.Pets.Where(p => p.Type != null).Count());
+        var affectedEntities = await context.GetAffectedEntitiesAsync(_computedExpression);
 
         affectedEntities.Should().BeEquivalentTo([person]);
     }
@@ -42,8 +53,7 @@ public class CollectionTests
         var pet = context!.Set<Pet>().Find(1)!;
         pet.Type = "Modified";
 
-        var affectedEntities = await context.GetAffectedEntitiesAsync(
-            (Person person) => person.Pets.Where(p => p.Type != null).Count());
+        var affectedEntities = await context.GetAffectedEntitiesAsync(_computedExpression);
 
         affectedEntities.Should().BeEquivalentTo([pet.Owner]);
     }
@@ -57,8 +67,7 @@ public class CollectionTests
         var pet = context!.Set<Pet>().Find(1)!;
         person.Pets.Remove(pet);
 
-        var affectedEntities = await context.GetAffectedEntitiesAsync(
-            (Person person) => person.Pets.Where(p => p.Type != null).Count());
+        var affectedEntities = await context.GetAffectedEntitiesAsync(_computedExpression);
 
         affectedEntities.Should().BeEquivalentTo([person]);
     }
@@ -72,8 +81,7 @@ public class CollectionTests
         var pet = context!.Set<Pet>().Find(1)!;
         pet.Owner = null;
 
-        var affectedEntities = await context.GetAffectedEntitiesAsync(
-            (Person person) => person.Pets.Where(p => p.Type != null).Count());
+        var affectedEntities = await context.GetAffectedEntitiesAsync(_computedExpression);
 
         affectedEntities.Should().BeEquivalentTo([person]);
     }

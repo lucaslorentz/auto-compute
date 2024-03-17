@@ -3,6 +3,8 @@
 public interface IAffectedEntitiesProvider
 {
     Task<IEnumerable<object>> GetAffectedEntitiesAsync(object input);
+
+    string ToDebugString();
 }
 
 public interface IAffectedEntitiesProvider<in TInput> : IAffectedEntitiesProvider

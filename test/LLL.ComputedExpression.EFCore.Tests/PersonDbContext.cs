@@ -17,6 +17,7 @@ public class Person
 public class Pet
 {
     public virtual int Id { get; set; }
+    public virtual string? Color { get; set; }
     public virtual string? Type { get; set; }
     public virtual Person? Owner { get; set; }
 }

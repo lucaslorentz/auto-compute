@@ -3,6 +3,8 @@
 public interface IEntityNavigationLoader
 {
     Task<IEnumerable<object>> LoadAsync(object input, IEnumerable<object> fromEntities);
+
+    string ToDebugString();
 }
 
 public interface IEntityNavigationLoader<in TInput> : IEntityNavigationLoader

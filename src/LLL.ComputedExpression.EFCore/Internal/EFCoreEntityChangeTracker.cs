@@ -46,6 +46,11 @@ public class EFCoreEntityChangeTracker(IModel model)
     public class PropertyAffectedEntitiesProvider(IProperty property)
         : IAffectedEntitiesProvider<IInput>
     {
+        public string ToDebugString()
+        {
+            return $"EntitiesWithPropertyChange({property.DeclaringEntityType.ShortName()}, {property.Name})";
+        }
+
         public async Task<IEnumerable<object>> GetAffectedEntitiesAsync(IInput input)
         {
             var affectedEntities = new HashSet<object>();
@@ -67,6 +72,11 @@ public class EFCoreEntityChangeTracker(IModel model)
     public class NavigationAffectedEntitiesProvider(INavigation navigation)
         : IAffectedEntitiesProvider<IInput>
     {
+        public string ToDebugString()
+        {
+            return $"EntitiesWithNavigationChange({navigation.DeclaringEntityType.ShortName()}, {navigation.Name})";
+        }
+
         public async Task<IEnumerable<object>> GetAffectedEntitiesAsync(IInput input)
         {
             var affectedEntities = new HashSet<object>();
