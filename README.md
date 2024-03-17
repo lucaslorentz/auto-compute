@@ -1,6 +1,10 @@
 # Computed Expression ![CI](https://github.com/lucaslorentz/computed-expression/workflows/CI/badge.svg) [![Coverage Status](https://coveralls.io/repos/github/lucaslorentz/computed-expression/badge.svg?branch=main)](https://coveralls.io/github/lucaslorentz/computed-expression?branch=main)
 
-Computed Expression is a library to automatically maintain derived data in .NET EF Core applications. Whether you're aggregating counts, calculating derived values, or implementing any denormalization in your EF Core projects, Computed Expression offers a straightforward solution. It tracks changes across related entities, automatically updating denormalized properties, reducing complexity, maintenance overhead, and ensuring consistency in your application.
+Computed Expression is a library designed to automatically maintain derived data within .NET EF Core applications.
+
+Whether you're implementing denormalization strategies or handling any other form of derived data management in your EF Core projects, Computed Expression offers a straightforward solution. It tracks changes across related entities, automatically updating denormalized properties, thereby reducing complexity, maintenance overhead, and ensuring consistency throughout your application.
+
+This library is basically an automatic implementation of the approach described by Microsoft in: https://learn.microsoft.com/en-us/ef/core/performance/modeling-for-performance#update-cache-columns-when-inputs-change
 
 ## Getting Started
 
