@@ -15,8 +15,8 @@ public class NavigationEntityContext : IEntityContext
 
         if (IsTrackingChanges)
         {
-            var inverseLoader = navigation.GetInverseLoader();
-            parent.AddAffectedEntitiesProvider(new LoadNavigationAffectedEntitiesProvider(_affectedEntitiesProvider, inverseLoader));
+            var inverse = navigation.GetInverse();
+            parent.AddAffectedEntitiesProvider(new LoadNavigationAffectedEntitiesProvider(_affectedEntitiesProvider, inverse));
         }
     }
 

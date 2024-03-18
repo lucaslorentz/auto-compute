@@ -1,6 +1,5 @@
 ﻿using System.Linq.Expressions;
 using LLL.Computed.EntityContextPropagators;
-using LLL.Computed.EntityContextResolvers;
 using LLL.Computed.EntityContexts;
 using LLL.Computed.ExpressionVisitors;
 
@@ -9,7 +8,6 @@ namespace LLL.Computed;
 public class ComputedExpressionAnalyzer<TInput>
     : IComputedExpressionAnalyzer
 {
-    private readonly IList<IEntityContextResolver> _entityContextResolvers = [];
     private readonly IList<IEntityContextPropagator> _entityContextPropagators = [];
     private readonly IList<IEntityChangeTracker> _entityChangeTrackers = [];
 
@@ -28,50 +26,37 @@ public class ComputedExpressionAnalyzer<TInput>
     public ComputedExpressionAnalyzer<TInput> AddDefaults()
     {
         return AddEntityContextPropagator(new LinqMethodsEntityContextPropagator())
-            .AddEntityContextResolver(new LinqMethodsEntityContextResolver())
-            .AddEntityContextResolver(new KeyValuePairEntityContextResolver())
-            .AddEntityContextResolver(new GroupingEntityContextResolver());
-    }
-
-    public ComputedExpressionAnalyzer<TInput> AddEntityContextResolver(
-        IEntityContextResolver resolver
-    )
-    {
-        _entityContextResolvers.Add(resolver);
-        return this;
+            .AddEntityContextPropagator(new KeyValuePairEntityContextPropagator())
+            .AddEntityContextPropagator(new GroupingEntityContextPropagator());
     }
 
     public ComputedExpressionAnalyzer<TInput> AddStopTrackingDecision(
-        IStopTrackingDecision stopTrackingDecision
-    )
+        IStopTrackingDecision stopTrackingDecision)
     {
-        _entityContextResolvers.Insert(0, new UntrackedEntityContextResolver<TInput>(
+        _entityContextPropagators.Insert(0, new UntrackedEntityContextPropagator<TInput>(
             stopTrackingDecision
         ));
         return this;
     }
 
     public ComputedExpressionAnalyzer<TInput> AddEntityNavigationProvider(
-        IEntityNavigationProvider<TInput> navigationProvider
-    )
+        IEntityNavigationProvider<TInput> navigationProvider)
     {
-        _entityContextResolvers.Add(new NavigationEntityContextResolver<TInput>(
+        _entityContextPropagators.Add(new NavigationEntityContextPropagator<TInput>(
             navigationProvider
         ));
         return this;
     }
 
     public ComputedExpressionAnalyzer<TInput> AddEntityContextPropagator(
-        IEntityContextPropagator propagator
-    )
+        IEntityContextPropagator propagator)
     {
         _entityContextPropagators.Add(propagator);
         return this;
     }
 
     public ComputedExpressionAnalyzer<TInput> AddEntityChangeTracker(
-        IEntityChangeTracker<TInput> tracker
-    )
+        IEntityChangeTracker<TInput> tracker)
     {
         _entityChangeTrackers.Add(tracker);
         return this;
@@ -79,9 +64,7 @@ public class ComputedExpressionAnalyzer<TInput>
 
     public IAffectedEntitiesProvider CreateAffectedEntitiesProvider(LambdaExpression computed)
     {
-        var analysis = new ComputedExpressionAnalysis(
-            _entityContextResolvers
-        );
+        var analysis = new ComputedExpressionAnalysis();
 
         var entityContext = new RootEntityContext<TInput>();
         analysis.AddEntityContextProvider(computed.Parameters[0], (key) => key == EntityContextKeys.None ? entityContext : null);

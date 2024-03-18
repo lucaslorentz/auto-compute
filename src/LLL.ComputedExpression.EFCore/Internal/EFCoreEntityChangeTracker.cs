@@ -12,9 +12,7 @@ public class EFCoreEntityChangeTracker(IModel model)
         DbContext DbContext { get; }
     }
 
-    public void TrackChanges(
-        Expression node,
-        IComputedExpressionAnalysis analysis)
+    public IEnumerable<IExpressionMatch<IAffectedEntitiesProvider<IInput>>> TrackChanges(Expression node)
     {
         if (node is MemberExpression memberExpression
             && memberExpression.Expression is not null)
@@ -24,21 +22,13 @@ public class EFCoreEntityChangeTracker(IModel model)
             var navigation = entityType?.FindNavigation(memberExpression.Member);
             if (navigation is not null)
             {
-                var entityContext = analysis.ResolveEntityContext(memberExpression.Expression, EntityContextKeys.None);
-                if (entityContext.IsTrackingChanges)
-                {
-                    entityContext.AddAffectedEntitiesProvider(new NavigationAffectedEntitiesProvider(navigation));
-                }
+                yield return ExpressionMatch.Create(memberExpression.Expression, new NavigationAffectedEntitiesProvider(navigation));
             }
 
             var property = entityType?.FindProperty(memberExpression.Member);
             if (property is not null)
             {
-                var entityContext = analysis.ResolveEntityContext(memberExpression.Expression, EntityContextKeys.None);
-                if (entityContext.IsTrackingChanges)
-                {
-                    entityContext.AddAffectedEntitiesProvider(new PropertyAffectedEntitiesProvider(property));
-                }
+                yield return ExpressionMatch.Create(memberExpression.Expression, new PropertyAffectedEntitiesProvider(property));
             }
         }
     }
