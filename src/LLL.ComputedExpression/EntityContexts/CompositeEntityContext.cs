@@ -1,6 +1,6 @@
-﻿using L3.Computed.AffectedEntitiesProviders;
+﻿using LLL.Computed.AffectedEntitiesProviders;
 
-namespace L3.Computed.EntityContexts;
+namespace LLL.Computed.EntityContexts;
 
 public class CompositeEntityContext : IEntityContext
 {

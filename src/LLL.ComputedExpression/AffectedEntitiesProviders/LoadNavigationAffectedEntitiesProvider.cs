@@ -1,4 +1,4 @@
-﻿namespace L3.Computed.AffectedEntitiesProviders;
+﻿namespace LLL.Computed.AffectedEntitiesProviders;
 
 public class LoadNavigationAffectedEntitiesProvider(
     IAffectedEntitiesProvider affectedEntitiesProvider,

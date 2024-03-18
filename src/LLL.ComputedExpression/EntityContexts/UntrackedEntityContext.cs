@@ -1,4 +1,4 @@
-﻿namespace L3.Computed.EntityContexts;
+﻿namespace LLL.Computed.EntityContexts;
 
 public class UntrackedEntityContext : IEntityContext
 {

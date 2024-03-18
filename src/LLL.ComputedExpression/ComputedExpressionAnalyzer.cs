@@ -1,10 +1,10 @@
 ﻿using System.Linq.Expressions;
-using L3.Computed.EntityContextPropagators;
-using L3.Computed.EntityContextResolvers;
-using L3.Computed.EntityContexts;
-using L3.Computed.ExpressionVisitors;
+using LLL.Computed.EntityContextPropagators;
+using LLL.Computed.EntityContextResolvers;
+using LLL.Computed.EntityContexts;
+using LLL.Computed.ExpressionVisitors;
 
-namespace L3.Computed;
+namespace LLL.Computed;
 
 public class ComputedExpressionAnalyzer<TInput>
     : IComputedExpressionAnalyzer

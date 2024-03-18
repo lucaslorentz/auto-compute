@@ -1,6 +1,6 @@
 ﻿using System.Linq.Expressions;
 
-namespace L3.Computed.ExpressionVisitors;
+namespace LLL.Computed.ExpressionVisitors;
 
 internal class PropagateEntityContextsVisitor(
     IList<IEntityContextPropagator> propagators,

@@ -1,7 +1,7 @@
-﻿using L3.Computed.EFCore.Internal;
+﻿using LLL.Computed.EFCore.Internal;
 using Microsoft.EntityFrameworkCore;
 
-namespace L3.Computed.EFCore;
+namespace LLL.Computed.EFCore;
 
 public class ComputedOptionsBuilder
 {

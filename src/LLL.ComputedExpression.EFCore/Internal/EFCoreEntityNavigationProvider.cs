@@ -3,7 +3,7 @@ using System.Linq.Expressions;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata;
 
-namespace L3.Computed.EFCore.Internal;
+namespace LLL.Computed.EFCore.Internal;
 
 public class EFCoreEntityNavigationProvider(IModel model)
     : IEntityNavigationProvider<EFCoreEntityNavigationProvider.IInput>

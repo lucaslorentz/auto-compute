@@ -1,7 +1,7 @@
 ﻿using System.Collections.Concurrent;
 using Microsoft.Extensions.Caching.Memory;
 
-namespace L3.Computed;
+namespace LLL.Computed;
 
 public class AffectedEntitiesProviderCache : IAffectedEntitiesProviderCache
 {

@@ -1,6 +1,6 @@
 ﻿using System.Linq.Expressions;
 
-namespace L3.Computed.ExpressionVisitors;
+namespace LLL.Computed.ExpressionVisitors;
 
 internal class TrackEntityChangesVisitor(
     IList<IEntityChangeTracker> entityChangeTrackers,

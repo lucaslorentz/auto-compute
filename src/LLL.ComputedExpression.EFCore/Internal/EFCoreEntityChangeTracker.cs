@@ -2,7 +2,7 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata;
 
-namespace L3.Computed.EFCore.Internal;
+namespace LLL.Computed.EFCore.Internal;
 
 public class EFCoreEntityChangeTracker(IModel model)
     : IEntityChangeTracker<EFCoreEntityChangeTracker.IInput>

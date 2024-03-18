@@ -3,7 +3,7 @@ using Microsoft.EntityFrameworkCore.Metadata;
 using Microsoft.EntityFrameworkCore.Metadata.Conventions.Infrastructure;
 using Microsoft.Extensions.DependencyInjection;
 
-namespace L3.Computed.EFCore.Internal;
+namespace LLL.Computed.EFCore.Internal;
 
 public class ComputedOptionsExtension : IDbContextOptionsExtension
 {

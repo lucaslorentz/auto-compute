@@ -1,6 +1,6 @@
 ﻿using FluentAssertions;
 
-namespace L3.Computed.EFCore.Tests.Computeds;
+namespace LLL.Computed.EFCore.Tests.Computeds;
 
 public class ComputedsTests
 {

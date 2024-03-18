@@ -1,7 +1,7 @@
 ﻿using System.Linq.Expressions;
-using L3.Computed.EntityContexts;
+using LLL.Computed.EntityContexts;
 
-namespace L3.Computed.EntityContextResolvers;
+namespace LLL.Computed.EntityContextResolvers;
 
 public class UntrackedEntityContextResolver<TInput>(
     IStopTrackingDecision stopTrackingDecision

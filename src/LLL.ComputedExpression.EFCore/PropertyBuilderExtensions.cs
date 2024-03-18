@@ -1,8 +1,8 @@
 ﻿using System.Linq.Expressions;
-using L3.Computed.EFCore.Internal;
+using LLL.Computed.EFCore.Internal;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
-namespace L3.Computed.EFCore;
+namespace LLL.Computed.EFCore;
 
 public static class EntityTypeBuilderExtensions
 {

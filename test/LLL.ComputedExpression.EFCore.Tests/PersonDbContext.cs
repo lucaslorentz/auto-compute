@@ -1,6 +1,6 @@
 ﻿using Microsoft.EntityFrameworkCore;
 
-namespace L3.Computed.EFCore.Tests;
+namespace LLL.Computed.EFCore.Tests;
 
 public class Person
 {

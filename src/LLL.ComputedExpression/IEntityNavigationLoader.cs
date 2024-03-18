@@ -1,4 +1,4 @@
-﻿namespace L3.Computed;
+﻿namespace LLL.Computed;
 
 public interface IEntityNavigationLoader
 {

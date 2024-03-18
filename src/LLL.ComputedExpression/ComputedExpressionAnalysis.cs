@@ -1,7 +1,7 @@
 ﻿using System.Collections.Concurrent;
 using System.Linq.Expressions;
 
-namespace L3.Computed;
+namespace LLL.Computed;
 
 public class ComputedExpressionAnalysis
     : IComputedExpressionAnalysis

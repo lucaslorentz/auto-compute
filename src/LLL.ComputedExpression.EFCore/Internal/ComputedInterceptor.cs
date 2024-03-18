@@ -1,6 +1,6 @@
 ﻿using Microsoft.EntityFrameworkCore.Diagnostics;
 
-namespace L3.Computed.EFCore;
+namespace LLL.Computed.EFCore;
 
 public class ComputedInterceptor : ISaveChangesInterceptor
 {

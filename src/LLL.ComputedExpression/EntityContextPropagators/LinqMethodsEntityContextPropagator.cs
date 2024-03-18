@@ -1,6 +1,6 @@
 ﻿using System.Linq.Expressions;
 
-namespace L3.Computed.EntityContextPropagators;
+namespace LLL.Computed.EntityContextPropagators;
 
 public class LinqMethodsEntityContextPropagator
     : IEntityContextPropagator
