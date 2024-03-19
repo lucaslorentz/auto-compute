@@ -1,13 +1,10 @@
 ﻿using System.Linq.Expressions;
 
-namespace LLL.Computed;
+namespace LLL.Computed.EntityContextPropagators;
 
-public class KeyValuePairEntityContextResolver : IEntityContextResolver
+public class KeyValuePairEntityContextPropagator : IEntityContextPropagator
 {
-    public IEntityContext? ResolveEntityContext(
-        Expression node,
-        IComputedExpressionAnalysis analysis,
-        string key)
+    public void PropagateEntityContext(Expression node, IComputedExpressionAnalysis analysis)
     {
         if (node is MemberExpression memberExpression)
         {
@@ -17,7 +14,7 @@ public class KeyValuePairEntityContextResolver : IEntityContextResolver
                 && memberExpression.Member.Name == "Key"
                 && memberExpression.Expression != null)
             {
-                return analysis.ResolveEntityContext(memberExpression.Expression, EntityContextKeys.Key);
+                analysis.PropagateEntityContext(memberExpression.Expression, EntityContextKeys.Key, node, EntityContextKeys.None);
             }
             else if (memberExpression.Member.DeclaringType != null
                 && memberExpression.Member.DeclaringType.IsConstructedGenericType
@@ -25,10 +22,8 @@ public class KeyValuePairEntityContextResolver : IEntityContextResolver
                 && memberExpression.Member.Name == "Value"
                 && memberExpression.Expression != null)
             {
-                return analysis.ResolveEntityContext(memberExpression.Expression, EntityContextKeys.Value);
+                analysis.PropagateEntityContext(memberExpression.Expression, EntityContextKeys.Value, node, EntityContextKeys.None);
             }
         }
-
-        return null;
     }
 }

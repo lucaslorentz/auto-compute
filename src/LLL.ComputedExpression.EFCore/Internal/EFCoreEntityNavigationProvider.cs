@@ -13,7 +13,7 @@ public class EFCoreEntityNavigationProvider(IModel model)
         DbContext DbContext { get; }
     }
 
-    public IEntityNavigation<IInput>? GetEntityNavigation(Expression node)
+    public IExpressionMatch<IEntityNavigation<IInput>>? GetEntityNavigation(Expression node)
     {
         if (node is MemberExpression memberExpression
             && memberExpression.Expression is not null)
@@ -22,38 +22,25 @@ public class EFCoreEntityNavigationProvider(IModel model)
             var entityType = model.FindEntityType(type);
             var navigation = entityType?.FindNavigation(memberExpression.Member);
             if (navigation != null)
-                return new EntityNavigation(memberExpression.Expression, navigation);
+                return ExpressionMatch.Create(memberExpression.Expression, new EntityNavigation(navigation));
         }
 
         return null;
     }
 
     class EntityNavigation(
-        Expression sourceExpression,
         INavigation navigation
     ) : IEntityNavigation<IInput>
     {
         public bool IsCollection => navigation.IsCollection;
-        public Expression SourceExpression => sourceExpression;
         public Type TargetType => navigation.TargetEntityType.ClrType;
 
-        public IEntityNavigationLoader<IInput> GetInverseLoader()
+        public IEntityNavigation<IInput> GetInverse()
         {
-            var inverseNavigation = navigation.Inverse
+            var inverse = navigation.Inverse
                 ?? throw new InvalidOperationException($"No inverse for navigation '{navigation.DeclaringType.ShortName()}.{navigation.Name}'");
 
-            return new NavigationLoader(inverseNavigation);
-        }
-    }
-
-    class NavigationLoader(INavigation navigation)
-        : IEntityNavigationLoader<IInput>
-    {
-        public Type TargetType => navigation.DeclaringEntityType.ClrType;
-
-        public string ToDebugString()
-        {
-            return $"{navigation.Name}";
+            return new EntityNavigation(inverse);
         }
 
         public async Task<IEnumerable<object>> LoadAsync(IInput input, IEnumerable<object> targetEntities)
@@ -85,6 +72,11 @@ public class EFCoreEntityNavigationProvider(IModel model)
                 }
             }
             return sourceEntities;
+        }
+
+        public string ToDebugString()
+        {
+            return $"{navigation.Name}";
         }
     }
 }

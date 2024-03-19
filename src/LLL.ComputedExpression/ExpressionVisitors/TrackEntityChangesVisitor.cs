@@ -12,7 +12,15 @@ internal class TrackEntityChangesVisitor(
         if (node is not null)
         {
             foreach (var entityChangeTracker in entityChangeTrackers)
-                entityChangeTracker.TrackChanges(node, analysis);
+            {
+                var matches = entityChangeTracker.TrackChanges(node);
+                foreach (var match in matches)
+                {
+                    var entityContext = analysis.ResolveEntityContext(match.FromExpression, EntityContextKeys.None);
+                    if (entityContext.IsTrackingChanges)
+                        entityContext.AddAffectedEntitiesProvider(match.Value);
+                }
+            }
         }
 
         return base.Visit(node);
