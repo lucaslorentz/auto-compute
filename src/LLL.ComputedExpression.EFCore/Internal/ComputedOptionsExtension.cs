@@ -15,10 +15,12 @@ public class ComputedOptionsExtension : IDbContextOptionsExtension
     {
         services.AddSingleton<Func<IModel, IComputedExpressionAnalyzer>>(model =>
         {
+            var efCoreMemberAccessLocator = new EFCoreMemberAccessLocator(model);
+
             var analyzer = ComputedExpressionAnalyzer<EFCoreAffectedEntitiesInput>
                 .CreateWithDefaults()
-                .AddEntityNavigationProvider(new EFCoreEntityNavigationProvider(model))
-                .AddEntityChangeTracker(new EFCoreEntityChangeTracker(model));
+                .AddEntityNavigationAccessLocator(efCoreMemberAccessLocator)
+                .AddEntityPropertyAccessLocator(efCoreMemberAccessLocator);
 
             foreach (var customize in ConfigureAnalyzer)
                 customize(model, analyzer);

@@ -3,22 +3,26 @@
 namespace LLL.Computed.ExpressionVisitors;
 
 internal class TrackEntityChangesVisitor(
-    IList<IEntityChangeTracker> entityChangeTrackers,
-    IComputedExpressionAnalysis analysis
+    IComputedExpressionAnalysis analysis,
+    ICollection<IEntityMemberAccessLocator> memberAccessLocators
 ) : ExpressionVisitor
 {
     public override Expression? Visit(Expression? node)
     {
         if (node is not null)
         {
-            foreach (var entityChangeTracker in entityChangeTrackers)
+            foreach (var memberAccessLocator in memberAccessLocators)
             {
-                var matches = entityChangeTracker.TrackChanges(node);
-                foreach (var match in matches)
+                var memberAccess = memberAccessLocator.GetEntityMemberAccess(node);
+                if (memberAccess is not null)
                 {
-                    var entityContext = analysis.ResolveEntityContext(match.FromExpression, EntityContextKeys.None);
-                    if (entityContext.IsTrackingChanges)
-                        entityContext.AddAffectedEntitiesProvider(match.Value);
+                    var affectedEntitiesProvider = memberAccess.Member.GetAffectedEntitiesProvider();
+                    if (affectedEntitiesProvider is not null)
+                    {
+                        var entityContext = analysis.ResolveEntityContext(memberAccess.FromExpression, EntityContextKeys.None);
+                        if (entityContext.IsTrackingChanges)
+                            entityContext.AddAffectedEntitiesProvider(memberAccess.Member.GetAffectedEntitiesProvider());
+                    }
                 }
             }
         }

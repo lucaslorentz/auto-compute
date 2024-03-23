@@ -3,8 +3,7 @@
 namespace LLL.Computed.EFCore.Internal;
 
 public class EFCoreAffectedEntitiesInput(DbContext dbContext) :
-    EFCoreEntityChangeTracker.IInput,
-    EFCoreEntityNavigationProvider.IInput
+    EFCoreMemberAccessLocator.IInput
 {
     public DbContext DbContext => dbContext;
 }

@@ -3,8 +3,7 @@ using System.Linq.Expressions;
 
 namespace LLL.Computed;
 
-public class ComputedExpressionAnalysis
-    : IComputedExpressionAnalysis
+public class ComputedExpressionAnalysis : IComputedExpressionAnalysis
 {
     private readonly ConcurrentDictionary<Expression, ConcurrentBag<Func<string, IEntityContext?>>> _entityContextProviders = new();
     private readonly ConcurrentDictionary<(Expression, string), IEntityContext> _entityContextCache = new();

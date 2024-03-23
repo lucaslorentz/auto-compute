@@ -9,7 +9,9 @@ public class ComputedExpressionAnalyzer<TInput>
     : IComputedExpressionAnalyzer
 {
     private readonly IList<IEntityContextPropagator> _entityContextPropagators = [];
-    private readonly IList<IEntityChangeTracker> _entityChangeTrackers = [];
+    private readonly HashSet<IEntityMemberAccessLocator<IEntityProperty>> _propertyAccessLocators = [];
+    private readonly HashSet<IEntityMemberAccessLocator<IEntityNavigation>> _navigationAccessLocators = [];
+    private readonly HashSet<IEntityMemberAccessLocator> _memberAccessLocators = [];
 
     private ComputedExpressionAnalyzer() { }
 
@@ -39,12 +41,22 @@ public class ComputedExpressionAnalyzer<TInput>
         return this;
     }
 
-    public ComputedExpressionAnalyzer<TInput> AddEntityNavigationProvider(
-        IEntityNavigationProvider<TInput> navigationProvider)
+    public ComputedExpressionAnalyzer<TInput> AddEntityNavigationAccessLocator(
+        IEntityMemberAccessLocator<IEntityNavigation, TInput> memberAccessLocator)
     {
         _entityContextPropagators.Add(new NavigationEntityContextPropagator<TInput>(
-            navigationProvider
+            memberAccessLocator
         ));
+        _navigationAccessLocators.Add(memberAccessLocator);
+        _memberAccessLocators.Add(memberAccessLocator);
+        return this;
+    }
+
+    public ComputedExpressionAnalyzer<TInput> AddEntityPropertyAccessLocator(
+        IEntityMemberAccessLocator<IEntityProperty, TInput> memberAccessLocator)
+    {
+        _propertyAccessLocators.Add(memberAccessLocator);
+        _memberAccessLocators.Add(memberAccessLocator);
         return this;
     }
 
@@ -52,13 +64,6 @@ public class ComputedExpressionAnalyzer<TInput>
         IEntityContextPropagator propagator)
     {
         _entityContextPropagators.Add(propagator);
-        return this;
-    }
-
-    public ComputedExpressionAnalyzer<TInput> AddEntityChangeTracker(
-        IEntityChangeTracker<TInput> tracker)
-    {
-        _entityChangeTrackers.Add(tracker);
         return this;
     }
 
@@ -75,10 +80,22 @@ public class ComputedExpressionAnalyzer<TInput>
         ).Visit(computed);
 
         new TrackEntityChangesVisitor(
-            _entityChangeTrackers,
-            analysis
+            analysis,
+            _memberAccessLocators
         ).Visit(computed);
 
         return entityContext.CompositeAffectedEntitiesProvider;
+    }
+
+    public LambdaExpression GetOldValueExpression(LambdaExpression computed)
+    {
+        var analysis = new ComputedExpressionAnalysis();
+
+        var entityContext = new RootEntityContext<TInput>();
+        analysis.AddEntityContextProvider(computed.Parameters[0], (key) => key == EntityContextKeys.None ? entityContext : null);
+
+        return new ChangeToPreviousValueVisitor(
+            _memberAccessLocators
+        ).VisitAndConvert(computed, nameof(GetOldValueExpression))!;
     }
 }

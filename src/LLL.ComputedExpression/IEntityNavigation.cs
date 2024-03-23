@@ -1,14 +1,11 @@
-﻿using System.Linq.Expressions;
+﻿namespace LLL.Computed;
 
-namespace LLL.Computed;
-
-public interface IEntityNavigation
+public interface IEntityNavigation : IEntityMember<IEntityNavigation>
 {
     bool IsCollection { get; }
     Type TargetType { get; }
     IEntityNavigation GetInverse();
     Task<IEnumerable<object>> LoadAsync(object input, IEnumerable<object> fromEntities);
-    string ToDebugString();
 }
 
 public interface IEntityNavigation<in TInput> : IEntityNavigation
