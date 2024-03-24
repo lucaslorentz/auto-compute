@@ -24,18 +24,25 @@ public abstract class EntityContext
 
     public IAffectedEntitiesProvider GetAffectedEntitiesProvider()
     {
-        var compositeProvider = new CompositeAffectedEntitiesProvider();
+        var providers = new List<IAffectedEntitiesProvider>();
         foreach (var member in _accessedMembers)
         {
-            compositeProvider.AddProvider(member.GetAffectedEntitiesProvider());
+            providers.Add(member.GetAffectedEntitiesProvider());
         }
         foreach (var childContext in _childContexts)
         {
             var provider = childContext.GetParentAffectedEntitiesProvider();
             if (provider is not null)
-                compositeProvider.AddProvider(provider);
+                providers.Add(provider);
         }
-        return compositeProvider;
+
+        if (providers.Count == 0)
+            return new EmptyAffectedEntitiesProvider();
+
+        if (providers.Count == 1)
+            return providers[0];
+
+        return new CompositeAffectedEntitiesProvider(providers);
     }
 
     public abstract IAffectedEntitiesProvider? GetParentAffectedEntitiesProvider();
