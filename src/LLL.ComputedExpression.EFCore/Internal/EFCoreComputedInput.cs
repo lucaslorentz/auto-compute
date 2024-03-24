@@ -2,8 +2,8 @@
 
 namespace LLL.Computed.EFCore.Internal;
 
-public class EFCoreAffectedEntitiesInput(DbContext dbContext) :
-    EFCoreMemberAccessLocator.IInput
+public class EFCoreComputedInput(DbContext dbContext)
+    : IEFCoreComputedInput
 {
     public DbContext DbContext => dbContext;
 }

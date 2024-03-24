@@ -29,7 +29,8 @@ public class ComputedExpressionAnalyzer<TInput>
     {
         return AddEntityContextPropagator(new LinqMethodsEntityContextPropagator())
             .AddEntityContextPropagator(new KeyValuePairEntityContextPropagator())
-            .AddEntityContextPropagator(new GroupingEntityContextPropagator());
+            .AddEntityContextPropagator(new GroupingEntityContextPropagator())
+            .AddEntityContextPropagator(new NavigationEntityContextPropagator(_navigationAccessLocators));
     }
 
     public ComputedExpressionAnalyzer<TInput> AddStopTrackingDecision(
@@ -44,9 +45,6 @@ public class ComputedExpressionAnalyzer<TInput>
     public ComputedExpressionAnalyzer<TInput> AddEntityNavigationAccessLocator(
         IEntityMemberAccessLocator<IEntityNavigation, TInput> memberAccessLocator)
     {
-        _entityContextPropagators.Add(new NavigationEntityContextPropagator<TInput>(
-            memberAccessLocator
-        ));
         _navigationAccessLocators.Add(memberAccessLocator);
         _memberAccessLocators.Add(memberAccessLocator);
         return this;
@@ -71,7 +69,7 @@ public class ComputedExpressionAnalyzer<TInput>
     {
         var analysis = new ComputedExpressionAnalysis();
 
-        var entityContext = new RootEntityContext<TInput>();
+        var entityContext = new RootEntityContext();
         analysis.AddEntityContextProvider(computed.Parameters[0], (key) => key == EntityContextKeys.None ? entityContext : null);
 
         new PropagateEntityContextsVisitor(
@@ -79,23 +77,23 @@ public class ComputedExpressionAnalyzer<TInput>
             analysis
         ).Visit(computed);
 
-        new TrackEntityChangesVisitor(
+        new CollectEntityMemberAccessesVisitor(
             analysis,
             _memberAccessLocators
         ).Visit(computed);
 
-        return entityContext.CompositeAffectedEntitiesProvider;
+        return entityContext.GetAffectedEntitiesProvider();
     }
 
     public LambdaExpression GetOldValueExpression(LambdaExpression computed)
     {
-        var analysis = new ComputedExpressionAnalysis();
+        var inputParameter = Expression.Parameter(typeof(object), "input");
 
-        var entityContext = new RootEntityContext<TInput>();
-        analysis.AddEntityContextProvider(computed.Parameters[0], (key) => key == EntityContextKeys.None ? entityContext : null);
-
-        return new ChangeToPreviousValueVisitor(
+        var newBody = new ChangeToPreviousValueVisitor(
+            inputParameter,
             _memberAccessLocators
-        ).VisitAndConvert(computed, nameof(GetOldValueExpression))!;
+        ).Visit(computed.Body)!;
+
+        return Expression.Lambda(newBody, [inputParameter, .. computed.Parameters]);
     }
 }

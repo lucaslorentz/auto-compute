@@ -5,7 +5,7 @@ namespace LLL.Computed.EFCore.Tests.AffectedEntities;
 
 public class BasicOperationsTests
 {
-    private static Expression<Func<Person, string?>> _computedExpression = (Person p) => p.FirstName + " " + p.LastName;
+    private static readonly Expression<Func<Person, string?>> _computedExpression = (Person p) => p.FirstName + " " + p.LastName;
 
     [Fact]
     public async void TestDebugString()

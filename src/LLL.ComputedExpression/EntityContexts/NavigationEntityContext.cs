@@ -2,28 +2,24 @@
 
 namespace LLL.Computed.EntityContexts;
 
-public class NavigationEntityContext : IEntityContext
+public class NavigationEntityContext : EntityContext
 {
-    public bool IsTrackingChanges { get; }
-    private readonly CompositeAffectedEntitiesProvider _affectedEntitiesProvider = new();
+    private readonly IEntityNavigation _navigation;
 
     public NavigationEntityContext(
-        IEntityContext parent,
+        EntityContext parent,
         IEntityNavigation navigation)
     {
+        _navigation = navigation;
         IsTrackingChanges = parent.IsTrackingChanges;
-
-        if (IsTrackingChanges)
-        {
-            var inverse = navigation.GetInverse();
-            parent.AddAffectedEntitiesProvider(new LoadNavigationAffectedEntitiesProvider(_affectedEntitiesProvider, inverse));
-        }
+        parent.RegisterChildContext(this);
     }
 
-    public void AddAffectedEntitiesProvider(IAffectedEntitiesProvider provider)
-    {
-        if (!IsTrackingChanges) return;
+    public override bool IsTrackingChanges { get; }
 
-        _affectedEntitiesProvider.AddProvider(provider);
+    public override IAffectedEntitiesProvider GetParentAffectedEntitiesProvider()
+    {
+        var inverse = _navigation.GetInverse();
+        return new LoadNavigationAffectedEntitiesProvider(GetAffectedEntitiesProvider(), inverse);
     }
 }

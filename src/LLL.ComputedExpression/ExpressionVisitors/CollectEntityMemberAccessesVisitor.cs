@@ -2,7 +2,7 @@
 
 namespace LLL.Computed.ExpressionVisitors;
 
-internal class TrackEntityChangesVisitor(
+internal class CollectEntityMemberAccessesVisitor(
     IComputedExpressionAnalysis analysis,
     ICollection<IEntityMemberAccessLocator> memberAccessLocators
 ) : ExpressionVisitor
@@ -16,13 +16,9 @@ internal class TrackEntityChangesVisitor(
                 var memberAccess = memberAccessLocator.GetEntityMemberAccess(node);
                 if (memberAccess is not null)
                 {
-                    var affectedEntitiesProvider = memberAccess.Member.GetAffectedEntitiesProvider();
-                    if (affectedEntitiesProvider is not null)
-                    {
-                        var entityContext = analysis.ResolveEntityContext(memberAccess.FromExpression, EntityContextKeys.None);
-                        if (entityContext.IsTrackingChanges)
-                            entityContext.AddAffectedEntitiesProvider(memberAccess.Member.GetAffectedEntitiesProvider());
-                    }
+                    var entityContext = analysis.ResolveEntityContext(memberAccess.FromExpression, EntityContextKeys.None);
+                    if (entityContext.IsTrackingChanges)
+                        entityContext.RegisterAccessedMember(memberAccess.Member);
                 }
             }
         }

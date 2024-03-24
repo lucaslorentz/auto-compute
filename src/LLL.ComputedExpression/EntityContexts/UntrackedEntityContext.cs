@@ -1,10 +1,11 @@
 ﻿namespace LLL.Computed.EntityContexts;
 
-public class UntrackedEntityContext : IEntityContext
+public class UntrackedEntityContext : EntityContext
 {
-    public bool IsTrackingChanges => false;
+    public override bool IsTrackingChanges => false;
 
-    public void AddAffectedEntitiesProvider(IAffectedEntitiesProvider provider)
+    public override IAffectedEntitiesProvider? GetParentAffectedEntitiesProvider()
     {
+        return GetAffectedEntitiesProvider();
     }
 }

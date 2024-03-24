@@ -1,28 +1,19 @@
-﻿using LLL.Computed.AffectedEntitiesProviders;
+﻿namespace LLL.Computed.EntityContexts;
 
-namespace LLL.Computed.EntityContexts;
-
-public class CompositeEntityContext : IEntityContext
+public class CompositeEntityContext : EntityContext
 {
-    public bool IsTrackingChanges { get; }
+    public override bool IsTrackingChanges { get; }
 
-    private readonly CompositeAffectedEntitiesProvider _affectedEntitiesProvider = new();
-
-    public CompositeEntityContext(params IEntityContext[] contexts)
+    public CompositeEntityContext(IList<EntityContext> contexts)
     {
         IsTrackingChanges = contexts.Any(c => c.IsTrackingChanges);
 
         foreach (var context in contexts)
-        {
-            if (context.IsTrackingChanges)
-            {
-                _affectedEntitiesProvider.AddProvider(_affectedEntitiesProvider);
-            }
-        }
+            context.RegisterChildContext(this);
     }
 
-    public void AddAffectedEntitiesProvider(IAffectedEntitiesProvider provider)
+    public override IAffectedEntitiesProvider GetParentAffectedEntitiesProvider()
     {
-        _affectedEntitiesProvider.AddProvider(provider);
+        return GetAffectedEntitiesProvider();
     }
 }

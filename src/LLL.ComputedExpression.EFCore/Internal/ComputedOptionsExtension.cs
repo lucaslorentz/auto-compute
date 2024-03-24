@@ -1,4 +1,5 @@
-﻿using Microsoft.EntityFrameworkCore.Infrastructure;
+﻿using LLL.Computed.Caching;
+using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
 using Microsoft.EntityFrameworkCore.Metadata.Conventions.Infrastructure;
 using Microsoft.Extensions.DependencyInjection;
@@ -9,7 +10,7 @@ public class ComputedOptionsExtension : IDbContextOptionsExtension
 {
     public DbContextOptionsExtensionInfo Info => new ComputedOptionsExtensionInfo(this);
 
-    public List<Action<IModel, ComputedExpressionAnalyzer<EFCoreAffectedEntitiesInput>>> ConfigureAnalyzer { get; } = [];
+    public List<Action<IModel, ComputedExpressionAnalyzer<EFCoreComputedInput>>> ConfigureAnalyzer { get; } = [];
 
     public void ApplyServices(IServiceCollection services)
     {
@@ -17,7 +18,7 @@ public class ComputedOptionsExtension : IDbContextOptionsExtension
         {
             var efCoreMemberAccessLocator = new EFCoreMemberAccessLocator(model);
 
-            var analyzer = ComputedExpressionAnalyzer<EFCoreAffectedEntitiesInput>
+            var analyzer = ComputedExpressionAnalyzer<EFCoreComputedInput>
                 .CreateWithDefaults()
                 .AddEntityNavigationAccessLocator(efCoreMemberAccessLocator)
                 .AddEntityPropertyAccessLocator(efCoreMemberAccessLocator);
@@ -28,7 +29,7 @@ public class ComputedOptionsExtension : IDbContextOptionsExtension
             return analyzer;
         });
 
-        services.AddSingleton<IAffectedEntitiesProviderCache, AffectedEntitiesProviderCache>();
+        services.AddSingleton<IConcurrentCreationCache, ConcurrentCreationMemoryCache>();
         services.AddScoped<IConventionSetPlugin, ComputedConventionSetPlugin>();
     }
 

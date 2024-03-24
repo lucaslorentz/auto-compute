@@ -7,9 +7,7 @@ public class LoadNavigationAffectedEntitiesProvider(
 {
     public string ToDebugString()
     {
-        var affectedEntities = affectedEntitiesProvider.ToDebugString();
-        var navigationDebugString = navigation.ToDebugString();
-        return $"Load({affectedEntities}, {navigationDebugString})";
+        return $"Load({affectedEntitiesProvider.ToDebugString()}, {navigation.Name})";
     }
 
     public async Task<IEnumerable<object>> GetAffectedEntitiesAsync(object input)

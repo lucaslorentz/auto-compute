@@ -1,11 +1,13 @@
 ﻿using System.Linq.Expressions;
+using LLL.Computed.EntityContexts;
 
 namespace LLL.Computed;
 
 public interface IComputedExpressionAnalysis
 {
-    IEntityContext ResolveEntityContext(Expression node, string key);
-    void PropagateEntityContext(Expression fromNode, string fromKey, Expression toNode, string toKey, Func<IEntityContext, IEntityContext>? mapper = null);
+    EntityContext ResolveEntityContext(Expression node, string key);
+    void PropagateEntityContext(Expression fromNode, string fromKey, Expression toNode, string toKey, Func<EntityContext, EntityContext>? mapper = null);
     void PropagateEntityContext((Expression fromNode, string fromKey)[] fromNodesKeys, Expression toNode, string toKey);
-    void AddEntityContextProvider(Expression node, Func<string, IEntityContext?> provider);
+    void AddEntityContextProvider(Expression node, Func<string, EntityContext?> provider);
+    void AddMemberAccess(Expression expression, IEntityMemberAccess<IEntityMember> entityMemberAccess);
 }

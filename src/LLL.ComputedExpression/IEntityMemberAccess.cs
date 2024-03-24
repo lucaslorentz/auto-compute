@@ -6,5 +6,4 @@ public interface IEntityMemberAccess<out TMember>
 {
     Expression FromExpression { get; }
     TMember Member { get; }
-    Expression CreatePreviousValueExpression(Expression expression);
 }

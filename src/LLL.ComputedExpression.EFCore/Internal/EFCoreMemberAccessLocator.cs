@@ -1,18 +1,15 @@
 ﻿using System.Collections;
 using System.Linq.Expressions;
+using LLL.ComputedExpression.EFCore;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.ChangeTracking;
 using Microsoft.EntityFrameworkCore.Metadata;
 
 namespace LLL.Computed.EFCore.Internal;
 
 public class EFCoreMemberAccessLocator(IModel model) :
-    IAllEntityMemberAccessLocator<EFCoreMemberAccessLocator.IInput>
+    IAllEntityMemberAccessLocator<IEFCoreComputedInput>
 {
-    public interface IInput
-    {
-        DbContext DbContext { get; }
-    }
-
     IEntityMemberAccess<IEntityNavigation>? IEntityMemberAccessLocator<IEntityNavigation>.GetEntityMemberAccess(Expression node)
     {
         if (node is MemberExpression memberExpression
@@ -45,12 +42,13 @@ public class EFCoreMemberAccessLocator(IModel model) :
 
     class EntityNavigation(
         INavigation navigation
-    ) : IEntityNavigation<IInput>
+    ) : IEntityNavigation<IEFCoreComputedInput>
     {
+        public string Name => navigation.Name;
         public bool IsCollection => navigation.IsCollection;
         public Type TargetType => navigation.TargetEntityType.ClrType;
 
-        public IEntityNavigation<IInput> GetInverse()
+        public IEntityNavigation<IEFCoreComputedInput> GetInverse()
         {
             var inverse = navigation.Inverse
                 ?? throw new InvalidOperationException($"No inverse for navigation '{navigation.DeclaringType.ShortName()}.{navigation.Name}'");
@@ -58,7 +56,7 @@ public class EFCoreMemberAccessLocator(IModel model) :
             return new EntityNavigation(inverse);
         }
 
-        public async Task<IEnumerable<object>> LoadAsync(IInput input, IEnumerable<object> targetEntities)
+        public async Task<IEnumerable<object>> LoadAsync(IEFCoreComputedInput input, IEnumerable<object> targetEntities)
         {
             var sourceEntities = new HashSet<object>();
             foreach (var targetEntity in targetEntities)
@@ -99,14 +97,38 @@ public class EFCoreMemberAccessLocator(IModel model) :
             return new NavigationAffectedEntitiesProvider(navigation);
         }
 
-        public Expression CreatePreviousValueExpression(IEntityMemberAccess<IEntityNavigation> expression)
+        public Expression CreatePreviousValueExpression(
+            IEntityMemberAccess<IEntityNavigation> memberAccess,
+            Expression inputExpression)
         {
-            throw new NotImplementedException();
+            var oldValueGetter = static (INavigation navigation, object input, object ent) =>
+            {
+                var dbContext = ((IEFCoreComputedInput)input).DbContext;
+
+                var entityEntry = dbContext.Entry(ent);
+
+                if (entityEntry.State == EntityState.Added)
+                    throw new Exception("INVALID!!!");
+
+                return entityEntry.Navigation(navigation).GetOriginalValue();
+            };
+
+            return Expression.Convert(
+                Expression.Invoke(
+                    Expression.Constant(oldValueGetter),
+                    Expression.Constant(navigation),
+                    inputExpression,
+                    memberAccess.FromExpression
+                ),
+                navigation.ClrType
+            );
         }
-    }
+}
 
     class EntityProperty(IProperty property) : IEntityProperty
     {
+        public string Name => property.Name;
+        
         public string ToDebugString()
         {
             return $"{property.Name}";
@@ -117,21 +139,63 @@ public class EFCoreMemberAccessLocator(IModel model) :
             return new PropertyAffectedEntitiesProvider(property);
         }
 
-        public Expression CreatePreviousValueExpression(IEntityMemberAccess<IEntityProperty> expression)
+        public Expression CreatePreviousValueExpression(
+            IEntityMemberAccess<IEntityProperty> memberAccess,
+            Expression inputExpression)
         {
-            throw new NotImplementedException();
+            var entityEntryExpression =
+                Expression.Call(
+                    Expression.Property(
+                        Expression.Convert(
+                            inputExpression,
+                            typeof(IEFCoreComputedInput)
+                        ),
+                        nameof(IEFCoreComputedInput.DbContext)
+                    ),
+                    nameof(DbContext.Entry),
+                    null,
+                    memberAccess.FromExpression
+                );
+
+            return Expression.Convert(
+                Expression.Condition(
+                    Expression.Equal(
+                        Expression.Property(
+                            entityEntryExpression,
+                            nameof(EntityEntry.State)
+                        ),
+                        Expression.Constant(EntityState.Added)
+                    ),
+                    Expression.Throw(
+                        Expression.New(
+                            typeof(Exception)
+                        ),
+                        typeof(object)
+                    ),
+                    Expression.Property(
+                        Expression.Call(
+                            entityEntryExpression,
+                            nameof(EntityEntry.Property),
+                            null,
+                            Expression.Constant(property)
+                        ),
+                        nameof(PropertyEntry.OriginalValue)
+                    )
+                ),
+                property.ClrType
+            );
         }
-    }
+}
 
     class PropertyAffectedEntitiesProvider(IProperty property)
-          : IAffectedEntitiesProvider<IInput>
+          : IAffectedEntitiesProvider<IEFCoreComputedInput>
     {
         public string ToDebugString()
         {
             return $"EntitiesWithPropertyChange({property.DeclaringEntityType.ShortName()}, {property.Name})";
         }
 
-        public async Task<IEnumerable<object>> GetAffectedEntitiesAsync(IInput input)
+        public async Task<IEnumerable<object>> GetAffectedEntitiesAsync(IEFCoreComputedInput input)
         {
             var affectedEntities = new HashSet<object>();
             foreach (var entityEntry in input.DbContext.ChangeTracker.Entries())
@@ -150,14 +214,14 @@ public class EFCoreMemberAccessLocator(IModel model) :
     }
 
     class NavigationAffectedEntitiesProvider(INavigation navigation)
-        : IAffectedEntitiesProvider<IInput>
+        : IAffectedEntitiesProvider<IEFCoreComputedInput>
     {
         public string ToDebugString()
         {
             return $"EntitiesWithNavigationChange({navigation.DeclaringEntityType.ShortName()}, {navigation.Name})";
         }
 
-        public async Task<IEnumerable<object>> GetAffectedEntitiesAsync(IInput input)
+        public async Task<IEnumerable<object>> GetAffectedEntitiesAsync(IEFCoreComputedInput input)
         {
             var affectedEntities = new HashSet<object>();
             foreach (var entityEntry in input.DbContext.ChangeTracker.Entries())
@@ -173,26 +237,20 @@ public class EFCoreMemberAccessLocator(IModel model) :
                 else if (navigation.Inverse != null && entityEntry.Metadata == navigation.Inverse.DeclaringEntityType)
                 {
                     var inverseReferenceEntry = entityEntry.Reference(navigation.Inverse);
-                    if (inverseReferenceEntry is not null && inverseReferenceEntry.IsModified)
+                    if (inverseReferenceEntry is not null
+                        && (entityEntry.State == EntityState.Added
+                        || (entityEntry.State == EntityState.Modified && inverseReferenceEntry.IsModified)
+                        || entityEntry.State == EntityState.Deleted))
                     {
                         if (!inverseReferenceEntry.IsLoaded)
                             await inverseReferenceEntry.LoadAsync();
 
                         if (inverseReferenceEntry.CurrentValue is not null)
-                        {
                             affectedEntities.Add(inverseReferenceEntry.CurrentValue);
-                        }
 
-                        var oldKeyValues = navigation.Inverse.ForeignKey.Properties
-                            .Select(p => entityEntry.OriginalValues[p])
-                            .ToArray();
-
-                        var oldValue = input.DbContext.Find(navigation.Inverse.TargetEntityType.ClrType, oldKeyValues);
-
-                        if (oldValue is not null)
-                        {
-                            affectedEntities.Add(oldValue);
-                        }
+                        var originalValue = inverseReferenceEntry.GetOriginalValue();
+                        if (originalValue is not null)
+                            affectedEntities.Add(originalValue);
                     }
                 }
             }
