@@ -3,7 +3,7 @@ using LLL.Computed.EntityContexts;
 
 namespace LLL.Computed.EntityContextPropagators;
 
-public class UntrackedEntityContextPropagator<TInput>(
+public class UntrackedEntityContextPropagator(
     IStopTrackingDecision stopTrackingDecision
 ) : IEntityContextPropagator
 {

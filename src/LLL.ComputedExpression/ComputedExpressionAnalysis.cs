@@ -14,22 +14,15 @@ public class ComputedExpressionAnalysis : IComputedExpressionAnalysis
     {
         return _entityContextCache.GetOrAdd((node, key), _ =>
         {
-            var entityContexts = new List<EntityContext>();
-
             if (_entityContextProviders.TryGetValue(node, out var providers))
             {
                 foreach (var provider in providers)
                 {
                     var entityContext = provider(key);
                     if (entityContext is not null)
-                        entityContexts.Add(entityContext);
+                        return entityContext;
                 }
             }
-
-            if (entityContexts.Count > 1)
-                return new CompositeEntityContext(entityContexts);
-            else if (entityContexts.Count == 1)
-                return entityContexts.First();
 
             throw new Exception($"No entity context found for node '{node}' with key '{key}'");
         });
@@ -37,29 +30,40 @@ public class ComputedExpressionAnalysis : IComputedExpressionAnalysis
 
     public void PropagateEntityContext(Expression fromNode, string fromKey, Expression toNode, string toKey, Func<EntityContext, EntityContext>? mapper = null)
     {
+        PropagateEntityContext([(fromNode, fromKey)], toNode, toKey, mapper);
+    }
+
+    public void PropagateEntityContext(
+        (Expression fromNode, string fromKey)[] fromNodesKeys,
+        Expression toNode,
+        string toKey,
+        Func<EntityContext, EntityContext>? mapper = null)
+    {
         AddEntityContextProvider(
             toNode,
             (key) =>
             {
-                var mappedKey = MapKey(key, fromKey, toKey);
-                if (mappedKey is null)
-                    return null;
+                var entityContexts = new List<EntityContext>();
 
-                var entityContext = ResolveEntityContext(fromNode, mappedKey);
+                foreach (var (fromNode, fromKey) in fromNodesKeys)
+                {
+                    var mappedKey = MapKey(key, fromKey, toKey);
+                    if (mappedKey is null)
+                        return null;
 
-                if (mapper != null)
-                    entityContext = mapper(entityContext);
+                    var entityContext = ResolveEntityContext(fromNode, mappedKey);
 
-                return entityContext;
+                    if (mapper != null)
+                        entityContext = mapper(entityContext);
+
+                    return entityContext;
+                }
+
+                if (entityContexts.Count > 1)
+                    return new CompositeEntityContext(entityContexts);
+
+                return entityContexts.FirstOrDefault();
             });
-    }
-
-    public void PropagateEntityContext((Expression fromNode, string fromKey)[] fromNodesKeys, Expression toNode, string toKey)
-    {
-        foreach (var (fromNode, fromKey) in fromNodesKeys)
-        {
-            PropagateEntityContext(fromNode, fromKey, toNode, toKey);
-        }
     }
 
     public void AddEntityContextProvider(

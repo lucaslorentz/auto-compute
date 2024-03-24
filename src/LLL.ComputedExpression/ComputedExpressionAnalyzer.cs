@@ -30,13 +30,14 @@ public class ComputedExpressionAnalyzer<TInput>
         return AddEntityContextPropagator(new LinqMethodsEntityContextPropagator())
             .AddEntityContextPropagator(new KeyValuePairEntityContextPropagator())
             .AddEntityContextPropagator(new GroupingEntityContextPropagator())
-            .AddEntityContextPropagator(new NavigationEntityContextPropagator(_navigationAccessLocators));
+            .AddEntityContextPropagator(new NavigationEntityContextPropagator(_navigationAccessLocators))
+            .AddStopTrackingDecision(new StopTrackingDecision());
     }
 
     public ComputedExpressionAnalyzer<TInput> AddStopTrackingDecision(
         IStopTrackingDecision stopTrackingDecision)
     {
-        _entityContextPropagators.Insert(0, new UntrackedEntityContextPropagator<TInput>(
+        _entityContextPropagators.Insert(0, new UntrackedEntityContextPropagator(
             stopTrackingDecision
         ));
         return this;
