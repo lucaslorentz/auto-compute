@@ -108,7 +108,7 @@ public class EFCoreMemberAccessLocator(IModel model) :
                 var entityEntry = dbContext.Entry(ent);
 
                 if (entityEntry.State == EntityState.Added)
-                    throw new Exception("INVALID!!!");
+                    throw new InvalidOperationException("Cannot return a previous value for an added entity");
 
                 return entityEntry.Navigation(navigation).GetOriginalValue();
             };
@@ -123,12 +123,12 @@ public class EFCoreMemberAccessLocator(IModel model) :
                 navigation.ClrType
             );
         }
-}
+    }
 
     class EntityProperty(IProperty property) : IEntityProperty
     {
         public string Name => property.Name;
-        
+
         public string ToDebugString()
         {
             return $"{property.Name}";
@@ -185,7 +185,7 @@ public class EFCoreMemberAccessLocator(IModel model) :
                 property.ClrType
             );
         }
-}
+    }
 
     class PropertyAffectedEntitiesProvider(IProperty property)
           : IAffectedEntitiesProvider<IEFCoreComputedInput>
