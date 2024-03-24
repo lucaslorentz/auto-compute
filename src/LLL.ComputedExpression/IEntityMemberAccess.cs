@@ -2,8 +2,8 @@ using System.Linq.Expressions;
 
 namespace LLL.Computed;
 
-public interface IExpressionMatch<out TValue>
+public interface IEntityMemberAccess<out TMember>
 {
     Expression FromExpression { get; }
-    TValue Value { get; }
+    TMember Member { get; }
 }

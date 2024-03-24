@@ -1,15 +1,11 @@
-﻿using LLL.Computed.AffectedEntitiesProviders;
+﻿namespace LLL.Computed.EntityContexts;
 
-namespace LLL.Computed.EntityContexts;
-
-public class RootEntityContext<TInput>
-    : IEntityContext
+public class RootEntityContext : EntityContext
 {
-    public bool IsTrackingChanges => true;
-    public CompositeAffectedEntitiesProvider CompositeAffectedEntitiesProvider { get; } = new();
+    public override bool IsTrackingChanges => true;
 
-    public void AddAffectedEntitiesProvider(IAffectedEntitiesProvider provider)
+    public override IAffectedEntitiesProvider? GetParentAffectedEntitiesProvider()
     {
-        CompositeAffectedEntitiesProvider.AddProvider(provider);
+        return GetAffectedEntitiesProvider();
     }
 }

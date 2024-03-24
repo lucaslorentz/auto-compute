@@ -3,25 +3,28 @@ using LLL.Computed.EntityContexts;
 
 namespace LLL.Computed.EntityContextPropagators;
 
-public class NavigationEntityContextPropagator<TInput>(
-    IEntityNavigationProvider navigationProvider
+public class NavigationEntityContextPropagator(
+    HashSet<IEntityMemberAccessLocator<IEntityNavigation>> navigationAccessLocators
 ) : IEntityContextPropagator
 {
     public void PropagateEntityContext(Expression node, IComputedExpressionAnalysis analysis)
     {
-        var navigationMatch = navigationProvider.GetEntityNavigation(node);
-        if (navigationMatch != null)
+        foreach (var navigationAccessLocator in navigationAccessLocators)
         {
-            var toKey = navigationMatch.Value.IsCollection
-                ? EntityContextKeys.Element
-                : EntityContextKeys.None;
+            var navigationAccess = navigationAccessLocator.GetEntityMemberAccess(node);
+            if (navigationAccess != null)
+            {
+                var toKey = navigationAccess.Member.IsCollection
+                    ? EntityContextKeys.Element
+                    : EntityContextKeys.None;
 
-            analysis.PropagateEntityContext(
-                navigationMatch.FromExpression,
-                EntityContextKeys.None,
-                node,
-                toKey,
-                entityContext => new NavigationEntityContext(entityContext, navigationMatch.Value));
+                analysis.PropagateEntityContext(
+                    navigationAccess.FromExpression,
+                    EntityContextKeys.None,
+                    node,
+                    toKey,
+                    entityContext => new NavigationEntityContext(entityContext, navigationAccess.Member));
+            }
         }
     }
 }

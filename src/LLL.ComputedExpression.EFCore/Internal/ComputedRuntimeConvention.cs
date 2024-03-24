@@ -36,7 +36,7 @@ class ComputedRuntimeConvention(Func<IModel, IComputedExpressionAnalyzer> comput
                     computedUpdaters.Add(async (dbContext) =>
                     {
                         var changes = 0;
-                        foreach (var affectedEntity in await affectedEntitiesProvider.GetAffectedEntitiesAsync(new EFCoreAffectedEntitiesInput(dbContext)))
+                        foreach (var affectedEntity in await affectedEntitiesProvider.GetAffectedEntitiesAsync(new EFCoreComputedInput(dbContext)))
                         {
                             var affectedEntry = dbContext.Entry(affectedEntity);
                             var propertyEntry = affectedEntry.Property(property);

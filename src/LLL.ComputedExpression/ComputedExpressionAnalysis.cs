@@ -1,35 +1,41 @@
 ﻿using System.Collections.Concurrent;
 using System.Linq.Expressions;
+using LLL.Computed.EntityContexts;
 
 namespace LLL.Computed;
 
-public class ComputedExpressionAnalysis
-    : IComputedExpressionAnalysis
+public class ComputedExpressionAnalysis : IComputedExpressionAnalysis
 {
-    private readonly ConcurrentDictionary<Expression, ConcurrentBag<Func<string, IEntityContext?>>> _entityContextProviders = new();
-    private readonly ConcurrentDictionary<(Expression, string), IEntityContext> _entityContextCache = new();
+    private readonly ConcurrentDictionary<Expression, ConcurrentBag<Func<string, EntityContext?>>> _entityContextProviders = new();
+    private readonly ConcurrentDictionary<(Expression, string), EntityContext> _entityContextCache = new();
+    private readonly ConcurrentDictionary<Expression, IEntityMemberAccess<IEntityMember>> _entityMemberAccesses = new();
 
-    public IEntityContext ResolveEntityContext(Expression node, string key)
+    public EntityContext ResolveEntityContext(Expression node, string key)
     {
         return _entityContextCache.GetOrAdd((node, key), _ =>
         {
+            var entityContexts = new List<EntityContext>();
+
             if (_entityContextProviders.TryGetValue(node, out var providers))
             {
                 foreach (var provider in providers)
                 {
                     var entityContext = provider(key);
                     if (entityContext is not null)
-                    {
-                        return entityContext;
-                    }
+                        entityContexts.Add(entityContext);
                 }
             }
+
+            if (entityContexts.Count > 1)
+                return new CompositeEntityContext(entityContexts);
+            else if (entityContexts.Count == 1)
+                return entityContexts.First();
 
             throw new Exception($"No entity context found for node '{node}' with key '{key}'");
         });
     }
 
-    public void PropagateEntityContext(Expression fromNode, string fromKey, Expression toNode, string toKey, Func<IEntityContext, IEntityContext>? mapper = null)
+    public void PropagateEntityContext(Expression fromNode, string fromKey, Expression toNode, string toKey, Func<EntityContext, EntityContext>? mapper = null)
     {
         AddEntityContextProvider(
             toNode,
@@ -58,11 +64,11 @@ public class ComputedExpressionAnalysis
 
     public void AddEntityContextProvider(
         Expression node,
-        Func<string, IEntityContext?> provider)
+        Func<string, EntityContext?> provider)
     {
         _entityContextProviders.AddOrUpdate(
             node,
-            (k) => new ConcurrentBag<Func<string, IEntityContext?>> {
+            (k) => new ConcurrentBag<Func<string, EntityContext?>> {
                 provider
             },
             (k, providers) =>
@@ -96,5 +102,10 @@ public class ComputedExpressionAnalysis
         var result = "/" + string.Join("/", finalParts);
 
         return result;
+    }
+
+    public void AddMemberAccess(Expression node, IEntityMemberAccess<IEntityMember> entityMemberAccess)
+    {
+        _entityMemberAccesses.TryAdd(node, entityMemberAccess);
     }
 }
