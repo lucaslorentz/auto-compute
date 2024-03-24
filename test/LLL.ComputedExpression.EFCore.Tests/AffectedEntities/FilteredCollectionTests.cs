@@ -3,9 +3,9 @@ using FluentAssertions;
 
 namespace LLL.Computed.EFCore.Tests.AffectedEntities;
 
-public class CollectionTests
+public class FilteredCollectionTests
 {
-    private static readonly Expression<Func<Person, int>> _computedExpression = (Person person) => person.Pets.Count;
+    private static readonly Expression<Func<Person, int>> _computedExpression = (Person person) => person.Pets.Where(p => p.Type == "Cat" && p.Color == "Black").Count();
 
     [Fact]
     public async void TestDebugString()
@@ -14,7 +14,7 @@ public class CollectionTests
 
         var affectedEntitiesProvider = context.GetAffectedEntitiesProvider(_computedExpression);
         affectedEntitiesProvider.ToDebugString()
-            .Should().Be("EntitiesWithNavigationChange(Person, Pets)");
+            .Should().Be("Concat(EntitiesWithNavigationChange(Person, Pets), Load(Concat(EntitiesWithPropertyChange(Pet, Type), EntitiesWithPropertyChange(Pet, Color)), Owner))");
     }
 
     [Fact]
@@ -52,7 +52,7 @@ public class CollectionTests
         pet.Type = "Modified";
 
         var affectedEntities = await context.GetAffectedEntitiesAsync(_computedExpression);
-        affectedEntities.Should().BeEmpty();
+        affectedEntities.Should().BeEquivalentTo([pet.Owner]);
     }
 
     [Fact]
