@@ -2,16 +2,16 @@
 
 public interface IAffectedEntitiesProvider
 {
-    Task<IEnumerable<object>> GetAffectedEntitiesAsync(object input);
+    Task<IReadOnlyCollection<object>> GetAffectedEntitiesAsync(object input);
 
     string ToDebugString();
 }
 
 public interface IAffectedEntitiesProvider<in TInput> : IAffectedEntitiesProvider
 {
-    Task<IEnumerable<object>> GetAffectedEntitiesAsync(TInput input);
+    Task<IReadOnlyCollection<object>> GetAffectedEntitiesAsync(TInput input);
 
-    Task<IEnumerable<object>> IAffectedEntitiesProvider.GetAffectedEntitiesAsync(object input)
+    Task<IReadOnlyCollection<object>> IAffectedEntitiesProvider.GetAffectedEntitiesAsync(object input)
     {
         return GetAffectedEntitiesAsync((TInput)input);
     }

@@ -4,7 +4,7 @@ namespace LLL.Computed.ExpressionVisitors;
 
 internal class CollectEntityMemberAccessesVisitor(
     IComputedExpressionAnalysis analysis,
-    ICollection<IEntityMemberAccessLocator> memberAccessLocators
+    IReadOnlyCollection<IEntityMemberAccessLocator> memberAccessLocators
 ) : ExpressionVisitor
 {
     public override Expression? Visit(Expression? node)

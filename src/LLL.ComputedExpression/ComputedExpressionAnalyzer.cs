@@ -5,8 +5,7 @@ using LLL.Computed.ExpressionVisitors;
 
 namespace LLL.Computed;
 
-public class ComputedExpressionAnalyzer<TInput>
-    : IComputedExpressionAnalyzer
+public class ComputedExpressionAnalyzer<TInput> : IComputedExpressionAnalyzer
 {
     private readonly IList<IEntityContextPropagator> _entityContextPropagators = [];
     private readonly HashSet<IEntityMemberAccessLocator<IEntityProperty>> _propertyAccessLocators = [];
@@ -68,9 +67,19 @@ public class ComputedExpressionAnalyzer<TInput>
 
     public IAffectedEntitiesProvider CreateAffectedEntitiesProvider(LambdaExpression computed)
     {
-        var analysis = new ComputedExpressionAnalysis();
+        var entityContext = GetEntityContext(computed, computed.Parameters[0], EntityContextKeys.None);
+        return entityContext.GetAffectedEntitiesProvider();
+    }
+
+    public EntityContext GetEntityContext(
+        LambdaExpression computed,
+        Expression node,
+        string entityContextKey)
+    {
+        var analysis = new ComputedExpressionAnalysis(this);
 
         var entityContext = new RootEntityContext();
+
         analysis.AddEntityContextProvider(computed.Parameters[0], (key) => key == EntityContextKeys.None ? entityContext : null);
 
         new PropagateEntityContextsVisitor(
@@ -83,10 +92,10 @@ public class ComputedExpressionAnalyzer<TInput>
             _memberAccessLocators
         ).Visit(computed);
 
-        return entityContext.GetAffectedEntitiesProvider();
+        return analysis.ResolveEntityContext(node, entityContextKey);
     }
 
-    public LambdaExpression GetOldValueExpression(LambdaExpression computed)
+    public LambdaExpression GetOriginalValueExpression(LambdaExpression computed)
     {
         var inputParameter = Expression.Parameter(typeof(object), "input");
 

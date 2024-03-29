@@ -8,7 +8,7 @@ public class EmptyAffectedEntitiesProvider
         return $"Empty";
     }
 
-    public async Task<IEnumerable<object>> GetAffectedEntitiesAsync(object input)
+    public async Task<IReadOnlyCollection<object>> GetAffectedEntitiesAsync(object input)
     {
         return [];
     }

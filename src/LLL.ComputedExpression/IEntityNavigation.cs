@@ -5,7 +5,8 @@ public interface IEntityNavigation : IEntityMember<IEntityNavigation>
     bool IsCollection { get; }
     Type TargetType { get; }
     IEntityNavigation GetInverse();
-    Task<IEnumerable<object>> LoadAsync(object input, IEnumerable<object> fromEntities);
+    Task<IReadOnlyCollection<object>> LoadCurrentAsync(object input, IReadOnlyCollection<object> fromEntities);
+    Task<IReadOnlyCollection<object>> LoadOriginalAsync(object input, IReadOnlyCollection<object> fromEntities);
 }
 
 public interface IEntityNavigation<in TInput> : IEntityNavigation
@@ -17,10 +18,17 @@ public interface IEntityNavigation<in TInput> : IEntityNavigation
         return GetInverse();
     }
 
-    Task<IEnumerable<object>> LoadAsync(TInput input, IEnumerable<object> fromEntities);
+    Task<IReadOnlyCollection<object>> LoadCurrentAsync(TInput input, IReadOnlyCollection<object> fromEntities);
 
-    Task<IEnumerable<object>> IEntityNavigation.LoadAsync(object input, IEnumerable<object> fromEntities)
+    Task<IReadOnlyCollection<object>> LoadOriginalAsync(TInput input, IReadOnlyCollection<object> fromEntities);
+
+    Task<IReadOnlyCollection<object>> IEntityNavigation.LoadCurrentAsync(object input, IReadOnlyCollection<object> fromEntities)
     {
-        return LoadAsync((TInput)input, fromEntities);
+        return LoadCurrentAsync((TInput)input, fromEntities);
+    }
+
+    Task<IReadOnlyCollection<object>> IEntityNavigation.LoadOriginalAsync(object input, IReadOnlyCollection<object> fromEntities)
+    {
+        return LoadOriginalAsync((TInput)input, fromEntities);
     }
 }

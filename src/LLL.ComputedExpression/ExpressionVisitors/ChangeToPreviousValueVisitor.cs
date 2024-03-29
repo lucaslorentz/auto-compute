@@ -4,7 +4,7 @@ namespace LLL.Computed.ExpressionVisitors;
 
 internal class ChangeToPreviousValueVisitor(
     ParameterExpression inputExpression,
-    ICollection<IEntityMemberAccessLocator> memberAccessLocators
+    IReadOnlyCollection<IEntityMemberAccessLocator> memberAccessLocators
 ) : ExpressionVisitor
 {
     public override Expression? Visit(Expression? node)

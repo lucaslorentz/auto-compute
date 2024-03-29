@@ -18,7 +18,7 @@ public static class Utilities
         if (navigation.IsCollection)
         {
             var collectionAccessor = navigation.GetCollectionAccessor()!;
-            var oldValue = collectionAccessor.Create();
+            var originalValue = collectionAccessor.Create();
 
             if (!navigationEntry.IsLoaded)
                 navigationEntry.Load();
@@ -41,7 +41,7 @@ public static class Utilities
                         // TODO: Improve to check the foreign keys
                         continue;
 
-                    collectionAccessor.AddStandalone(oldValue, item);
+                    collectionAccessor.AddStandalone(originalValue, item);
                 }
             }
 
@@ -55,12 +55,12 @@ public static class Utilities
                     {
                         var oldInverseValue = inverseReferenceEntry.GetOriginalValue();
                         if (ReferenceEquals(entityEntry.Entity, oldInverseValue))
-                            collectionAccessor.AddStandalone(oldValue, itemEntry.Entity);
+                            collectionAccessor.AddStandalone(originalValue, itemEntry.Entity);
                     }
                 }
             }
 
-            return oldValue;
+            return originalValue;
         }
         else
         {
@@ -69,6 +69,39 @@ public static class Utilities
                 .ToArray();
 
             return entityEntry.Context.Find(navigation.TargetEntityType.ClrType, oldKeyValues);
+        }
+    }
+
+    public static IEnumerable<object> GetOriginalEntities(this NavigationEntry navigationEntry)
+    {
+        var originalValue = navigationEntry.GetOriginalValue();
+        if (navigationEntry.Metadata.IsCollection)
+        {
+            if (originalValue is IEnumerable values)
+            {
+                foreach (var value in values)
+                    yield return value;
+            }
+        }
+        else if (originalValue is not null)
+        {
+            yield return originalValue;
+        }
+    }
+    public static IEnumerable<object> GetEntities(this NavigationEntry navigationEntry)
+    {
+        var currentValue = navigationEntry.CurrentValue;
+        if (navigationEntry.Metadata.IsCollection)
+        {
+            if (currentValue is IEnumerable values)
+            {
+                foreach (var value in values)
+                    yield return value;
+            }
+        }
+        else if (currentValue is not null)
+        {
+            yield return currentValue;
         }
     }
 }

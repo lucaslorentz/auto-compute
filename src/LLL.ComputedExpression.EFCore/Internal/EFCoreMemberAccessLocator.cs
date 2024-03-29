@@ -56,33 +56,38 @@ public class EFCoreMemberAccessLocator(IModel model) :
             return new EntityNavigation(inverse);
         }
 
-        public async Task<IEnumerable<object>> LoadAsync(IEFCoreComputedInput input, IEnumerable<object> targetEntities)
+        public async Task<IReadOnlyCollection<object>> LoadOriginalAsync(IEFCoreComputedInput input, IReadOnlyCollection<object> targetEntities)
+        {
+            var sourceEntities = new HashSet<object>();
+            foreach (var targetEntity in targetEntities)
+            {
+                var targetEntry = input.DbContext.Entry(targetEntity);
+                if (targetEntry.State == EntityState.Added)
+                    throw new Exception("Cannot get old value of an added entity");
+
+                var navigationEntry = targetEntry.Navigation(navigation);
+
+                if (!navigationEntry.IsLoaded)
+                    await navigationEntry.LoadAsync();
+
+                foreach (var originalEntity in navigationEntry.GetOriginalEntities())
+                    sourceEntities.Add(originalEntity);
+            }
+            return sourceEntities;
+        }
+
+        public async Task<IReadOnlyCollection<object>> LoadCurrentAsync(IEFCoreComputedInput input, IReadOnlyCollection<object> targetEntities)
         {
             var sourceEntities = new HashSet<object>();
             foreach (var targetEntity in targetEntities)
             {
                 var navigationEntry = input.DbContext.Entry(targetEntity).Navigation(navigation);
+
                 if (!navigationEntry.IsLoaded)
-                {
                     await navigationEntry.LoadAsync();
-                }
-                if (navigation.IsCollection)
-                {
-                    if (navigationEntry.CurrentValue is IEnumerable enumerable)
-                    {
-                        foreach (var sourceEntity in enumerable)
-                        {
-                            sourceEntities.Add(sourceEntity);
-                        }
-                    }
-                }
-                else
-                {
-                    if (navigationEntry.CurrentValue is not null)
-                    {
-                        sourceEntities.Add(navigationEntry.CurrentValue);
-                    }
-                }
+
+                foreach (var entity in navigationEntry.GetEntities())
+                    sourceEntities.Add(entity);
             }
             return sourceEntities;
         }
@@ -101,7 +106,7 @@ public class EFCoreMemberAccessLocator(IModel model) :
             IEntityMemberAccess<IEntityNavigation> memberAccess,
             Expression inputExpression)
         {
-            var oldValueGetter = static (INavigation navigation, object input, object ent) =>
+            var originalValueGetter = static (INavigation navigation, object input, object ent) =>
             {
                 var dbContext = ((IEFCoreComputedInput)input).DbContext;
 
@@ -115,7 +120,7 @@ public class EFCoreMemberAccessLocator(IModel model) :
 
             return Expression.Convert(
                 Expression.Invoke(
-                    Expression.Constant(oldValueGetter),
+                    Expression.Constant(originalValueGetter),
                     Expression.Constant(navigation),
                     inputExpression,
                     memberAccess.FromExpression
@@ -168,7 +173,8 @@ public class EFCoreMemberAccessLocator(IModel model) :
                     ),
                     Expression.Throw(
                         Expression.New(
-                            typeof(Exception)
+                            typeof(Exception).GetConstructor([typeof(string)])!,
+                            Expression.Constant("Cannot retrieve previous value from an added entity")
                         ),
                         typeof(object)
                     ),
@@ -195,7 +201,7 @@ public class EFCoreMemberAccessLocator(IModel model) :
             return $"EntitiesWithPropertyChange({property.DeclaringEntityType.ShortName()}, {property.Name})";
         }
 
-        public async Task<IEnumerable<object>> GetAffectedEntitiesAsync(IEFCoreComputedInput input)
+        public async Task<IReadOnlyCollection<object>> GetAffectedEntitiesAsync(IEFCoreComputedInput input)
         {
             var affectedEntities = new HashSet<object>();
             foreach (var entityEntry in input.DbContext.ChangeTracker.Entries())
@@ -221,7 +227,7 @@ public class EFCoreMemberAccessLocator(IModel model) :
             return $"EntitiesWithNavigationChange({navigation.DeclaringEntityType.ShortName()}, {navigation.Name})";
         }
 
-        public async Task<IEnumerable<object>> GetAffectedEntitiesAsync(IEFCoreComputedInput input)
+        public async Task<IReadOnlyCollection<object>> GetAffectedEntitiesAsync(IEFCoreComputedInput input)
         {
             var affectedEntities = new HashSet<object>();
             foreach (var entityEntry in input.DbContext.ChangeTracker.Entries())
@@ -236,21 +242,20 @@ public class EFCoreMemberAccessLocator(IModel model) :
                 }
                 else if (navigation.Inverse != null && entityEntry.Metadata == navigation.Inverse.DeclaringEntityType)
                 {
-                    var inverseReferenceEntry = entityEntry.Reference(navigation.Inverse);
-                    if (inverseReferenceEntry is not null
+                    var inverseNavigationEntry = entityEntry.Navigation(navigation.Inverse);
+                    if (inverseNavigationEntry is not null
                         && (entityEntry.State == EntityState.Added
-                        || (entityEntry.State == EntityState.Modified && inverseReferenceEntry.IsModified)
+                        || (entityEntry.State == EntityState.Modified && inverseNavigationEntry.IsModified)
                         || entityEntry.State == EntityState.Deleted))
                     {
-                        if (!inverseReferenceEntry.IsLoaded)
-                            await inverseReferenceEntry.LoadAsync();
+                        if (!inverseNavigationEntry.IsLoaded)
+                            await inverseNavigationEntry.LoadAsync();
 
-                        if (inverseReferenceEntry.CurrentValue is not null)
-                            affectedEntities.Add(inverseReferenceEntry.CurrentValue);
+                        foreach (var currentEntity in inverseNavigationEntry.GetEntities())
+                            affectedEntities.Add(currentEntity);
 
-                        var originalValue = inverseReferenceEntry.GetOriginalValue();
-                        if (originalValue is not null)
-                            affectedEntities.Add(originalValue);
+                        foreach (var originalEntity in inverseNavigationEntry.GetOriginalEntities())
+                            affectedEntities.Add(originalEntity);
                     }
                 }
             }

@@ -43,20 +43,20 @@ public static class DbContextExtensions
             static (k) => k.Analyzer.CreateAffectedEntitiesProvider((LambdaExpression)k.ExpressionKey.Expression));
     }
 
-    public static Delegate GetComputedOldValueGetter(this DbContext dbContext, LambdaExpression computedExpression)
+    public static Delegate GetComputedOriginalValueGetter(this DbContext dbContext, LambdaExpression computedExpression)
     {
         var analyzer = GetComputedExpressionAnalyzer(dbContext);
 
         var cache = dbContext.GetService<IConcurrentCreationCache>();
 
         var cacheKey = new ComputedExpressionAnalysisCacheKey(
-            "OldValueFunction",
+            "OriginalValueFunction",
             new ExpressionCacheKey(computedExpression, ExpressionEqualityComparer.Instance),
             analyzer);
 
         return cache.GetOrCreate(
             cacheKey,
-            static (k) => k.Analyzer.GetOldValueExpression((LambdaExpression)k.ExpressionKey.Expression).Compile());
+            static (k) => k.Analyzer.GetOriginalValueExpression((LambdaExpression)k.ExpressionKey.Expression).Compile());
     }
 
     public static Delegate GetComputedCurrentValueGetter(this DbContext dbContext, LambdaExpression computedExpression)
@@ -86,8 +86,8 @@ public static class DbContextExtensions
     public static async Task<IEnumerable<(TEntity, P?, P?)>> GetChangesAsync<TEntity, P>(
         this DbContext dbContext, Expression<Func<TEntity, P>> computedExpression)
     {
-        var oldValueGetter = dbContext.GetComputedOldValueGetter(computedExpression);
-        var newValueGetter = dbContext.GetComputedCurrentValueGetter(computedExpression);
+        var originalValueGetter = dbContext.GetComputedOriginalValueGetter(computedExpression);
+        var currentValueGetter = dbContext.GetComputedCurrentValueGetter(computedExpression);
 
         var input = new EFCoreComputedInput(dbContext);
 
@@ -97,15 +97,15 @@ public static class DbContextExtensions
         {
             var state = dbContext.Entry(e!).State;
 
-            var oldValue = state == EntityState.Added
+            var originalValue = state == EntityState.Added
                 ? default
-                : (P?)oldValueGetter.DynamicInvoke(input, e);
+                : (P?)originalValueGetter.DynamicInvoke(input, e);
 
-            var newValue = state == EntityState.Deleted
+            var currentValue = state == EntityState.Deleted
                 ? default
-                : (P?)newValueGetter.DynamicInvoke(e);
+                : (P?)currentValueGetter.DynamicInvoke(e);
 
-            return (e, oldValue, newValue);
+            return (e, originalValue, currentValue);
         }).ToArray();
     }
 
