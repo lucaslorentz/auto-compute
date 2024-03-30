@@ -97,7 +97,7 @@ public class EFCoreMemberAccessLocator(IModel model) :
             return $"{navigation.Name}";
         }
 
-        public IAffectedEntitiesProvider GetAffectedEntitiesProvider()
+        public IAffectedEntitiesProvider? GetAffectedEntitiesProvider()
         {
             return new NavigationAffectedEntitiesProvider(navigation);
         }
@@ -139,7 +139,7 @@ public class EFCoreMemberAccessLocator(IModel model) :
             return $"{property.Name}";
         }
 
-        public IAffectedEntitiesProvider GetAffectedEntitiesProvider()
+        public IAffectedEntitiesProvider? GetAffectedEntitiesProvider()
         {
             return new PropertyAffectedEntitiesProvider(property);
         }

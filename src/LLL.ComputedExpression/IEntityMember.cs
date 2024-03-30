@@ -5,7 +5,7 @@ namespace LLL.Computed;
 public interface IEntityMember
 {
     string Name { get; }
-    IAffectedEntitiesProvider GetAffectedEntitiesProvider();
+    IAffectedEntitiesProvider? GetAffectedEntitiesProvider();
     Expression CreatePreviousValueExpression(
         IEntityMemberAccess<IEntityMember> memberAccess,
         Expression inputExpression);

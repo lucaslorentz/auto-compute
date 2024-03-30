@@ -27,7 +27,7 @@ public static class DbContextExtensions
         return analyzer;
     }
 
-    public static IAffectedEntitiesProvider GetAffectedEntitiesProvider(this DbContext dbContext, LambdaExpression computedExpression)
+    public static IAffectedEntitiesProvider? GetAffectedEntitiesProvider(this DbContext dbContext, LambdaExpression computedExpression)
     {
         var analyzer = GetComputedExpressionAnalyzer(dbContext);
 
@@ -79,6 +79,9 @@ public static class DbContextExtensions
         this DbContext dbContext, Expression<Func<TEntity, P>> computedExpression)
     {
         var affectedEntitiesProvider = dbContext.GetAffectedEntitiesProvider(computedExpression);
+        if (affectedEntitiesProvider is null)
+            return [];
+
         var affectedEntities = await affectedEntitiesProvider.GetAffectedEntitiesAsync(new EFCoreComputedInput(dbContext));
         return affectedEntities.OfType<TEntity>();
     }

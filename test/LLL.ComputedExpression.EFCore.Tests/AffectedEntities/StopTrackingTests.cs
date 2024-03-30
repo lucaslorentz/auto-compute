@@ -12,7 +12,7 @@ public class StopTrackingTests
         var affectedEntitiesProvider = context.GetAffectedEntitiesProvider(
             (Person p) => p.AsComputedUntracked().FirstName + " " + p.LastName);
 
-        affectedEntitiesProvider.ToDebugString()
+        affectedEntitiesProvider!.ToDebugString()
             .Should().Be("EntitiesWithPropertyChange(Person, LastName)");
     }
 
@@ -24,8 +24,7 @@ public class StopTrackingTests
         var affectedEntitiesProvider = context.GetAffectedEntitiesProvider(
             (Person p) => p.AsComputedUntracked().Pets.Count(p => p.Type == "Cat"));
 
-        affectedEntitiesProvider.ToDebugString()
-            .Should().Be("Empty");
+        affectedEntitiesProvider.Should().BeNull();
     }
 
     [Fact]
@@ -36,7 +35,7 @@ public class StopTrackingTests
         var affectedEntitiesProvider = context.GetAffectedEntitiesProvider(
             (Person p) => p.Pets.Count(p => p.AsComputedUntracked().Type == "Cat" && p.Color == "Black"));
 
-        affectedEntitiesProvider.ToDebugString()
+        affectedEntitiesProvider!.ToDebugString()
             .Should().Be("Concat(EntitiesWithNavigationChange(Person, Pets), Load(EntitiesWithPropertyChange(Pet, Color), Owner))");
     }
 }

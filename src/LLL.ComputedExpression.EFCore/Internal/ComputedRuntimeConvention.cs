@@ -54,7 +54,7 @@ class ComputedRuntimeConvention(Func<IModel, IComputedExpressionAnalyzer> comput
         IProperty property,
         LambdaExpression computedExpression)
     {
-        IAffectedEntitiesProvider affectedEntitiesProvider;
+        IAffectedEntitiesProvider? affectedEntitiesProvider;
         try
         {
             affectedEntitiesProvider = computedExpressionAnalyzer.CreateAffectedEntitiesProvider(computedExpression);
@@ -63,6 +63,9 @@ class ComputedRuntimeConvention(Func<IModel, IComputedExpressionAnalyzer> comput
         {
             throw new InvalidOperationException($"Invalid computed expression for '{property.DeclaringEntityType.ShortName()}.{property.Name}': {ex.Message}");
         }
+
+        if (affectedEntitiesProvider is null)
+            return;
 
         var compiledExpression = computedExpression.Compile();
 
@@ -104,10 +107,13 @@ class ComputedRuntimeConvention(Func<IModel, IComputedExpressionAnalyzer> comput
                 var originalValueGetter = computedExpressionAnalyzer.GetOriginalValueExpression(incrementalPart.ValueExtraction).Compile();
                 var currentValueGetter = incrementalPart.ValueExtraction.Compile();
 
-                var composedAffectedEntitiesProvider = CompositeAffectedEntitiesProvider.ComposeIfNecessary([
+                var composedAffectedEntitiesProvider = AffectedEntitiesProvider.ComposeAndCleanup([
                     valueAffectedEntitiesProvider,
                     rootRelationshipAffectedEntitiesProvider
                 ]);
+
+                if (composedAffectedEntitiesProvider is null)
+                    continue;
 
                 computedUpdaters.Add(async (dbContext) =>
                 {

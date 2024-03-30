@@ -5,6 +5,10 @@ public interface IAffectedEntitiesProvider
     Task<IReadOnlyCollection<object>> GetAffectedEntitiesAsync(object input);
 
     string ToDebugString();
+
+    IReadOnlyCollection<IAffectedEntitiesProvider> Flatten() {
+        return [this];
+    }
 }
 
 public interface IAffectedEntitiesProvider<in TInput> : IAffectedEntitiesProvider

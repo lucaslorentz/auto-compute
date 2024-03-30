@@ -1,7 +1,4 @@
-﻿
-using LLL.Computed.AffectedEntitiesProviders;
-
-namespace LLL.Computed.EntityContexts;
+﻿namespace LLL.Computed.EntityContexts;
 
 public class RootEntityContext : EntityContext
 {
@@ -12,9 +9,9 @@ public class RootEntityContext : EntityContext
         return GetAffectedEntitiesProvider();
     }
 
-    public override IAffectedEntitiesProvider GetAffectedEntitiesProviderInverse()
+    public override IAffectedEntitiesProvider? GetAffectedEntitiesProviderInverse()
     {
-        return new EmptyAffectedEntitiesProvider();
+        return null;
     }
 
     public override async Task<IReadOnlyCollection<object>> LoadOriginalRootEntities(object input, IReadOnlyCollection<object> objects)
