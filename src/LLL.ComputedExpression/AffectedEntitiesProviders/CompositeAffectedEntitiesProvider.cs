@@ -14,7 +14,7 @@ public class CompositeAffectedEntitiesProvider(
         return $"Concat({inner})";
     }
 
-    public async Task<IEnumerable<object>> GetAffectedEntitiesAsync(object input)
+    public async Task<IReadOnlyCollection<object>> GetAffectedEntitiesAsync(object input)
     {
         var entities = new HashSet<object>();
         foreach (var provider in providers)
@@ -23,5 +23,16 @@ public class CompositeAffectedEntitiesProvider(
                 entities.Add(entity);
         }
         return entities;
+    }
+
+    public static IAffectedEntitiesProvider ComposeIfNecessary(IList<IAffectedEntitiesProvider> providers)
+    {
+        if (providers.Count == 0)
+            return new EmptyAffectedEntitiesProvider();
+
+        if (providers.Count == 1)
+            return providers[0];
+
+        return new CompositeAffectedEntitiesProvider(providers);
     }
 }

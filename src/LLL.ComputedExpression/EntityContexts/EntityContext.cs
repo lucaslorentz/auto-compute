@@ -25,10 +25,10 @@ public abstract class EntityContext
     public IAffectedEntitiesProvider GetAffectedEntitiesProvider()
     {
         var providers = new List<IAffectedEntitiesProvider>();
+
         foreach (var member in _accessedMembers)
-        {
             providers.Add(member.GetAffectedEntitiesProvider());
-        }
+
         foreach (var childContext in _childContexts)
         {
             var provider = childContext.GetParentAffectedEntitiesProvider();
@@ -36,14 +36,14 @@ public abstract class EntityContext
                 providers.Add(provider);
         }
 
-        if (providers.Count == 0)
-            return new EmptyAffectedEntitiesProvider();
-
-        if (providers.Count == 1)
-            return providers[0];
-
-        return new CompositeAffectedEntitiesProvider(providers);
+        return CompositeAffectedEntitiesProvider.ComposeIfNecessary(providers);
     }
 
     public abstract IAffectedEntitiesProvider? GetParentAffectedEntitiesProvider();
+
+    public abstract IAffectedEntitiesProvider GetAffectedEntitiesProviderInverse();
+
+    public abstract Task<IReadOnlyCollection<object>> LoadOriginalRootEntities(object input, IReadOnlyCollection<object> entities);
+
+    public abstract Task<IReadOnlyCollection<object>> LoadCurrentRootEntities(object input, IReadOnlyCollection<object> entities);
 }

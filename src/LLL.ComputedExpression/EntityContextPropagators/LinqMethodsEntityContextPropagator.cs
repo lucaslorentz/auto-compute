@@ -1,5 +1,6 @@
 ﻿using System.Linq.Expressions;
 using System.Security.Cryptography.X509Certificates;
+using LLL.Computed.EntityContexts;
 
 namespace LLL.Computed.EntityContextPropagators;
 
@@ -24,7 +25,8 @@ public class LinqMethodsEntityContextPropagator
                                 methodCallExpression.Arguments[0],
                                 EntityContextKeys.Element,
                                 param,
-                                EntityContextKeys.None
+                                EntityContextKeys.None,
+                                e => new ScopedEntityContext(e)
                             );
                         }
                     }
@@ -53,13 +55,32 @@ public class LinqMethodsEntityContextPropagator
                     case nameof(Enumerable.ToArray):
                     case nameof(Enumerable.ToList):
                     case nameof(Enumerable.ToHashSet):
-                    case nameof(Enumerable.Where):
                         analysis.PropagateEntityContext(
                             methodCallExpression.Arguments[0],
                             EntityContextKeys.Element,
                             node,
                             EntityContextKeys.Element
                         );
+                        break;
+
+                    case nameof(Enumerable.Where):
+                        {
+                            var filterLambda = GetLambda(methodCallExpression.Arguments[1])
+                                ?? throw new Exception("Where witout lambda is not supported");
+
+                            analysis.PropagateEntityContext(
+                                methodCallExpression.Arguments[0],
+                                EntityContextKeys.Element,
+                                node,
+                                EntityContextKeys.Element,
+                                e =>
+                                {
+                                    var originalFilterLambda = analysis.Analyzer.GetOriginalValueExpression(filterLambda);
+                                    var parameterEntityContext = analysis.ResolveEntityContext(filterLambda.Parameters[0], EntityContextKeys.None);
+                                    return new FilteredEntityContext(e, parameterEntityContext, originalFilterLambda, filterLambda);
+                                }
+                            );
+                        }
                         break;
 
                     case nameof(Enumerable.ElementAt):

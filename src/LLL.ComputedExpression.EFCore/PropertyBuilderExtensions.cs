@@ -1,5 +1,6 @@
 ﻿using System.Linq.Expressions;
 using LLL.Computed.EFCore.Internal;
+using LLL.Computed.Incremental;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
 namespace LLL.Computed.EFCore;
@@ -14,6 +15,17 @@ public static class EntityTypeBuilderExtensions
     {
         var propertyBuilder = entityTypeBuilder.Property(propertyExpression);
         propertyBuilder.HasAnnotation(ComputedAnnotationNames.Expression, computedExpression);
+        return propertyBuilder;
+    }
+
+    public static PropertyBuilder<TProperty> ComputedProperty<TEntity, TProperty>(
+        this EntityTypeBuilder<TEntity> entityTypeBuilder,
+        Expression<Func<TEntity, TProperty>> propertyExpression,
+        IIncrementalComputed incrementalComputedDefinition)
+        where TEntity : class
+    {
+        var propertyBuilder = entityTypeBuilder.Property(propertyExpression);
+        propertyBuilder.HasAnnotation(ComputedAnnotationNames.Expression, incrementalComputedDefinition);
         return propertyBuilder;
     }
 }

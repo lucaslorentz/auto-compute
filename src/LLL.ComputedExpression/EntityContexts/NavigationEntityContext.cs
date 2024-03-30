@@ -4,12 +4,14 @@ namespace LLL.Computed.EntityContexts;
 
 public class NavigationEntityContext : EntityContext
 {
+    private readonly EntityContext _parent;
     private readonly IEntityNavigation _navigation;
 
     public NavigationEntityContext(
         EntityContext parent,
         IEntityNavigation navigation)
     {
+        _parent = parent;
         _navigation = navigation;
         IsTrackingChanges = parent.IsTrackingChanges;
         parent.RegisterChildContext(this);
@@ -19,7 +21,39 @@ public class NavigationEntityContext : EntityContext
 
     public override IAffectedEntitiesProvider GetParentAffectedEntitiesProvider()
     {
-        var inverse = _navigation.GetInverse();
-        return new LoadNavigationAffectedEntitiesProvider(GetAffectedEntitiesProvider(), inverse);
+        return new LoadNavigationAffectedEntitiesProvider(GetAffectedEntitiesProvider(), _navigation.GetInverse());
+    }
+
+    public override IAffectedEntitiesProvider GetAffectedEntitiesProviderInverse()
+    {
+        var navigationAffectedEntitiesProvider = _navigation.GetInverse().GetAffectedEntitiesProvider();
+        var parentAffectedEntitiesProvider = _parent.GetAffectedEntitiesProviderInverse();
+        var loadedFromParentAffectedEntitiesProvider = new LoadNavigationAffectedEntitiesProvider(parentAffectedEntitiesProvider, _navigation);
+        return new CompositeAffectedEntitiesProvider([
+            navigationAffectedEntitiesProvider,
+            loadedFromParentAffectedEntitiesProvider
+        ]);
+    }
+
+    public override async Task<IReadOnlyCollection<object>> LoadOriginalRootEntities(object input, IReadOnlyCollection<object> entities)
+    {
+        var rootEntities = new HashSet<object>();
+
+        var parentEntities = await _navigation.GetInverse().LoadOriginalAsync(input, entities);
+        foreach (var rootEntity in await _parent.LoadOriginalRootEntities(input, parentEntities))
+            rootEntities.Add(rootEntity);
+
+        return rootEntities;
+    }
+
+    public override async Task<IReadOnlyCollection<object>> LoadCurrentRootEntities(object input, IReadOnlyCollection<object> entities)
+    {
+        var rootEntities = new HashSet<object>();
+
+        var parentEntities = await _navigation.GetInverse().LoadCurrentAsync(input, entities);
+        foreach (var rootEntity in await _parent.LoadCurrentRootEntities(input, parentEntities))
+            rootEntities.Add(rootEntity);
+
+        return rootEntities;
     }
 }

@@ -4,11 +4,13 @@ using LLL.Computed.EntityContexts;
 
 namespace LLL.Computed;
 
-public class ComputedExpressionAnalysis : IComputedExpressionAnalysis
+public class ComputedExpressionAnalysis(IComputedExpressionAnalyzer analyzer) : IComputedExpressionAnalysis
 {
     private readonly ConcurrentDictionary<Expression, ConcurrentBag<Func<string, EntityContext?>>> _entityContextProviders = new();
     private readonly ConcurrentDictionary<(Expression, string), EntityContext> _entityContextCache = new();
     private readonly ConcurrentDictionary<Expression, IEntityMemberAccess<IEntityMember>> _entityMemberAccesses = new();
+
+    public IComputedExpressionAnalyzer Analyzer { get; } = analyzer;
 
     public EntityContext ResolveEntityContext(Expression node, string key)
     {
@@ -56,7 +58,7 @@ public class ComputedExpressionAnalysis : IComputedExpressionAnalysis
                     if (mapper != null)
                         entityContext = mapper(entityContext);
 
-                    return entityContext;
+                    entityContexts.Add(entityContext);
                 }
 
                 if (entityContexts.Count > 1)

@@ -10,9 +10,9 @@ public class LoadNavigationAffectedEntitiesProvider(
         return $"Load({affectedEntitiesProvider.ToDebugString()}, {navigation.Name})";
     }
 
-    public async Task<IEnumerable<object>> GetAffectedEntitiesAsync(object input)
+    public async Task<IReadOnlyCollection<object>> GetAffectedEntitiesAsync(object input)
     {
         var affectedEntities = await affectedEntitiesProvider.GetAffectedEntitiesAsync(input);
-        return await navigation.LoadAsync(input, affectedEntities);
+        return await navigation.LoadCurrentAsync(input, affectedEntities.ToArray());
     }
 }
