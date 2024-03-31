@@ -13,7 +13,7 @@ public class BasicOperationsTests
         using var context = await TestDbContext.Create<PersonDbContext>();
 
         var affectedEntitiesProvider = context.GetAffectedEntitiesProvider(_computedExpression);
-        affectedEntitiesProvider.ToDebugString()
+        affectedEntitiesProvider!.ToDebugString()
             .Should().Be("Concat(EntitiesWithPropertyChange(Person, FirstName), EntitiesWithPropertyChange(Person, LastName))");
     }
 

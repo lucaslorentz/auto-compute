@@ -65,7 +65,7 @@ public class ComputedExpressionAnalyzer<TInput> : IComputedExpressionAnalyzer
         return this;
     }
 
-    public IAffectedEntitiesProvider CreateAffectedEntitiesProvider(LambdaExpression computed)
+    public IAffectedEntitiesProvider? CreateAffectedEntitiesProvider(LambdaExpression computed)
     {
         var entityContext = GetEntityContext(computed, computed.Parameters[0], EntityContextKeys.None);
         return entityContext.GetAffectedEntitiesProvider();

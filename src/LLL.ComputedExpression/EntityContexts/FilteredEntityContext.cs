@@ -26,14 +26,14 @@ public class FilteredEntityContext : EntityContext
 
     public override bool IsTrackingChanges { get; }
 
-    public override IAffectedEntitiesProvider GetParentAffectedEntitiesProvider()
+    public override IAffectedEntitiesProvider? GetParentAffectedEntitiesProvider()
     {
         return GetAffectedEntitiesProvider();
     }
 
-    public override IAffectedEntitiesProvider GetAffectedEntitiesProviderInverse()
+    public override IAffectedEntitiesProvider? GetAffectedEntitiesProviderInverse()
     {
-        return CompositeAffectedEntitiesProvider.ComposeIfNecessary([
+        return AffectedEntitiesProvider.ComposeAndCleanup([
             _parent.GetAffectedEntitiesProviderInverse(),
             _lambdaEntityContext.GetAffectedEntitiesProvider()
         ]);

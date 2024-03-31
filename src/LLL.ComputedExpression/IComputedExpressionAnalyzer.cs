@@ -5,7 +5,7 @@ namespace LLL.Computed;
 
 public interface IComputedExpressionAnalyzer
 {
-    IAffectedEntitiesProvider CreateAffectedEntitiesProvider(LambdaExpression computed);
+    IAffectedEntitiesProvider? CreateAffectedEntitiesProvider(LambdaExpression computed);
     LambdaExpression GetOriginalValueExpression(LambdaExpression computed);
     EntityContext GetEntityContext(
         LambdaExpression computed,

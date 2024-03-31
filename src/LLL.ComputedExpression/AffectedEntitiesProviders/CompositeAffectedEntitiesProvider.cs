@@ -1,15 +1,14 @@
 ﻿namespace LLL.Computed.AffectedEntitiesProviders;
 
 public class CompositeAffectedEntitiesProvider(
-    IList<IAffectedEntitiesProvider> providers
+    IReadOnlyCollection<IAffectedEntitiesProvider> providers
 ) : IAffectedEntitiesProvider
 {
+    private readonly IReadOnlyCollection<IAffectedEntitiesProvider> _providers = providers;
+
     public string ToDebugString()
     {
-        if (providers is [var provider])
-            return provider.ToDebugString();
-
-        var inner = string.Join(", ", providers.Select(p => p.ToDebugString()));
+        var inner = string.Join(", ", _providers.Select(p => p.ToDebugString()));
 
         return $"Concat({inner})";
     }
@@ -17,7 +16,7 @@ public class CompositeAffectedEntitiesProvider(
     public async Task<IReadOnlyCollection<object>> GetAffectedEntitiesAsync(object input)
     {
         var entities = new HashSet<object>();
-        foreach (var provider in providers)
+        foreach (var provider in _providers)
         {
             foreach (var entity in await provider.GetAffectedEntitiesAsync(input))
                 entities.Add(entity);
@@ -25,14 +24,8 @@ public class CompositeAffectedEntitiesProvider(
         return entities;
     }
 
-    public static IAffectedEntitiesProvider ComposeIfNecessary(IList<IAffectedEntitiesProvider> providers)
+    IReadOnlyCollection<IAffectedEntitiesProvider> IAffectedEntitiesProvider.Flatten()
     {
-        if (providers.Count == 0)
-            return new EmptyAffectedEntitiesProvider();
-
-        if (providers.Count == 1)
-            return providers[0];
-
-        return new CompositeAffectedEntitiesProvider(providers);
+        return _providers;
     }
 }

@@ -13,7 +13,7 @@ public class CollectionTests
         using var context = await TestDbContext.Create<PersonDbContext>();
 
         var affectedEntitiesProvider = context.GetAffectedEntitiesProvider(_computedExpression);
-        affectedEntitiesProvider.ToDebugString()
+        affectedEntitiesProvider!.ToDebugString()
             .Should().Be("EntitiesWithNavigationChange(Person, Pets)");
     }
 

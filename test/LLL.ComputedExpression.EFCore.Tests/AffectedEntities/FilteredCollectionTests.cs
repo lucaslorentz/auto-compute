@@ -13,7 +13,7 @@ public class FilteredCollectionTests
         using var context = await TestDbContext.Create<PersonDbContext>();
 
         var affectedEntitiesProvider = context.GetAffectedEntitiesProvider(_computedExpression);
-        affectedEntitiesProvider.ToDebugString()
+        affectedEntitiesProvider!.ToDebugString()
             .Should().Be("Concat(EntitiesWithNavigationChange(Person, Pets), Load(Concat(EntitiesWithPropertyChange(Pet, Type), EntitiesWithPropertyChange(Pet, Color)), Owner))");
     }
 

@@ -18,19 +18,19 @@ public class CompositeEntityContext : EntityContext
         _parents = parents;
     }
 
-    public override IAffectedEntitiesProvider GetParentAffectedEntitiesProvider()
+    public override IAffectedEntitiesProvider? GetParentAffectedEntitiesProvider()
     {
         return GetAffectedEntitiesProvider();
     }
 
-    public override IAffectedEntitiesProvider GetAffectedEntitiesProviderInverse()
+    public override IAffectedEntitiesProvider? GetAffectedEntitiesProviderInverse()
     {
-        var providers = new List<IAffectedEntitiesProvider>();
+        var providers = new List<IAffectedEntitiesProvider?>();
 
         foreach (var parent in _parents)
             providers.Add(parent.GetAffectedEntitiesProviderInverse());
 
-        return CompositeAffectedEntitiesProvider.ComposeIfNecessary(providers);
+        return AffectedEntitiesProvider.ComposeAndCleanup(providers);
     }
 
     public override async Task<IReadOnlyCollection<object>> LoadOriginalRootEntities(object input, IReadOnlyCollection<object> objects)

@@ -19,17 +19,26 @@ public class NavigationEntityContext : EntityContext
 
     public override bool IsTrackingChanges { get; }
 
-    public override IAffectedEntitiesProvider GetParentAffectedEntitiesProvider()
+    public override IAffectedEntitiesProvider? GetParentAffectedEntitiesProvider()
     {
-        return new LoadNavigationAffectedEntitiesProvider(GetAffectedEntitiesProvider(), _navigation.GetInverse());
+        var affectedEntitiesProvider = GetAffectedEntitiesProvider();
+
+        if (affectedEntitiesProvider is null)
+            return null;
+
+        return new LoadNavigationAffectedEntitiesProvider(affectedEntitiesProvider, _navigation.GetInverse());
     }
 
-    public override IAffectedEntitiesProvider GetAffectedEntitiesProviderInverse()
+    public override IAffectedEntitiesProvider? GetAffectedEntitiesProviderInverse()
     {
         var navigationAffectedEntitiesProvider = _navigation.GetInverse().GetAffectedEntitiesProvider();
         var parentAffectedEntitiesProvider = _parent.GetAffectedEntitiesProviderInverse();
-        var loadedFromParentAffectedEntitiesProvider = new LoadNavigationAffectedEntitiesProvider(parentAffectedEntitiesProvider, _navigation);
-        return new CompositeAffectedEntitiesProvider([
+        
+        var loadedFromParentAffectedEntitiesProvider = parentAffectedEntitiesProvider is null
+            ? null
+            : new LoadNavigationAffectedEntitiesProvider(parentAffectedEntitiesProvider, _navigation);
+
+        return AffectedEntitiesProvider.ComposeAndCleanup([
             navigationAffectedEntitiesProvider,
             loadedFromParentAffectedEntitiesProvider
         ]);

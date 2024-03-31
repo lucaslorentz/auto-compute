@@ -1,7 +1,4 @@
-﻿
-using LLL.Computed.AffectedEntitiesProviders;
-
-namespace LLL.Computed.EntityContexts;
+﻿namespace LLL.Computed.EntityContexts;
 
 public class UntrackedEntityContext : EntityContext
 {
@@ -9,12 +6,12 @@ public class UntrackedEntityContext : EntityContext
 
     public override IAffectedEntitiesProvider? GetParentAffectedEntitiesProvider()
     {
-        return new EmptyAffectedEntitiesProvider();
+        return null;
     }
 
-    public override IAffectedEntitiesProvider GetAffectedEntitiesProviderInverse()
+    public override IAffectedEntitiesProvider? GetAffectedEntitiesProviderInverse()
     {
-        return new EmptyAffectedEntitiesProvider();
+        return null;
     }
 
     public override async Task<IReadOnlyCollection<object>> LoadOriginalRootEntities(object input, IReadOnlyCollection<object> entities)
