@@ -38,17 +38,19 @@ class PersonDbContext(DbContextOptions<PersonDbContext> options) : DbContext(opt
         personBuilder.ComputedProperty(p => p.HasCats, p => p.Pets.Any(x => x.Type == "Cat"));
         personBuilder.ComputedProperty(p => p.Description, p => p.FullName + " (" + p.Pets.Count() + " pets)");
 
-        personBuilder.ComputedProperty(
+        personBuilder.IncrementalComputedProperty(
             p => p.NumberOfCatsIncremental,
-            new IncrementalComputedBuilder<Person, int>(0)
-                .AddMany(p => p.Pets, p => p.Type == "Cat" ? 1 : 0)
+            0,
+            c => c.AddCollection(p => p.Pets, p => p.Type == "Cat" ? 1 : 0)
         );
 
-        personBuilder.ComputedProperty(
+        personBuilder.IncrementalComputedProperty(
             p => p.NumberOfCatsOrDogsIncrementalFiltered,
-            new IncrementalComputedBuilder<Person, int>(0)
-                .AddMany(p => p.Pets.Where(x => x.Type == "Cat")
-                    .Concat(p.Pets.Where(x => x.Type == "Dog")), p => 1)
+            0,
+            c => c.AddCollection(p =>
+                p.Pets.Where(x => x.Type == "Cat")
+                .Concat(p.Pets.Where(x => x.Type == "Dog"))
+            , p => 1)
         );
     }
 
