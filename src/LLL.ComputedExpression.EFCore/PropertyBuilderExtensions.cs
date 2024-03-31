@@ -1,9 +1,9 @@
 ﻿using System.Linq.Expressions;
-using LLL.Computed.EFCore.Internal;
-using LLL.Computed.Incremental;
+using LLL.ComputedExpression.EFCore.Internal;
+using LLL.ComputedExpression.Incremental;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
-namespace LLL.Computed.EFCore;
+namespace LLL.ComputedExpression.EFCore;
 
 public static class EntityTypeBuilderExtensions
 {

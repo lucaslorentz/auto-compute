@@ -1,4 +1,4 @@
-﻿namespace LLL.Computed.Caching;
+﻿namespace LLL.ComputedExpression.Caching;
 
 public interface IConcurrentCreationCache
 {

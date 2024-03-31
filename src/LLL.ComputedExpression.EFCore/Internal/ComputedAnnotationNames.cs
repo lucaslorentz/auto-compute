@@ -1,4 +1,4 @@
-﻿namespace LLL.Computed.EFCore.Internal;
+﻿namespace LLL.ComputedExpression.EFCore.Internal;
 
 public static class ComputedAnnotationNames
 {

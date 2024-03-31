@@ -1,7 +1,7 @@
 ﻿using System.Linq.Expressions;
-using LLL.Computed.EntityContexts;
+using LLL.ComputedExpression.EntityContexts;
 
-namespace LLL.Computed.EntityContextPropagators;
+namespace LLL.ComputedExpression.EntityContextPropagators;
 
 public class UntrackedEntityContextPropagator(
     IStopTrackingDecision stopTrackingDecision

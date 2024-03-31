@@ -1,7 +1,7 @@
-﻿using LLL.Computed.EFCore.Internal;
+﻿using LLL.ComputedExpression.EFCore.Internal;
 using Microsoft.EntityFrameworkCore;
 
-namespace LLL.Computed.EFCore;
+namespace LLL.ComputedExpression.EFCore;
 
 public class ComputedOptionsBuilder
 {

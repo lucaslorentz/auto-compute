@@ -2,7 +2,7 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 
-namespace LLL.Computed.EFCore.Tests;
+namespace LLL.ComputedExpression.EFCore.Tests;
 
 public static class TestDbContext
 {

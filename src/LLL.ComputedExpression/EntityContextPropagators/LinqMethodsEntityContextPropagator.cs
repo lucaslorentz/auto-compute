@@ -1,8 +1,8 @@
 ﻿using System.Linq.Expressions;
 using System.Security.Cryptography.X509Certificates;
-using LLL.Computed.EntityContexts;
+using LLL.ComputedExpression.EntityContexts;
 
-namespace LLL.Computed.EntityContextPropagators;
+namespace LLL.ComputedExpression.EntityContextPropagators;
 
 public class LinqMethodsEntityContextPropagator
     : IEntityContextPropagator

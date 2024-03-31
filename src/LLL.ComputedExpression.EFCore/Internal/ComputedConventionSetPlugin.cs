@@ -2,7 +2,7 @@
 using Microsoft.EntityFrameworkCore.Metadata.Conventions;
 using Microsoft.EntityFrameworkCore.Metadata.Conventions.Infrastructure;
 
-namespace LLL.Computed.EFCore.Internal;
+namespace LLL.ComputedExpression.EFCore.Internal;
 
 public class ComputedConventionSetPlugin(
         Func<IModel, IComputedExpressionAnalyzer> computedExpressionAnalyzerFactory)

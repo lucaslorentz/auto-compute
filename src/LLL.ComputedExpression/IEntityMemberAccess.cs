@@ -1,6 +1,6 @@
 using System.Linq.Expressions;
 
-namespace LLL.Computed;
+namespace LLL.ComputedExpression;
 
 public interface IEntityMemberAccess<out TMember>
 {

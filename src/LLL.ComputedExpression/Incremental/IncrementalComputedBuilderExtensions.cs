@@ -1,7 +1,7 @@
 using System.Linq.Expressions;
 using System.Numerics;
 
-namespace LLL.Computed.Incremental;
+namespace LLL.ComputedExpression.Incremental;
 
 public static class IncrementalComputedBuilderExtensions
 {

@@ -1,10 +1,10 @@
-﻿using LLL.Computed.Caching;
+﻿using LLL.ComputedExpression.Caching;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
 using Microsoft.EntityFrameworkCore.Metadata.Conventions.Infrastructure;
 using Microsoft.Extensions.DependencyInjection;
 
-namespace LLL.Computed.EFCore.Internal;
+namespace LLL.ComputedExpression.EFCore.Internal;
 
 public class ComputedOptionsExtension : IDbContextOptionsExtension
 {

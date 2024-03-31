@@ -1,10 +1,9 @@
-﻿using System.Collections.Concurrent;
-using System.Linq.Expressions;
+﻿using System.Linq.Expressions;
 using System.Runtime.CompilerServices;
-using LLL.Computed;
-using LLL.Computed.AffectedEntitiesProviders;
-using LLL.Computed.EFCore.Internal;
-using LLL.Computed.Incremental;
+using LLL.ComputedExpression;
+using LLL.ComputedExpression.AffectedEntitiesProviders;
+using LLL.ComputedExpression.EFCore.Internal;
+using LLL.ComputedExpression.Incremental;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata;
 using Microsoft.EntityFrameworkCore.Metadata.Conventions;

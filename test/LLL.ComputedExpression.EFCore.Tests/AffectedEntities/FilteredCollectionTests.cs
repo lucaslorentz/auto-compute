@@ -1,7 +1,7 @@
 ﻿using System.Linq.Expressions;
 using FluentAssertions;
 
-namespace LLL.Computed.EFCore.Tests.AffectedEntities;
+namespace LLL.ComputedExpression.EFCore.Tests.AffectedEntities;
 
 public class FilteredCollectionTests
 {

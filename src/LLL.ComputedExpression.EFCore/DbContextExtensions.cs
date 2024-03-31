@@ -1,11 +1,11 @@
 ﻿using System.Linq.Expressions;
-using LLL.Computed.Caching;
-using LLL.Computed.EFCore.Internal;
+using LLL.ComputedExpression.Caching;
+using LLL.ComputedExpression.EFCore.Internal;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Query;
 
-namespace LLL.Computed.EFCore;
+namespace LLL.ComputedExpression.EFCore;
 
 public static class DbContextExtensions
 {

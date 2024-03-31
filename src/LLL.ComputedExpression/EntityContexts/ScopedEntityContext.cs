@@ -1,4 +1,4 @@
-namespace LLL.Computed.EntityContexts;
+namespace LLL.ComputedExpression.EntityContexts;
 
 public class ScopedEntityContext : EntityContext
 {

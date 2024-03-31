@@ -1,6 +1,6 @@
 using System.Linq.Expressions;
 
-namespace LLL.Computed.Incremental;
+namespace LLL.ComputedExpression.Incremental;
 
 public record IncrementalComputedPart(
     LambdaExpression Navigation,

@@ -1,7 +1,7 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Internal;
 
-namespace LLL.Computed.EFCore.Tests;
+namespace LLL.ComputedExpression.EFCore.Tests;
 
 public class Person
 {

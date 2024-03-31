@@ -1,6 +1,6 @@
 ﻿using Microsoft.EntityFrameworkCore;
 
-namespace LLL.Computed.EFCore.Tests;
+namespace LLL.ComputedExpression.EFCore.Tests;
 
 public interface ITestDbContext
 {

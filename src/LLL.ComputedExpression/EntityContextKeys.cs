@@ -1,4 +1,4 @@
-﻿namespace LLL.Computed;
+﻿namespace LLL.ComputedExpression;
 
 public static class EntityContextKeys
 {

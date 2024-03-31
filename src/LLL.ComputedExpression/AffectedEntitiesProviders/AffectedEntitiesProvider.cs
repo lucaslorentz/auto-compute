@@ -1,4 +1,4 @@
-namespace LLL.Computed.AffectedEntitiesProviders;
+namespace LLL.ComputedExpression.AffectedEntitiesProviders;
 
 public static class AffectedEntitiesProvider
 {
