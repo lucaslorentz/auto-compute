@@ -1,7 +1,7 @@
-﻿using LLL.Computed.Incremental;
-using Microsoft.EntityFrameworkCore;
+﻿using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Metadata.Internal;
 
-namespace LLL.Computed.EFCore.Tests;
+namespace LLL.ComputedExpression.EFCore.Tests;
 
 public class Person
 {
@@ -10,11 +10,9 @@ public class Person
     public virtual string? LastName { get; set; }
     public virtual string? FullName { get; protected set; }
     public virtual IList<Pet> Pets { get; protected set; } = [];
-    public virtual int NumberOfCats { get; protected set; }
     public virtual bool HasCats { get; protected set; }
     public virtual string? Description { get; protected set; }
-    public virtual int NumberOfCatsIncremental { get; protected set; }
-    public virtual int NumberOfCatsOrDogsIncrementalFiltered { get; protected set; }
+    public virtual int Total { get; protected set; }
 }
 
 public class Pet
@@ -25,31 +23,19 @@ public class Pet
     public virtual Person? Owner { get; set; }
 }
 
-class PersonDbContext(DbContextOptions<PersonDbContext> options) : DbContext(options),
-    ISeededDbContext<PersonDbContext>
+class PersonDbContext(
+    DbContextOptions options,
+    Action<ModelBuilder>? customizeModel
+) : DbContext(options), ITestDbContext<PersonDbContext>
 {
+    public Action<ModelBuilder>? CustomizeModel => customizeModel;
+
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         base.OnModelCreating(modelBuilder);
-
-        var personBuilder = modelBuilder.Entity<Person>();
-        personBuilder.ComputedProperty(p => p.FullName, p => p.FirstName + " " + p.LastName);
-        personBuilder.ComputedProperty(p => p.NumberOfCats, p => p.Pets.Count(x => x.Type == "Cat"));
-        personBuilder.ComputedProperty(p => p.HasCats, p => p.Pets.Any(x => x.Type == "Cat"));
-        personBuilder.ComputedProperty(p => p.Description, p => p.FullName + " (" + p.Pets.Count() + " pets)");
-
-        personBuilder.ComputedProperty(
-            p => p.NumberOfCatsIncremental,
-            new IncrementalComputedBuilder<Person, int>(0)
-                .AddMany(p => p.Pets, p => p.Type == "Cat" ? 1 : 0)
-        );
-
-        personBuilder.ComputedProperty(
-            p => p.NumberOfCatsOrDogsIncrementalFiltered,
-            new IncrementalComputedBuilder<Person, int>(0)
-                .AddMany(p => p.Pets.Where(x => x.Type == "Cat")
-                    .Concat(p.Pets.Where(x => x.Type == "Dog")), p => 1)
-        );
+        modelBuilder.Entity<Person>();
+        modelBuilder.Entity<Pet>();
+        customizeModel?.Invoke(modelBuilder);
     }
 
     public static async void SeedData(PersonDbContext dbContext)
@@ -63,5 +49,12 @@ class PersonDbContext(DbContextOptions<PersonDbContext> options) : DbContext(opt
                 new Pet { Id = 1, Type = "Cat" }
             },
         });
+    }
+
+    public static PersonDbContext Create(
+        DbContextOptions options,
+        Action<ModelBuilder>? customizeModel)
+    {
+        return new PersonDbContext(options, customizeModel);
     }
 }

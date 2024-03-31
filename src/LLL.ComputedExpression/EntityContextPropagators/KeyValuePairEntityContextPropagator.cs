@@ -1,6 +1,6 @@
 ﻿using System.Linq.Expressions;
 
-namespace LLL.Computed.EntityContextPropagators;
+namespace LLL.ComputedExpression.EntityContextPropagators;
 
 public class KeyValuePairEntityContextPropagator : IEntityContextPropagator
 {

@@ -1,7 +1,7 @@
 using System.Linq.Expressions;
-using LLL.Computed.AffectedEntitiesProviders;
+using LLL.ComputedExpression.AffectedEntitiesProviders;
 
-namespace LLL.Computed.EntityContexts;
+namespace LLL.ComputedExpression.EntityContexts;
 
 public class FilteredEntityContext : EntityContext
 {

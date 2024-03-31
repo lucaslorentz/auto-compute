@@ -1,7 +1,7 @@
 ﻿using System.Linq.Expressions;
 using FluentAssertions;
 
-namespace LLL.Computed.EFCore.Tests.Changes;
+namespace LLL.ComputedExpression.EFCore.Tests.Changes;
 
 public class CollectionTests
 {

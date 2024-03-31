@@ -5,7 +5,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.ChangeTracking;
 using Microsoft.EntityFrameworkCore.Metadata;
 
-namespace LLL.Computed.EFCore.Internal;
+namespace LLL.ComputedExpression.EFCore.Internal;
 
 public class EFCoreMemberAccessLocator(IModel model) :
     IAllEntityMemberAccessLocator<IEFCoreComputedInput>

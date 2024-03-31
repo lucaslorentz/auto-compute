@@ -1,13 +1,13 @@
 ﻿using FluentAssertions;
 
-namespace LLL.Computed.EFCore.Tests.Computeds;
+namespace LLL.ComputedExpression.EFCore.Tests.Computeds;
 
 public class ComputedsTests
 {
     [Fact]
     public async void TestProperty()
     {
-        using var context = await TestDbContext.Create<PersonDbContext>();
+        using var context = await GetDbContextAsync();
 
         var person = context!.Set<Person>().Find(1)!;
 
@@ -25,11 +25,11 @@ public class ComputedsTests
     [Fact]
     public async void TestCollectionElementAdded()
     {
-        using var context = await TestDbContext.Create<PersonDbContext>();
+        using var context = await GetDbContextAsync();
 
         var person = context!.Set<Person>().Find(1)!;
 
-        person.NumberOfCats.Should().Be(1);
+        person.Total.Should().Be(1);
         person.Description.Should().Be("John Doe (1 pets)");
 
         var pet = new Pet { Type = "Cat" };
@@ -37,7 +37,7 @@ public class ComputedsTests
 
         await context.SaveChangesAsync();
 
-        person.NumberOfCats.Should().Be(2);
+        person.Total.Should().Be(2);
         person.HasCats.Should().BeTrue();
         person.Description.Should().Be("John Doe (2 pets)");
     }
@@ -45,11 +45,11 @@ public class ComputedsTests
     [Fact]
     public async void TestCollectionElementAddedInverse()
     {
-        using var context = await TestDbContext.Create<PersonDbContext>();
+        using var context = await GetDbContextAsync();
 
         var person = context!.Set<Person>().Find(1)!;
 
-        person.NumberOfCats.Should().Be(1);
+        person.Total.Should().Be(1);
         person.HasCats.Should().BeTrue();
         person.Description.Should().Be("John Doe (1 pets)");
 
@@ -58,7 +58,7 @@ public class ComputedsTests
 
         await context.SaveChangesAsync();
 
-        person.NumberOfCats.Should().Be(2);
+        person.Total.Should().Be(2);
         person.HasCats.Should().BeTrue();
         person.Description.Should().Be("John Doe (2 pets)");
     }
@@ -66,11 +66,11 @@ public class ComputedsTests
     [Fact]
     public async void TestCollectionElementModified()
     {
-        using var context = await TestDbContext.Create<PersonDbContext>();
+        using var context = await GetDbContextAsync();
 
         var person = context!.Set<Person>().Find(1)!;
 
-        person.NumberOfCats.Should().Be(1);
+        person.Total.Should().Be(1);
         person.HasCats.Should().BeTrue();
         person.Description.Should().Be("John Doe (1 pets)");
 
@@ -79,7 +79,7 @@ public class ComputedsTests
 
         await context.SaveChangesAsync();
 
-        person.NumberOfCats.Should().Be(0);
+        person.Total.Should().Be(0);
         person.HasCats.Should().BeFalse();
         person.Description.Should().Be("John Doe (1 pets)");
     }
@@ -87,11 +87,11 @@ public class ComputedsTests
     [Fact]
     public async void TestCollectionElementRemoved()
     {
-        using var context = await TestDbContext.Create<PersonDbContext>();
+        using var context = await GetDbContextAsync();
 
         var person = context!.Set<Person>().Find(1)!;
 
-        person.NumberOfCats.Should().Be(1);
+        person.Total.Should().Be(1);
         person.HasCats.Should().BeTrue();
         person.Description.Should().Be("John Doe (1 pets)");
 
@@ -100,7 +100,7 @@ public class ComputedsTests
 
         await context.SaveChangesAsync();
 
-        person.NumberOfCats.Should().Be(0);
+        person.Total.Should().Be(0);
         person.HasCats.Should().BeFalse();
         person.Description.Should().Be("John Doe (0 pets)");
     }
@@ -108,12 +108,12 @@ public class ComputedsTests
     [Fact]
     public async void TestCollectionElementRemovedInverse()
     {
-        using var context = await TestDbContext.Create<PersonDbContext>();
+        using var context = await GetDbContextAsync();
 
         var person = context!.Set<Person>().Find(1)!;
         person.Description.Should().Be("John Doe (1 pets)");
 
-        person.NumberOfCats.Should().Be(1);
+        person.Total.Should().Be(1);
         person.HasCats.Should().BeTrue();
 
         var pet = context!.Set<Pet>().Find(1)!;
@@ -121,8 +121,20 @@ public class ComputedsTests
 
         await context.SaveChangesAsync();
 
-        person.NumberOfCats.Should().Be(0);
+        person.Total.Should().Be(0);
         person.HasCats.Should().BeFalse();
         person.Description.Should().Be("John Doe (0 pets)");
+    }
+
+    private static async Task<PersonDbContext> GetDbContextAsync()
+    {
+        return await TestDbContext.Create<PersonDbContext>(modelBuilder =>
+        {
+            var personBuilder = modelBuilder.Entity<Person>();
+            personBuilder.ComputedProperty(p => p.FullName, p => p.FirstName + " " + p.LastName);
+            personBuilder.ComputedProperty(p => p.Total, p => p.Pets.Count(x => x.Type == "Cat"));
+            personBuilder.ComputedProperty(p => p.HasCats, p => p.Pets.Any(x => x.Type == "Cat"));
+            personBuilder.ComputedProperty(p => p.Description, p => p.FullName + " (" + p.Pets.Count() + " pets)");
+        });
     }
 }

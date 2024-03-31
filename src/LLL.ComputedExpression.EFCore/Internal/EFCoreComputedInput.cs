@@ -1,6 +1,6 @@
 ﻿using Microsoft.EntityFrameworkCore;
 
-namespace LLL.Computed.EFCore.Internal;
+namespace LLL.ComputedExpression.EFCore.Internal;
 
 public class EFCoreComputedInput(DbContext dbContext)
     : IEFCoreComputedInput

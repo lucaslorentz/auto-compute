@@ -1,4 +1,4 @@
-namespace LLL.Computed.Incremental;
+namespace LLL.ComputedExpression.Incremental;
 
 public interface IIncrementalComputed
 {

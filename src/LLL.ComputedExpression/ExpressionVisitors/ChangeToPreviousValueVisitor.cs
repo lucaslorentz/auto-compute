@@ -1,6 +1,6 @@
 using System.Linq.Expressions;
 
-namespace LLL.Computed.ExpressionVisitors;
+namespace LLL.ComputedExpression.ExpressionVisitors;
 
 internal class ChangeToPreviousValueVisitor(
     ParameterExpression inputExpression,

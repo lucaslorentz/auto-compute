@@ -1,9 +1,9 @@
 ﻿using System.Linq.Expressions;
-using LLL.Computed.EntityContextPropagators;
-using LLL.Computed.EntityContexts;
-using LLL.Computed.ExpressionVisitors;
+using LLL.ComputedExpression.EntityContextPropagators;
+using LLL.ComputedExpression.EntityContexts;
+using LLL.ComputedExpression.ExpressionVisitors;
 
-namespace LLL.Computed;
+namespace LLL.ComputedExpression;
 
 public class ComputedExpressionAnalyzer<TInput> : IComputedExpressionAnalyzer
 {

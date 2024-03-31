@@ -1,8 +1,8 @@
 ﻿using System.Collections.Concurrent;
 using System.Linq.Expressions;
-using LLL.Computed.EntityContexts;
+using LLL.ComputedExpression.EntityContexts;
 
-namespace LLL.Computed;
+namespace LLL.ComputedExpression;
 
 public class ComputedExpressionAnalysis(IComputedExpressionAnalyzer analyzer) : IComputedExpressionAnalysis
 {
