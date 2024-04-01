@@ -217,7 +217,7 @@ public class LinqMethodsEntityContextPropagator
                             {
                                 analysis.PropagateEntityContext(
                                     selectorLambda.Body,
-                                    EntityContextKeys.None,
+                                    EntityContextKeys.Element,
                                     node,
                                     EntityContextKeys.Element
                                 );
