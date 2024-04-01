@@ -3,7 +3,6 @@
 public interface IEntityNavigation : IEntityMember<IEntityNavigation>
 {
     bool IsCollection { get; }
-    Type TargetType { get; }
     IEntityNavigation GetInverse();
     Task<IReadOnlyCollection<object>> LoadCurrentAsync(object input, IReadOnlyCollection<object> fromEntities);
     Task<IReadOnlyCollection<object>> LoadOriginalAsync(object input, IReadOnlyCollection<object> fromEntities);

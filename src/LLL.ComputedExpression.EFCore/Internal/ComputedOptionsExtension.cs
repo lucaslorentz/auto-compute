@@ -10,20 +10,19 @@ public class ComputedOptionsExtension : IDbContextOptionsExtension
 {
     public DbContextOptionsExtensionInfo Info => new ComputedOptionsExtensionInfo(this);
 
-    public List<Action<IModel, ComputedExpressionAnalyzer<EFCoreComputedInput>>> ConfigureAnalyzer { get; } = [];
+    public Func<IModel, ComputedExpressionAnalyzer<IEFCoreComputedInput>>? AnalyzerFactory { get; set; }
+
+    public List<Action<IModel, ComputedExpressionAnalyzer<IEFCoreComputedInput>>> AnalyzerConfigurations { get; } = [];
 
     public void ApplyServices(IServiceCollection services)
     {
         services.AddSingleton<Func<IModel, IComputedExpressionAnalyzer>>(model =>
         {
-            var efCoreMemberAccessLocator = new EFCoreMemberAccessLocator(model);
+            var analyzer = AnalyzerFactory is not null
+                ? AnalyzerFactory(model)
+                : DefaultAnalyzerFactory(model);
 
-            var analyzer = ComputedExpressionAnalyzer<EFCoreComputedInput>
-                .CreateWithDefaults()
-                .AddEntityNavigationAccessLocator(efCoreMemberAccessLocator)
-                .AddEntityPropertyAccessLocator(efCoreMemberAccessLocator);
-
-            foreach (var customize in ConfigureAnalyzer)
+            foreach (var customize in AnalyzerConfigurations)
                 customize(model, analyzer);
 
             return analyzer;
@@ -35,6 +34,15 @@ public class ComputedOptionsExtension : IDbContextOptionsExtension
 
     public void Validate(IDbContextOptions options)
     {
+    }
+
+    private static ComputedExpressionAnalyzer<IEFCoreComputedInput> DefaultAnalyzerFactory(IModel model)
+    {
+        var efCoreMemberAccessLocator = new EFCoreMemberAccessLocator(model);
+
+        return ComputedExpressionAnalyzer<IEFCoreComputedInput>
+            .CreateWithDefaults()
+            .AddEntityMemberAccessLocator(efCoreMemberAccessLocator); ;
     }
 
     private class ComputedOptionsExtensionInfo(IDbContextOptionsExtension extension)

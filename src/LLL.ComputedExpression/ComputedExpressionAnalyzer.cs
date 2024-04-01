@@ -8,8 +8,7 @@ namespace LLL.ComputedExpression;
 public class ComputedExpressionAnalyzer<TInput> : IComputedExpressionAnalyzer
 {
     private readonly IList<IEntityContextPropagator> _entityContextPropagators = [];
-    private readonly HashSet<IEntityMemberAccessLocator<IEntityProperty>> _propertyAccessLocators = [];
-    private readonly HashSet<IEntityMemberAccessLocator<IEntityNavigation>> _navigationAccessLocators = [];
+    private readonly HashSet<IEntityNavigationAccessLocator> _navigationAccessLocators = [];
     private readonly HashSet<IEntityMemberAccessLocator> _memberAccessLocators = [];
 
     private ComputedExpressionAnalyzer() { }
@@ -42,18 +41,12 @@ public class ComputedExpressionAnalyzer<TInput> : IComputedExpressionAnalyzer
         return this;
     }
 
-    public ComputedExpressionAnalyzer<TInput> AddEntityNavigationAccessLocator(
-        IEntityMemberAccessLocator<IEntityNavigation, TInput> memberAccessLocator)
+    public ComputedExpressionAnalyzer<TInput> AddEntityMemberAccessLocator(
+        IEntityMemberAccessLocator<TInput> memberAccessLocator)
     {
-        _navigationAccessLocators.Add(memberAccessLocator);
-        _memberAccessLocators.Add(memberAccessLocator);
-        return this;
-    }
+        if (memberAccessLocator is IEntityNavigationAccessLocator nav)
+            _navigationAccessLocators.Add(nav);
 
-    public ComputedExpressionAnalyzer<TInput> AddEntityPropertyAccessLocator(
-        IEntityMemberAccessLocator<IEntityProperty, TInput> memberAccessLocator)
-    {
-        _propertyAccessLocators.Add(memberAccessLocator);
         _memberAccessLocators.Add(memberAccessLocator);
         return this;
     }
