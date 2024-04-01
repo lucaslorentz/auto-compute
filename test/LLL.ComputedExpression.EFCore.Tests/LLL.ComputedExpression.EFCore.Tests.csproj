@@ -10,6 +10,10 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <RuntimeHostConfigurationOption Include="System.Runtime.Loader.UseRidGraph" Value="true" />
+  </ItemGroup>
+
+  <ItemGroup>
     <PackageReference Include="FluentAssertions" Version="6.12.0" />
     <PackageReference Include="Microsoft.EntityFrameworkCore.Proxies" Version="7.0.0" />
     <PackageReference Include="Microsoft.EntityFrameworkCore.Sqlite" Version="7.0.0" />
@@ -26,7 +30,8 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\..\src\LLL.ComputedExpression.EFCore\LLL.ComputedExpression.EFCore.csproj" />
+    <ProjectReference
+      Include="..\..\src\LLL.ComputedExpression.EFCore\LLL.ComputedExpression.EFCore.csproj" />
   </ItemGroup>
 
 </Project>
