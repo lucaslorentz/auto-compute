@@ -16,6 +16,12 @@ public class ComputedOptionsBuilder
         optionsBuilder.AddInterceptors(new ComputedInterceptor());
     }
 
+    public ComputedOptionsBuilder AnalyzerFactory(Func<IModel, ComputedExpressionAnalyzer<IEFCoreComputedInput>>? factory)
+    {
+        _extension.AnalyzerFactory = factory;
+        return this;
+    }
+
     public ComputedOptionsBuilder ConfigureAnalyzer(Action<IModel, ComputedExpressionAnalyzer<IEFCoreComputedInput>> configuration)
     {
         _extension.AnalyzerConfigurations.Add(configuration);
