@@ -1,10 +1,9 @@
 using FluentAssertions;
-using Microsoft.EntityFrameworkCore;
 using LLL.ComputedExpression.Incremental;
 
 namespace LLL.ComputedExpression.EFCore.Tests.Computeds;
 
-public class IncrementalComputedsTests
+public class IncrementalFilteredCollectionTests
 {
     [Fact]
     public async void TestCollectionElementAdded()
@@ -41,7 +40,7 @@ public class IncrementalComputedsTests
     }
 
     [Fact]
-    public async void TestCollectionElementModified()
+    public async void TestCollectionElementModifiedToBeFilteredOut()
     {
         using var context = await GetDbContextAsync();
 
@@ -55,6 +54,23 @@ public class IncrementalComputedsTests
         await context.SaveChangesAsync();
 
         person.Total.Should().Be(0);
+    }
+
+    [Fact]
+    public async void TestCollectionElementModifiedToContinue()
+    {
+        using var context = await GetDbContextAsync();
+
+        var person = context!.Set<Person>().Find(1)!;
+
+        person.Total.Should().Be(1);
+
+        var pet = context!.Set<Pet>().Find(1)!;
+        pet.Type = "Dog";
+
+        await context.SaveChangesAsync();
+
+        person.Total.Should().Be(1);
     }
 
     [Fact]
@@ -91,15 +107,19 @@ public class IncrementalComputedsTests
         person.Total.Should().Be(0);
     }
 
-    private static async Task<DbContext> GetDbContextAsync()
+    private static async Task<PersonDbContext> GetDbContextAsync()
     {
         return await TestDbContext.Create<PersonDbContext>(modelBuilder =>
         {
             var personBuilder = modelBuilder.Entity<Person>();
+
             personBuilder.IncrementalComputedProperty(
                 p => p.Total,
                 0,
-                c => c.AddCollection(p => p.Pets, p => p.Type == "Cat" ? 1 : 0)
+                c => c.AddCollection(p =>
+                    p.Pets.Where(x => x.Type == "Cat")
+                    .Concat(p.Pets.Where(x => x.Type == "Dog"))
+                , p => 1)
             );
         });
     }

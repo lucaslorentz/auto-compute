@@ -1,4 +1,5 @@
 ﻿using System.Linq.Expressions;
+using System.Numerics;
 using LLL.ComputedExpression.EFCore.Internal;
 using LLL.ComputedExpression.Incremental;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
@@ -22,12 +23,13 @@ public static class EntityTypeBuilderExtensions
         this EntityTypeBuilder<TEntity> entityTypeBuilder,
         Expression<Func<TEntity, TProperty>> propertyExpression,
         TProperty initialValue,
-        Action<IncrementalComputedBuilder<TEntity, TProperty>> build)
+        Action<NumberIncrementalComputed<TEntity, TProperty>> buildComputed)
         where TEntity : class
+        where TProperty : INumber<TProperty>
     {
         var propertyBuilder = entityTypeBuilder.Property(propertyExpression);
-        var incrementalComputedBuilder = new IncrementalComputedBuilder<TEntity, TProperty>(initialValue);
-        build(incrementalComputedBuilder);
+        var incrementalComputedBuilder = new NumberIncrementalComputed<TEntity, TProperty>(initialValue);
+        buildComputed(incrementalComputedBuilder);
         propertyBuilder.HasAnnotation(ComputedAnnotationNames.Expression, incrementalComputedBuilder);
         return propertyBuilder;
     }

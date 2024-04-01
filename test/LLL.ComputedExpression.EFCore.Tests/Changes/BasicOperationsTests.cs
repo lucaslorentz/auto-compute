@@ -16,7 +16,9 @@ public class BasicOperationsTests
         context!.Add(person);
 
         var changes = await context.GetChangesAsync(_computedExpression);
-        changes.Should().BeEquivalentTo([(person, default(string), "Jane Doe")]);
+        changes.Should().BeEquivalentTo(new Dictionary<Person, (string?, string?)>{
+            { person, (default(string), "Jane Doe")}
+        });
     }
 
     [Fact]
@@ -28,7 +30,9 @@ public class BasicOperationsTests
         person.FirstName = "Modified";
 
         var changes = await context.GetChangesAsync(_computedExpression);
-        changes.Should().BeEquivalentTo([(person, "John Doe", "Modified Doe")]);
+        changes.Should().BeEquivalentTo(new Dictionary<Person, (string?, string?)>{
+            { person, ("John Doe", "Modified Doe")}
+        });
     }
 
     [Fact]
@@ -40,6 +44,8 @@ public class BasicOperationsTests
         context.Remove(person);
 
         var changes = await context.GetChangesAsync(_computedExpression);
-        changes.Should().BeEquivalentTo([(person, "John Doe", default(string))]);
+        changes.Should().BeEquivalentTo(new Dictionary<Person, (string?, string?)>{
+            { person, ("John Doe", default(string))}
+        });
     }
 }

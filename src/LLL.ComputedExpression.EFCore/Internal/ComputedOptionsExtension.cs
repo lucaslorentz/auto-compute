@@ -38,11 +38,10 @@ public class ComputedOptionsExtension : IDbContextOptionsExtension
 
     private static ComputedExpressionAnalyzer<IEFCoreComputedInput> DefaultAnalyzerFactory(IModel model)
     {
-        var efCoreMemberAccessLocator = new EFCoreMemberAccessLocator(model);
-
         return ComputedExpressionAnalyzer<IEFCoreComputedInput>
             .CreateWithDefaults()
-            .AddEntityMemberAccessLocator(efCoreMemberAccessLocator); ;
+            .AddEntityMemberAccessLocator(new EFCoreMemberAccessLocator(model))
+            .SetEntityActionProvider(new EFCoreEntityActionProvider());
     }
 
     private class ComputedOptionsExtensionInfo(IDbContextOptionsExtension extension)

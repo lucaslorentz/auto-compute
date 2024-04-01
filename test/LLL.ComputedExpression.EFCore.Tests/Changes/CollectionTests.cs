@@ -17,7 +17,9 @@ public class CollectionTests
         person.Pets.Add(pet);
 
         var changes = await context.GetChangesAsync(_computedExpression);
-        changes.Should().BeEquivalentTo([(person, 1, 2)]);
+        changes.Should().BeEquivalentTo(new Dictionary<Person, (int, int)>{
+            { person, (1, 2)}
+        });
     }
 
     [Fact]
@@ -30,7 +32,9 @@ public class CollectionTests
         context.Add(pet);
 
         var changes = await context.GetChangesAsync(_computedExpression);
-        changes.Should().BeEquivalentTo([(person, 1, 2)]);
+        changes.Should().BeEquivalentTo(new Dictionary<Person, (int, int)>{
+            { person, (1, 2)}
+        });
     }
 
     [Fact]
@@ -55,7 +59,9 @@ public class CollectionTests
         person.Pets.Remove(pet);
 
         var changes = await context.GetChangesAsync(_computedExpression);
-        changes.Should().BeEquivalentTo([(person, 1, 0)]);
+        changes.Should().BeEquivalentTo(new Dictionary<Person, (int, int)>{
+            { person, (1, 0)}
+        });
     }
 
     [Fact]
@@ -68,6 +74,8 @@ public class CollectionTests
         pet.Owner = null;
 
         var changes = await context.GetChangesAsync(_computedExpression);
-        changes.Should().BeEquivalentTo([(person, 1, 0)]);
+        changes.Should().BeEquivalentTo(new Dictionary<Person, (int, int)>{
+            { person, (1, 0)}
+        });
     }
 }

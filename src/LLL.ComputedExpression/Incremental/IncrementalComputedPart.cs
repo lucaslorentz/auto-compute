@@ -4,7 +4,6 @@ namespace LLL.ComputedExpression.Incremental;
 
 public record IncrementalComputedPart(
     LambdaExpression Navigation,
-    LambdaExpression ValueExtraction,
-    Delegate Update,
+    LambdaExpression ValueSelector,
     bool IsMany
-);
+) : IIncrementalComputedPart;
