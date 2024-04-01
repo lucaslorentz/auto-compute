@@ -7,7 +7,7 @@ public class EFCoreMemberAccessLocator(IModel model) :
     IEntityNavigationAccessLocator<IEFCoreComputedInput>,
     IEntityPropertyAccessLocator<IEFCoreComputedInput>
 {
-    public IEntityMemberAccess<IEntityNavigation>? GetEntityNavigationAccess(Expression node)
+    public virtual IEntityMemberAccess<IEntityNavigation>? GetEntityNavigationAccess(Expression node)
     {
         if (node is MemberExpression memberExpression
             && memberExpression.Expression is not null)
@@ -16,13 +16,13 @@ public class EFCoreMemberAccessLocator(IModel model) :
             var entityType = model.FindEntityType(type);
             var navigation = entityType?.FindNavigation(memberExpression.Member);
             if (navigation != null)
-                return EntityMemberAccess.Create(memberExpression.Expression, new EFCoreEntityNavigation(navigation));
+                return EntityMemberAccess.Create(memberExpression.Expression, GetNavigation(navigation));
         }
 
         return null;
     }
 
-    public IEntityMemberAccess<IEntityProperty>? GetEntityPropertyAccess(Expression node)
+    public virtual IEntityMemberAccess<IEntityProperty>? GetEntityPropertyAccess(Expression node)
     {
         if (node is MemberExpression memberExpression
             && memberExpression.Expression is not null)
@@ -31,9 +31,19 @@ public class EFCoreMemberAccessLocator(IModel model) :
             var entityType = model.FindEntityType(type);
             var property = entityType?.FindProperty(memberExpression.Member);
             if (property is not null)
-                return EntityMemberAccess.Create(memberExpression.Expression, new EFCoreEntityProperty(property));
+                return EntityMemberAccess.Create(memberExpression.Expression, GetProperty(property));
         }
 
         return null;
+    }
+
+    protected virtual EFCoreEntityNavigation GetNavigation(INavigation navigation)
+    {
+        return new EFCoreEntityNavigation(navigation);
+    }
+
+    protected virtual EFCoreEntityProperty GetProperty(IProperty property)
+    {
+        return new EFCoreEntityProperty(property);
     }
 }
