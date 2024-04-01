@@ -37,12 +37,12 @@ public class EFCoreMemberAccessLocator(IModel model) :
         return null;
     }
 
-    protected virtual EFCoreEntityNavigation GetNavigation(INavigation navigation)
+    protected virtual IEntityNavigation GetNavigation(INavigation navigation)
     {
         return new EFCoreEntityNavigation(navigation);
     }
 
-    protected virtual EFCoreEntityProperty GetProperty(IProperty property)
+    protected virtual IEntityProperty GetProperty(IProperty property)
     {
         return new EFCoreEntityProperty(property);
     }
