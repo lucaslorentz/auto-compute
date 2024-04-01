@@ -1,5 +1,6 @@
 ﻿using LLL.ComputedExpression.EFCore.Internal;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Metadata;
 
 namespace LLL.ComputedExpression.EFCore;
 
@@ -13,6 +14,12 @@ public class ComputedOptionsBuilder
             ?? new ComputedOptionsExtension();
 
         optionsBuilder.AddInterceptors(new ComputedInterceptor());
+    }
+
+    public ComputedOptionsBuilder ConfigureAnalyzer(Action<IModel, ComputedExpressionAnalyzer<IEFCoreComputedInput>> configuration)
+    {
+        _extension.AnalyzerConfigurations.Add(configuration);
+        return this;
     }
 
     internal ComputedOptionsExtension Build()

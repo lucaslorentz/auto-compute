@@ -8,7 +8,6 @@ namespace LLL.ComputedExpression;
 public class ComputedExpressionAnalyzer<TInput> : IComputedExpressionAnalyzer
 {
     private readonly IList<IEntityContextPropagator> _entityContextPropagators = [];
-    private readonly HashSet<IEntityPropertyAccessLocator> _propertyAccessLocators = [];
     private readonly HashSet<IEntityNavigationAccessLocator> _navigationAccessLocators = [];
     private readonly HashSet<IEntityMemberAccessLocator> _memberAccessLocators = [];
 
@@ -42,18 +41,12 @@ public class ComputedExpressionAnalyzer<TInput> : IComputedExpressionAnalyzer
         return this;
     }
 
-    public ComputedExpressionAnalyzer<TInput> AddEntityNavigationAccessLocator(
-        IEntityNavigationAccessLocator<TInput> memberAccessLocator)
+    public ComputedExpressionAnalyzer<TInput> AddEntityMemberAccessLocator(
+        IEntityMemberAccessLocator<TInput> memberAccessLocator)
     {
-        _navigationAccessLocators.Add(memberAccessLocator);
-        _memberAccessLocators.Add(memberAccessLocator);
-        return this;
-    }
+        if (memberAccessLocator is IEntityNavigationAccessLocator nav)
+            _navigationAccessLocators.Add(nav);
 
-    public ComputedExpressionAnalyzer<TInput> AddEntityPropertyAccessLocator(
-        IEntityPropertyAccessLocator<TInput> memberAccessLocator)
-    {
-        _propertyAccessLocators.Add(memberAccessLocator);
         _memberAccessLocators.Add(memberAccessLocator);
         return this;
     }
