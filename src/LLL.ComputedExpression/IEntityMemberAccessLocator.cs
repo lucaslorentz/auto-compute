@@ -4,33 +4,47 @@ namespace LLL.ComputedExpression;
 
 public interface IEntityMemberAccessLocator
 {
-    IEntityMemberAccess<IEntityMember>? GetEntityMemberAccess(Expression node);
-}
-
-public interface IEntityMemberAccessLocator<TMember> : IEntityMemberAccessLocator
-{
-    new IEntityMemberAccess<TMember>? GetEntityMemberAccess(Expression node);
-
-    IEntityMemberAccess<IEntityMember>? IEntityMemberAccessLocator.GetEntityMemberAccess(Expression node)
+    public IEntityMemberAccess<IEntityMember>? GetEntityMemberAccess(Expression node)
     {
-        return GetEntityMemberAccess(node) as IEntityMemberAccess<IEntityMember>;
+        if (this is IEntityNavigationAccessLocator nav)
+        {
+            var access = nav.GetEntityNavigationAccess(node);
+            if (access is not null)
+                return access;
+        }
+
+        if (this is IEntityPropertyAccessLocator prop)
+        {
+            var access = prop.GetEntityPropertyAccess(node);
+            if (access is not null)
+                return access;
+        }
+
+        return null;
     }
 }
 
-public interface IEntityMemberAccessLocator<TMember, in TInput> : IEntityMemberAccessLocator<TMember>
-    where TMember : IEntityMember<TMember>
+public interface IEntityMemberAccessLocator<in TInput> : IEntityMemberAccessLocator
 {
 }
 
-public interface IAllEntityMemberAccessLocator<in TInput> :
-    IEntityMemberAccessLocator<IEntityNavigation, TInput>,
-    IEntityMemberAccessLocator<IEntityProperty, TInput>
+public interface IEntityPropertyAccessLocator : IEntityMemberAccessLocator
 {
-    IEntityMemberAccess<IEntityMember>? IEntityMemberAccessLocator.GetEntityMemberAccess(Expression node)
-    {
-        IEntityMemberAccess<IEntityMember>? result = null;
-        result ??= ((IEntityMemberAccessLocator<IEntityNavigation, TInput>)this).GetEntityMemberAccess(node);
-        result ??= ((IEntityMemberAccessLocator<IEntityProperty, TInput>)this).GetEntityMemberAccess(node);
-        return result;
-    }
+    IEntityMemberAccess<IEntityProperty>? GetEntityPropertyAccess(Expression node);
+}
+
+public interface IEntityPropertyAccessLocator<in TInput>
+    : IEntityPropertyAccessLocator, IEntityMemberAccessLocator<TInput>
+{
+}
+
+
+public interface IEntityNavigationAccessLocator : IEntityMemberAccessLocator
+{
+    IEntityMemberAccess<IEntityNavigation>? GetEntityNavigationAccess(Expression node);
+}
+
+public interface IEntityNavigationAccessLocator<in TInput>
+    : IEntityNavigationAccessLocator, IEntityMemberAccessLocator<TInput>
+{
 }

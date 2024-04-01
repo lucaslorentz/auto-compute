@@ -4,9 +4,10 @@ using Microsoft.EntityFrameworkCore.Metadata;
 namespace LLL.ComputedExpression.EFCore.Internal;
 
 public class EFCoreMemberAccessLocator(IModel model) :
-    IAllEntityMemberAccessLocator<IEFCoreComputedInput>
+    IEntityNavigationAccessLocator<IEFCoreComputedInput>,
+    IEntityPropertyAccessLocator<IEFCoreComputedInput>
 {
-    IEntityMemberAccess<IEntityNavigation>? IEntityMemberAccessLocator<IEntityNavigation>.GetEntityMemberAccess(Expression node)
+    public IEntityMemberAccess<IEntityNavigation>? GetEntityNavigationAccess(Expression node)
     {
         if (node is MemberExpression memberExpression
             && memberExpression.Expression is not null)
@@ -21,7 +22,7 @@ public class EFCoreMemberAccessLocator(IModel model) :
         return null;
     }
 
-    IEntityMemberAccess<IEntityProperty>? IEntityMemberAccessLocator<IEntityProperty>.GetEntityMemberAccess(Expression node)
+    public IEntityMemberAccess<IEntityProperty>? GetEntityPropertyAccess(Expression node)
     {
         if (node is MemberExpression memberExpression
             && memberExpression.Expression is not null)

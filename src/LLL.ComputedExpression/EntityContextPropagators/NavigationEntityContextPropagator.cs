@@ -4,14 +4,14 @@ using LLL.ComputedExpression.EntityContexts;
 namespace LLL.ComputedExpression.EntityContextPropagators;
 
 public class NavigationEntityContextPropagator(
-    HashSet<IEntityMemberAccessLocator<IEntityNavigation>> navigationAccessLocators
+    HashSet<IEntityNavigationAccessLocator> navigationAccessLocators
 ) : IEntityContextPropagator
 {
     public void PropagateEntityContext(Expression node, IComputedExpressionAnalysis analysis)
     {
         foreach (var navigationAccessLocator in navigationAccessLocators)
         {
-            var navigationAccess = navigationAccessLocator.GetEntityMemberAccess(node);
+            var navigationAccess = navigationAccessLocator.GetEntityNavigationAccess(node);
             if (navigationAccess != null)
             {
                 var toKey = navigationAccess.Member.IsCollection
