@@ -2,7 +2,7 @@ using System.Linq.Expressions;
 
 namespace LLL.ComputedExpression.ExpressionVisitors;
 
-internal class ChangeToPreviousValueVisitor(
+internal class ChangeToOriginalValueVisitor(
     ParameterExpression inputExpression,
     IReadOnlyCollection<IEntityMemberAccessLocator> memberAccessLocators
 ) : ExpressionVisitor
@@ -15,7 +15,7 @@ internal class ChangeToPreviousValueVisitor(
             {
                 var propertyAccess = propertyAccessLocator.GetEntityMemberAccess(node);
                 if (propertyAccess is not null)
-                    return propertyAccess.Member.CreatePreviousValueExpression(
+                    return propertyAccess.Member.CreateOriginalValueExpression(
                         propertyAccess,
                         inputExpression);
             }

@@ -133,9 +133,9 @@ public class ComputedExpressionAnalyzer<TInput> : IComputedExpressionAnalyzer
 
     public LambdaExpression GetOriginalValueExpression(LambdaExpression computed)
     {
-        var inputParameter = Expression.Parameter(typeof(object), "input");
+        var inputParameter = Expression.Parameter(typeof(TInput), "input");
 
-        var newBody = new ChangeToPreviousValueVisitor(
+        var newBody = new ChangeToOriginalValueVisitor(
             inputParameter,
             _memberAccessLocators
         ).Visit(computed.Body)!;

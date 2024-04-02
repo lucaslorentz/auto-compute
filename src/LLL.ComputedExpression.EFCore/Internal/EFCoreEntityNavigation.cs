@@ -65,18 +65,18 @@ public class EFCoreEntityNavigation(
         return new EFCoreNavigationAffectedEntitiesProvider(navigation);
     }
 
-    public virtual Expression CreatePreviousValueExpression(
+    public virtual Expression CreateOriginalValueExpression(
         IEntityMemberAccess<IEntityNavigation> memberAccess,
         Expression inputExpression)
     {
-        var originalValueGetter = static (INavigation navigation, object input, object ent) =>
+        var originalValueGetter = static (INavigation navigation, IEFCoreComputedInput input, object ent) =>
         {
-            var dbContext = ((IEFCoreComputedInput)input).DbContext;
+            var dbContext = input.DbContext;
 
             var entityEntry = dbContext.Entry(ent);
 
             if (entityEntry.State == EntityState.Added)
-                throw new InvalidOperationException("Cannot return a previous value for an added entity");
+                throw new InvalidOperationException("Cannot retrieve the original value of an added entity");
 
             return entityEntry.Navigation(navigation).GetOriginalValue();
         };

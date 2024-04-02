@@ -1,6 +1,5 @@
 using System.Linq.Expressions;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.EntityFrameworkCore.ChangeTracking;
 using Microsoft.EntityFrameworkCore.Metadata;
 
 namespace LLL.ComputedExpression.EFCore.Internal;
@@ -19,49 +18,28 @@ public class EFCoreEntityProperty(IProperty property) : IEntityProperty
         return new EFCorePropertyAffectedEntitiesProvider(property);
     }
 
-    public virtual Expression CreatePreviousValueExpression(
+    public virtual Expression CreateOriginalValueExpression(
         IEntityMemberAccess<IEntityProperty> memberAccess,
         Expression inputExpression)
     {
-        var entityEntryExpression =
-            Expression.Call(
-                Expression.Property(
-                    Expression.Convert(
-                        inputExpression,
-                        typeof(IEFCoreComputedInput)
-                    ),
-                    nameof(IEFCoreComputedInput.DbContext)
-                ),
-                nameof(DbContext.Entry),
-                null,
-                memberAccess.FromExpression
-            );
+        var originalValueGetter = static (IProperty property, IEFCoreComputedInput input, object ent) =>
+        {
+            var dbContext = input.DbContext;
+
+            var entityEntry = dbContext.Entry(ent);
+
+            if (entityEntry.State == EntityState.Added)
+                throw new InvalidOperationException("Cannot retrieve the original value of an added entity");
+
+            return entityEntry.Property(property).OriginalValue;
+        };
 
         return Expression.Convert(
-            Expression.Condition(
-                Expression.Equal(
-                    Expression.Property(
-                        entityEntryExpression,
-                        nameof(EntityEntry.State)
-                    ),
-                    Expression.Constant(EntityState.Added)
-                ),
-                Expression.Throw(
-                    Expression.New(
-                        typeof(Exception).GetConstructor([typeof(string)])!,
-                        Expression.Constant("Cannot retrieve previous value from an added entity")
-                    ),
-                    typeof(object)
-                ),
-                Expression.Property(
-                    Expression.Call(
-                        entityEntryExpression,
-                        nameof(EntityEntry.Property),
-                        null,
-                        Expression.Constant(property)
-                    ),
-                    nameof(PropertyEntry.OriginalValue)
-                )
+            Expression.Invoke(
+                Expression.Constant(originalValueGetter),
+                Expression.Constant(property),
+                inputExpression,
+                memberAccess.FromExpression
             ),
             property.ClrType
         );

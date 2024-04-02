@@ -6,7 +6,7 @@ public interface IEntityMember
 {
     string Name { get; }
     IAffectedEntitiesProvider? GetAffectedEntitiesProvider();
-    Expression CreatePreviousValueExpression(
+    Expression CreateOriginalValueExpression(
         IEntityMemberAccess<IEntityMember> memberAccess,
         Expression inputExpression);
 }
@@ -14,18 +14,18 @@ public interface IEntityMember
 
 public interface IEntityMember<TMember> : IEntityMember
 {
-    Expression CreatePreviousValueExpression(
+    Expression CreateOriginalValueExpression(
         IEntityMemberAccess<TMember> memberAccess,
         Expression inputExpression);
 
-    Expression IEntityMember.CreatePreviousValueExpression(
+    Expression IEntityMember.CreateOriginalValueExpression(
         IEntityMemberAccess<IEntityMember> memberAccess,
         Expression inputExpression)
     {
         if (memberAccess is not IEntityMemberAccess<TMember> memberAccessTyped)
             throw new ArgumentException($"Param {nameof(memberAccess)} should be of type {typeof(IEntityMemberAccess<TMember>)}");
 
-        return CreatePreviousValueExpression(
+        return CreateOriginalValueExpression(
             memberAccessTyped,
             inputExpression);
     }
