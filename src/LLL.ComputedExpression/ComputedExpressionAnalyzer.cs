@@ -92,30 +92,6 @@ public class ComputedExpressionAnalyzer<TInput> : IComputedExpressionAnalyzer
         return new CompositeIncrementalChangesProvider(incrementalComputed, providers);
     }
 
-    private EntityContext GetEntityContext(
-        LambdaExpression computed,
-        Expression node,
-        string entityContextKey)
-    {
-        var analysis = new ComputedExpressionAnalysis(this);
-
-        var entityContext = new RootEntityContext();
-
-        analysis.AddEntityContextProvider(computed.Parameters[0], (key) => key == EntityContextKeys.None ? entityContext : null);
-
-        new PropagateEntityContextsVisitor(
-            _entityContextPropagators,
-            analysis
-        ).Visit(computed);
-
-        new CollectEntityMemberAccessesVisitor(
-            analysis,
-            _memberAccessLocators
-        ).Visit(computed);
-
-        return analysis.ResolveEntityContext(node, entityContextKey);
-    }
-
     public IChangesProvider? GetChangesProvider(LambdaExpression computed)
     {
         var affectedEntitiesProvider = CreateAffectedEntitiesProvider(computed);
@@ -143,6 +119,30 @@ public class ComputedExpressionAnalyzer<TInput> : IComputedExpressionAnalyzer
         return Expression.Lambda(newBody, [inputParameter, .. computed.Parameters]);
     }
 
+    private EntityContext GetEntityContext(
+        LambdaExpression computed,
+        Expression node,
+        string entityContextKey)
+    {
+        var analysis = new ComputedExpressionAnalysis(this);
+
+        var entityContext = new RootEntityContext();
+
+        analysis.AddEntityContextProvider(computed.Parameters[0], (key) => key == EntityContextKeys.None ? entityContext : null);
+
+        new PropagateEntityContextsVisitor(
+            _entityContextPropagators,
+            analysis
+        ).Visit(computed);
+
+        new CollectEntityMemberAccessesVisitor(
+            analysis,
+            _memberAccessLocators
+        ).Visit(computed);
+
+        return analysis.ResolveEntityContext(node, entityContextKey);
+    }
+
     private IIncrementalChangesProvider? CreateIncrementalChangesProvider(
         IIncrementalComputed incrementalComputed,
         IncrementalComputedPart incrementalComputedPart)
@@ -161,7 +161,7 @@ public class ComputedExpressionAnalyzer<TInput> : IComputedExpressionAnalyzer
 
         var composedAffectedEntitiesProvider = AffectedEntitiesProvider.ComposeAndCleanup([
             valueAffectedEntitiesProvider,
-                rootRelationshipAffectedEntitiesProvider
+            rootRelationshipAffectedEntitiesProvider
         ]);
 
         if (composedAffectedEntitiesProvider is null)
