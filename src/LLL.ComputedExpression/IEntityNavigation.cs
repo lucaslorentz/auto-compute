@@ -23,11 +23,17 @@ public interface IEntityNavigation<in TInput> : IEntityNavigation
 
     Task<IReadOnlyCollection<object>> IEntityNavigation.LoadCurrentAsync(object input, IReadOnlyCollection<object> fromEntities)
     {
-        return LoadCurrentAsync((TInput)input, fromEntities);
+        if (input is not TInput inputTyped)
+            throw new ArgumentException($"Param {nameof(input)} should be of type {typeof(TInput)}");
+
+        return LoadCurrentAsync(inputTyped, fromEntities);
     }
 
     Task<IReadOnlyCollection<object>> IEntityNavigation.LoadOriginalAsync(object input, IReadOnlyCollection<object> fromEntities)
     {
-        return LoadOriginalAsync((TInput)input, fromEntities);
+        if (input is not TInput inputTyped)
+            throw new ArgumentException($"Param {nameof(input)} should be of type {typeof(TInput)}");
+
+        return LoadOriginalAsync(inputTyped, fromEntities);
     }
 }

@@ -22,8 +22,11 @@ public interface IEntityMember<TMember> : IEntityMember
         IEntityMemberAccess<IEntityMember> memberAccess,
         Expression inputExpression)
     {
+        if (memberAccess is not IEntityMemberAccess<TMember> memberAccessTyped)
+            throw new ArgumentException($"Param {nameof(memberAccess)} should be of type {typeof(IEntityMemberAccess<TMember>)}");
+
         return CreatePreviousValueExpression(
-            (IEntityMemberAccess<TMember>)memberAccess,
+            memberAccessTyped,
             inputExpression);
     }
 }
