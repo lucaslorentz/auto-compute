@@ -115,7 +115,6 @@ public class IncrementalFilteredCollectionTests
 
             personBuilder.IncrementalComputedProperty(
                 p => p.Total,
-                0,
                 c => c.AddCollection(p =>
                     p.Pets.Where(x => x.Type == "Cat")
                     .Concat(p.Pets.Where(x => x.Type == "Dog"))

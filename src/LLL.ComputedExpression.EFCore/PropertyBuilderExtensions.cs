@@ -22,15 +22,24 @@ public static class EntityTypeBuilderExtensions
     public static PropertyBuilder<TProperty> IncrementalComputedProperty<TEntity, TProperty>(
         this EntityTypeBuilder<TEntity> entityTypeBuilder,
         Expression<Func<TEntity, TProperty>> propertyExpression,
-        TProperty initialValue,
         Action<NumberIncrementalComputed<TEntity, TProperty>> buildComputed)
         where TEntity : class
         where TProperty : INumber<TProperty>
     {
+        var incrementalComputed = new NumberIncrementalComputed<TEntity, TProperty>();
+        buildComputed(incrementalComputed);
+        return entityTypeBuilder.IncrementalComputedProperty(propertyExpression, incrementalComputed);
+    }
+
+    public static PropertyBuilder<TProperty> IncrementalComputedProperty<TEntity, TProperty>(
+        this EntityTypeBuilder<TEntity> entityTypeBuilder,
+        Expression<Func<TEntity, TProperty>> propertyExpression,
+        IIncrementalComputed<TEntity, TProperty> incrementalComputed)
+        where TEntity : class
+        where TProperty : INumber<TProperty>
+    {
         var propertyBuilder = entityTypeBuilder.Property(propertyExpression);
-        var incrementalComputedBuilder = new NumberIncrementalComputed<TEntity, TProperty>(initialValue);
-        buildComputed(incrementalComputedBuilder);
-        propertyBuilder.HasAnnotation(ComputedAnnotationNames.Expression, incrementalComputedBuilder);
+        propertyBuilder.HasAnnotation(ComputedAnnotationNames.Expression, incrementalComputed);
         return propertyBuilder;
     }
 }

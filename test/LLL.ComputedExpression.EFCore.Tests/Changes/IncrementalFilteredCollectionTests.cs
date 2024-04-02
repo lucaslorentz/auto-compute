@@ -5,7 +5,7 @@ namespace LLL.ComputedExpression.EFCore.Tests.Changes;
 
 public class IncrementalFilteredCollectionTests
 {
-    private static readonly IIncrementalComputed<Person, int> _incrementalComputed = new NumberIncrementalComputed<Person, int>(0)
+    private static readonly IIncrementalComputed<Person, int> _incrementalComputed = new NumberIncrementalComputed<Person, int>()
         .AddCollection(person => person.Pets.Where(p => p.Type == "Cat")
             .Concat(person.Pets.Where(p => p.Type == "Dog")), cat => 1);
 

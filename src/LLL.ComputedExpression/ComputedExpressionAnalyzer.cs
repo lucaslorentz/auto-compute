@@ -1,5 +1,4 @@
 ﻿using System.Linq.Expressions;
-using System.Reflection.Metadata.Ecma335;
 using LLL.ComputedExpression.AffectedEntitiesProviders;
 using LLL.ComputedExpression.ChangesProvider;
 using LLL.ComputedExpression.EntityContextPropagators;
@@ -78,18 +77,6 @@ public class ComputedExpressionAnalyzer<TInput> : IComputedExpressionAnalyzer
         return entityContext.GetAffectedEntitiesProvider();
     }
 
-    public LambdaExpression GetOriginalValueExpression(LambdaExpression computed)
-    {
-        var inputParameter = Expression.Parameter(typeof(object), "input");
-
-        var newBody = new ChangeToPreviousValueVisitor(
-            inputParameter,
-            _memberAccessLocators
-        ).Visit(computed.Body)!;
-
-        return Expression.Lambda(newBody, [inputParameter, .. computed.Parameters]);
-    }
-
     public IIncrementalChangesProvider CreateIncrementalChangesProvider(
         IIncrementalComputed incrementalComputed)
     {
@@ -142,6 +129,18 @@ public class ComputedExpressionAnalyzer<TInput> : IComputedExpressionAnalyzer
             originalValueGetter,
             currentValueGetter,
             entityActionProvider);
+    }
+
+    public LambdaExpression GetOriginalValueExpression(LambdaExpression computed)
+    {
+        var inputParameter = Expression.Parameter(typeof(object), "input");
+
+        var newBody = new ChangeToPreviousValueVisitor(
+            inputParameter,
+            _memberAccessLocators
+        ).Visit(computed.Body)!;
+
+        return Expression.Lambda(newBody, [inputParameter, .. computed.Parameters]);
     }
 
     private IIncrementalChangesProvider? CreateIncrementalChangesProvider(

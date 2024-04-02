@@ -107,8 +107,8 @@ class ComputedRuntimeConvention(Func<IModel, IComputedExpressionAnalyzer> comput
                     var propertyEntry = entityEntry.Property(property);
 
                     var originalValue = entityEntry.State == EntityState.Added
-                        ? incrementalComputed.ZeroValue
-                        : propertyEntry.OriginalValue ?? incrementalComputed.ZeroValue;
+                        ? incrementalComputed.Zero
+                        : propertyEntry.OriginalValue ?? incrementalComputed.Zero;
 
                     var newValue = incrementalComputed.Add(
                         originalValue,

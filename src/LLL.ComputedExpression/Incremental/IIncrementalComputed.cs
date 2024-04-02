@@ -2,7 +2,7 @@ namespace LLL.ComputedExpression.Incremental;
 
 public interface IIncrementalComputed
 {
-    object? ZeroValue { get; }
+    object? Zero { get; }
     bool IsZero(object? value);
     object? Add(object? a, object? b);
     object? Remove(object? a, object? b);
@@ -11,11 +11,11 @@ public interface IIncrementalComputed
 
 public interface IIncrementalComputed<T, V> : IIncrementalComputed
 {
-    new V ZeroValue { get; }
+    new V Zero { get; }
     bool IsZero(V value);
     V Add(V a, V b);
     V Remove(V a, V b);
-    object? IIncrementalComputed.ZeroValue => ZeroValue;
+    object? IIncrementalComputed.Zero => Zero;
     bool IIncrementalComputed.IsZero(object? value) => IsZero((V)value!);
     object? IIncrementalComputed.Add(object? a, object? b) => Add((V)a!, (V)b!);
     object? IIncrementalComputed.Remove(object? a, object? b) => Remove((V)a!, (V)b!);

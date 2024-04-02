@@ -98,7 +98,6 @@ public class IncrementalCollectionTests
             var personBuilder = modelBuilder.Entity<Person>();
             personBuilder.IncrementalComputedProperty(
                 p => p.Total,
-                0,
                 c => c.AddCollection(p => p.Pets, p => p.Type == "Cat" ? 1 : 0)
             );
         });
