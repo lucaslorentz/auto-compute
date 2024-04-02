@@ -92,7 +92,7 @@ public class ComputedExpressionAnalyzer<TInput> : IComputedExpressionAnalyzer
         return new CompositeIncrementalChangesProvider(incrementalComputed, providers);
     }
 
-    public IChangesProvider? GetChangesProvider(LambdaExpression computed)
+    public IChangesProvider? CreateChangesProvider(LambdaExpression computed)
     {
         var affectedEntitiesProvider = CreateAffectedEntitiesProvider(computed);
         if (affectedEntitiesProvider is null)

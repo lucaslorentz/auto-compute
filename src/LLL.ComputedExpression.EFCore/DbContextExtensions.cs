@@ -65,7 +65,7 @@ public static class DbContextExtensions
 
         return cache.GetOrCreate(
             cacheKey,
-            static (k) => k.Analyzer.GetChangesProvider((LambdaExpression)k.ExpressionKey.Expression));
+            static (k) => k.Analyzer.CreateChangesProvider((LambdaExpression)k.ExpressionKey.Expression));
     }
 
     public static async Task<IReadOnlyDictionary<TEntity, (P? originalValue, P? newValue)>> GetChangesAsync<TEntity, P>(
