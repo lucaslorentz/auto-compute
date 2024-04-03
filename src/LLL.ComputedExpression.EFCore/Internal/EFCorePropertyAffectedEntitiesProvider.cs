@@ -8,7 +8,7 @@ public class EFCorePropertyAffectedEntitiesProvider(IProperty property)
 {
     public virtual string ToDebugString()
     {
-        return $"EntitiesWithPropertyChange({property.DeclaringEntityType.ShortName()}, {property.Name})";
+        return $"EntitiesWithPropertyChange({property.DeclaringType.ShortName()}, {property.Name})";
     }
 
     public  virtual async Task<IReadOnlyCollection<object>> GetAffectedEntitiesAsync(IEFCoreComputedInput input)
@@ -16,7 +16,7 @@ public class EFCorePropertyAffectedEntitiesProvider(IProperty property)
         var affectedEntities = new HashSet<object>();
         foreach (var entityEntry in input.DbContext.ChangeTracker.Entries())
         {
-            if (entityEntry.Metadata == property.DeclaringEntityType)
+            if (entityEntry.Metadata == property.DeclaringType)
             {
                 var propertyEntry = entityEntry.Property(property);
                 if (entityEntry.State == EntityState.Added

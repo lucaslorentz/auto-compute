@@ -30,7 +30,7 @@ public class EFCoreEntityNavigation(
 
             var navigationEntry = targetEntry.Navigation(navigation);
 
-            if (!navigationEntry.IsLoaded)
+            if (!navigationEntry.IsLoaded && targetEntry.State != EntityState.Detached)
                 await navigationEntry.LoadAsync();
 
             foreach (var originalEntity in navigationEntry.GetOriginalEntities())
@@ -44,9 +44,10 @@ public class EFCoreEntityNavigation(
         var sourceEntities = new HashSet<object>();
         foreach (var targetEntity in targetEntities)
         {
-            var navigationEntry = input.DbContext.Entry(targetEntity).Navigation(navigation);
+            var entityEntry = input.DbContext.Entry(targetEntity);
+            var navigationEntry = entityEntry.Navigation(navigation);
 
-            if (!navigationEntry.IsLoaded)
+            if (!navigationEntry.IsLoaded && entityEntry.State != EntityState.Detached)
                 await navigationEntry.LoadAsync();
 
             foreach (var entity in navigationEntry.GetEntities())

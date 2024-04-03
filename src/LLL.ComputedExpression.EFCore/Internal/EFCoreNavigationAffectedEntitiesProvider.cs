@@ -32,7 +32,7 @@ public class EFCoreNavigationAffectedEntitiesProvider(INavigation navigation)
                     || (entityEntry.State == EntityState.Modified && inverseNavigationEntry.IsModified)
                     || entityEntry.State == EntityState.Deleted))
                 {
-                    if (!inverseNavigationEntry.IsLoaded)
+                    if (!inverseNavigationEntry.IsLoaded && entityEntry.State != EntityState.Detached)
                         await inverseNavigationEntry.LoadAsync();
 
                     foreach (var currentEntity in inverseNavigationEntry.GetEntities())

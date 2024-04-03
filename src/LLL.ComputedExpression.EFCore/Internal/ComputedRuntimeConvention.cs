@@ -81,7 +81,7 @@ class ComputedRuntimeConvention(Func<IModel, IComputedExpressionAnalyzer> comput
         }
         catch (Exception ex)
         {
-            throw new InvalidOperationException($"Invalid computed expression for '{property.DeclaringEntityType.ShortName()}.{property.Name}': {ex.Message}");
+            throw new InvalidOperationException($"Invalid computed expression for '{property.DeclaringType.ShortName()}.{property.Name}': {ex.Message}");
         }
     }
 
@@ -127,7 +127,7 @@ class ComputedRuntimeConvention(Func<IModel, IComputedExpressionAnalyzer> comput
         }
         catch (Exception ex)
         {
-            throw new InvalidOperationException($"Invalid computed expression for '{property.DeclaringEntityType.ShortName()}.{property.Name}': {ex.Message}");
+            throw new InvalidOperationException($"Invalid computed expression for '{property.DeclaringType.ShortName()}.{property.Name}': {ex.Message}");
         }
     }
 }

@@ -20,7 +20,7 @@ public static class Utilities
             var collectionAccessor = navigation.GetCollectionAccessor()!;
             var originalValue = collectionAccessor.Create();
 
-            if (!navigationEntry.IsLoaded)
+            if (!navigationEntry.IsLoaded && entityEntry.State != EntityState.Detached)
                 navigationEntry.Load();
 
             var inverseNavigation = navigation.Inverse
