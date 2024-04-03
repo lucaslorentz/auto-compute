@@ -25,7 +25,7 @@ public class PartIncrementalChangesProvider(
             var oldPartValue = affectedEntityAction == EntityAction.Create ? incrementalComputed.Zero : originalValueGetter.DynamicInvoke(input, affectedEntity);
             var oldRoots = affectedEntityAction == EntityAction.Create ? [] : await originalRootEntitiesProvider.GetRootEntities(input, [affectedEntity]);
 
-            var newPartValue = affectedEntityAction == EntityAction.Delete ? incrementalComputed.Zero : currentValueGetter.DynamicInvoke(affectedEntity);
+            var newPartValue = affectedEntityAction == EntityAction.Delete ? incrementalComputed.Zero : currentValueGetter.DynamicInvoke(input, affectedEntity);
             var newRoots = affectedEntityAction == EntityAction.Delete ? [] : await currentRootEntitiesProvider.GetRootEntities(input, [affectedEntity]);
 
             foreach (var rootEntity in oldRoots)

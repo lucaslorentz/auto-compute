@@ -98,7 +98,7 @@ public class ComputedExpressionAnalyzer<TInput> : IComputedExpressionAnalyzer
         if (affectedEntitiesProvider is null)
             return null;
         var originalValueGetter = GetOriginalValueExpression(computed).Compile();
-        var currentValueGetter = computed.Compile();
+        var currentValueGetter = GetCurrentValueExpression(computed).Compile();
         var entityActionProvider = RequireEntityActionProvider();
         return new DefaultChangesProvider(
             affectedEntitiesProvider,
@@ -163,7 +163,7 @@ public class ComputedExpressionAnalyzer<TInput> : IComputedExpressionAnalyzer
         var valueAffectedEntitiesProvider = CreateAffectedEntitiesProvider(incrementalComputedPart.ValueSelector);
         var rootRelationshipAffectedEntitiesProvider = entityContext.GetAffectedEntitiesProviderInverse();
         var originalValueGetter = GetOriginalValueExpression(incrementalComputedPart.ValueSelector).Compile();
-        var currentValueGetter = incrementalComputedPart.ValueSelector.Compile();
+        var currentValueGetter = GetCurrentValueExpression(incrementalComputedPart.ValueSelector).Compile();
         var originalRootEntitiesProvider = entityContext.GetOriginalRootEntitiesProvider();
         var currentRootEntitiesProvider = entityContext.GetCurrentRootEntitiesProvider();
 

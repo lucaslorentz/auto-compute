@@ -20,7 +20,7 @@ public class DefaultChangesProvider(
 
             var currentValue = entityActionProvider.GetEntityAction(input, e) == EntityAction.Delete
                 ? default
-                : currentValueGetter.DynamicInvoke(e);
+                : currentValueGetter.DynamicInvoke(input, e);
 
             return (originalValue, currentValue);
         });
