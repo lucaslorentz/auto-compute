@@ -23,13 +23,13 @@ public class ScopedEntityContext : EntityContext
         return _parent.GetAffectedEntitiesProviderInverse();
     }
 
-    public override async Task<IReadOnlyCollection<object>> LoadOriginalRootEntities(object input, IReadOnlyCollection<object> entities)
+    public override IRootEntitiesProvider GetOriginalRootEntitiesProvider()
     {
-        return await _parent.LoadOriginalRootEntities(input, entities);
+        return _parent.GetOriginalRootEntitiesProvider();
     }
 
-    public override async Task<IReadOnlyCollection<object>> LoadCurrentRootEntities(object input, IReadOnlyCollection<object> entities)
+    public override IRootEntitiesProvider GetCurrentRootEntitiesProvider()
     {
-        return await _parent.LoadCurrentRootEntities(input, entities);
+        return _parent.GetCurrentRootEntitiesProvider();
     }
 }

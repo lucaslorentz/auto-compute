@@ -1,4 +1,5 @@
 ﻿using LLL.ComputedExpression.AffectedEntitiesProviders;
+using LLL.ComputedExpression.RootEntitiesProvider;
 
 namespace LLL.ComputedExpression.EntityContexts;
 
@@ -44,25 +45,13 @@ public class NavigationEntityContext : EntityContext
         ]);
     }
 
-    public override async Task<IReadOnlyCollection<object>> LoadOriginalRootEntities(object input, IReadOnlyCollection<object> entities)
+    public override IRootEntitiesProvider GetOriginalRootEntitiesProvider()
     {
-        var rootEntities = new HashSet<object>();
-
-        var parentEntities = await _navigation.GetInverse().LoadOriginalAsync(input, entities);
-        foreach (var rootEntity in await _parent.LoadOriginalRootEntities(input, parentEntities))
-            rootEntities.Add(rootEntity);
-
-        return rootEntities;
+        return new LoadOriginalNavigationRootEntitiesProvider(_parent.GetOriginalRootEntitiesProvider(), _navigation.GetInverse());
     }
 
-    public override async Task<IReadOnlyCollection<object>> LoadCurrentRootEntities(object input, IReadOnlyCollection<object> entities)
+    public override IRootEntitiesProvider GetCurrentRootEntitiesProvider()
     {
-        var rootEntities = new HashSet<object>();
-
-        var parentEntities = await _navigation.GetInverse().LoadCurrentAsync(input, entities);
-        foreach (var rootEntity in await _parent.LoadCurrentRootEntities(input, parentEntities))
-            rootEntities.Add(rootEntity);
-
-        return rootEntities;
+        return new LoadCurrentNavigationRootEntitiesProvider(_parent.GetCurrentRootEntitiesProvider(), _navigation.GetInverse());
     }
 }

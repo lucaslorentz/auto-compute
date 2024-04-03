@@ -1,4 +1,6 @@
-﻿namespace LLL.ComputedExpression.EntityContexts;
+﻿using LLL.ComputedExpression.RootEntitiesProvider;
+
+namespace LLL.ComputedExpression.EntityContexts;
 
 public class UntrackedEntityContext : EntityContext
 {
@@ -14,13 +16,15 @@ public class UntrackedEntityContext : EntityContext
         return null;
     }
 
-    public override async Task<IReadOnlyCollection<object>> LoadOriginalRootEntities(object input, IReadOnlyCollection<object> entities)
+    public override IRootEntitiesProvider GetOriginalRootEntitiesProvider()
     {
-        return [];
+        // TODO: Implement
+        return new EmptyRootEntitiesProvider();
     }
 
-    public override async Task<IReadOnlyCollection<object>> LoadCurrentRootEntities(object input, IReadOnlyCollection<object> entities)
+    public override IRootEntitiesProvider GetCurrentRootEntitiesProvider()
     {
-        return [];
+        // TODO: Implement
+        return new EmptyRootEntitiesProvider();
     }
 }

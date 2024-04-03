@@ -1,4 +1,6 @@
-﻿using LLL.ComputedExpression.AffectedEntitiesProviders;
+﻿using System.Runtime.CompilerServices;
+using LLL.ComputedExpression.AffectedEntitiesProviders;
+using LLL.ComputedExpression.RootEntitiesProvider;
 
 namespace LLL.ComputedExpression.EntityContexts;
 
@@ -33,25 +35,23 @@ public class CompositeEntityContext : EntityContext
         return AffectedEntitiesProvider.ComposeAndCleanup(providers);
     }
 
-    public override async Task<IReadOnlyCollection<object>> LoadOriginalRootEntities(object input, IReadOnlyCollection<object> objects)
+    public override IRootEntitiesProvider GetOriginalRootEntitiesProvider()
     {
-        var rootEntities = new HashSet<object>();
+        var providers = new List<IRootEntitiesProvider>();
+
         foreach (var parent in _parents)
-        {
-            foreach (var rootEntity in await parent.LoadOriginalRootEntities(input, objects))
-                rootEntities.Add(rootEntity);
-        }
-        return rootEntities;
+            providers.Add(parent.GetOriginalRootEntitiesProvider());
+
+        return new CompositeRootEntitiesProvider(providers);
     }
 
-    public override async Task<IReadOnlyCollection<object>> LoadCurrentRootEntities(object input, IReadOnlyCollection<object> objects)
+    public override IRootEntitiesProvider GetCurrentRootEntitiesProvider()
     {
-        var rootEntities = new HashSet<object>();
+        var providers = new List<IRootEntitiesProvider>();
+
         foreach (var parent in _parents)
-        {
-            foreach (var rootEntity in await parent.LoadCurrentRootEntities(input, objects))
-                rootEntities.Add(rootEntity);
-        }
-        return rootEntities;
+            providers.Add(parent.GetCurrentRootEntitiesProvider());
+
+        return new CompositeRootEntitiesProvider(providers);
     }
 }

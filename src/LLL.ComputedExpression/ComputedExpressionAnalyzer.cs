@@ -119,6 +119,12 @@ public class ComputedExpressionAnalyzer<TInput> : IComputedExpressionAnalyzer
         return Expression.Lambda(newBody, [inputParameter, .. computed.Parameters]);
     }
 
+    public LambdaExpression GetCurrentValueExpression(LambdaExpression computed)
+    {
+        var inputParameter = Expression.Parameter(typeof(TInput), "input");
+        return Expression.Lambda(computed.Body, [inputParameter, .. computed.Parameters]);
+    }
+
     private EntityContext GetEntityContext(
         LambdaExpression computed,
         Expression node,
@@ -158,6 +164,8 @@ public class ComputedExpressionAnalyzer<TInput> : IComputedExpressionAnalyzer
         var rootRelationshipAffectedEntitiesProvider = entityContext.GetAffectedEntitiesProviderInverse();
         var originalValueGetter = GetOriginalValueExpression(incrementalComputedPart.ValueSelector).Compile();
         var currentValueGetter = incrementalComputedPart.ValueSelector.Compile();
+        var originalRootEntitiesProvider = entityContext.GetOriginalRootEntitiesProvider();
+        var currentRootEntitiesProvider = entityContext.GetCurrentRootEntitiesProvider();
 
         var composedAffectedEntitiesProvider = AffectedEntitiesProvider.ComposeAndCleanup([
             valueAffectedEntitiesProvider,
@@ -173,7 +181,8 @@ public class ComputedExpressionAnalyzer<TInput> : IComputedExpressionAnalyzer
             entityActionProvider,
             originalValueGetter,
             currentValueGetter,
-            entityContext
+            originalRootEntitiesProvider,
+            currentRootEntitiesProvider
         );
     }
 

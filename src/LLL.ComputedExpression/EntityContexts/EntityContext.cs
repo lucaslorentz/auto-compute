@@ -43,7 +43,7 @@ public abstract class EntityContext
 
     public abstract IAffectedEntitiesProvider? GetAffectedEntitiesProviderInverse();
 
-    public abstract Task<IReadOnlyCollection<object>> LoadOriginalRootEntities(object input, IReadOnlyCollection<object> entities);
+    public abstract IRootEntitiesProvider GetOriginalRootEntitiesProvider();
 
-    public abstract Task<IReadOnlyCollection<object>> LoadCurrentRootEntities(object input, IReadOnlyCollection<object> entities);
+    public abstract IRootEntitiesProvider GetCurrentRootEntitiesProvider();
 }

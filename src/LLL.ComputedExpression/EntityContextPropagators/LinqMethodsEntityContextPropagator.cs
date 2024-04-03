@@ -75,9 +75,8 @@ public class LinqMethodsEntityContextPropagator
                                 EntityContextKeys.Element,
                                 e =>
                                 {
-                                    var originalFilterLambda = analysis.Analyzer.GetOriginalValueExpression(filterLambda);
                                     var parameterEntityContext = analysis.ResolveEntityContext(filterLambda.Parameters[0], EntityContextKeys.None);
-                                    return new FilteredEntityContext(e, parameterEntityContext, originalFilterLambda, filterLambda);
+                                    return new FilteredEntityContext(e, parameterEntityContext, filterLambda, analysis.Analyzer);
                                 }
                             );
                         }

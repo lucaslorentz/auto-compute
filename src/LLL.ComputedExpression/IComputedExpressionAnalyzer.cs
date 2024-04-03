@@ -9,4 +9,5 @@ public interface IComputedExpressionAnalyzer
     IChangesProvider? CreateChangesProvider(LambdaExpression computed);
     IIncrementalChangesProvider CreateIncrementalChangesProvider(IIncrementalComputed incrementalComputed);
     LambdaExpression GetOriginalValueExpression(LambdaExpression computed);
+    LambdaExpression GetCurrentValueExpression(LambdaExpression computed);
 }
