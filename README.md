@@ -4,7 +4,7 @@ Computed Expression is a library designed to automatically maintain derived data
 
 Whether you're implementing denormalization strategies or handling any other form of derived data in your EF Core projects, Computed Expression offers a straightforward solution. It tracks changes across related entities, automatically updating derived properties, thereby reducing complexity, maintenance overhead, and ensuring consistency throughout your application.
 
-This library is basically an automatic implementation of the approach described by Microsoft in: https://learn.microsoft.com/en-us/ef/core/performance/modeling-for-performance#update-cache-columns-when-inputs-change
+This library is an automatic implementation of the approach described by Microsoft in: https://learn.microsoft.com/en-us/ef/core/performance/modeling-for-performance#update-cache-columns-when-inputs-change
 
 ## Getting Started
 
@@ -32,57 +32,64 @@ protected override void OnModelCreating(ModelBuilder modelBuilder)
 
     var personBuilder = modelBuilder.Entity<Person>();
     personBuilder.ComputedProperty(person => person.FullName, person => person.FirstName + " " + person.LastName);
-    personBuilder.ComputedProperty(person => person.NumberOfCats, person => person.Pets.Count(pet => pet.Type == "Cat"));
     personBuilder.ComputedProperty(person => person.HasCats, person => person.Pets.Any(pet => pet.Type == "Cat"));
     personBuilder.ComputedProperty(person => person.Description, person => person.FullName + " (" + person.Pets.Count() + " pets)");
+    personBuilder.IncrementalComputedProperty(p => p.NumberOfCats, b => b.AddCollection(person => person.Pets.Where(pet => pet.Type == "Cat"), pet => 1));
 }
 ```
 
 That's it! Now, all defined computed properties will be automatically updated during `dbContext.SaveChanges()`.
 
-Check [PersonDbContext](test/LLL.ComputedExpression.EFCore.Tests/PersonDbContext.cs) for a complete example.
+Check the rest of the readme to understand each feature.
 
 ## How it works
 
 This library operates by meticulously analyzing computed expressions and tracking all referenced data within them. It then traverses inverse navigations to pinpoint all entities that could be affected by changes to the referenced data.
 
-### Basic example
-Consider the following basic example:
+For this basic scenario:
 ```csharp
 personBuilder.ComputedProperty(person => person.FullName, person => person.FirstName + " " + person.LastName);
 ```
-In this scenario, the following data will be monitored for changes:
-- Person's FirstName property.
-- Person's LastName property.
+The FullName property will be automatically updated whenever:
+- Person's FirstName property changes.
+- Person's LastName property changes.
 
-Whenever a change occurs in any of these monitored properties, the FullName property of that person will be automatically updated with the result of the computed expression.
-
-### Navigation example
-Let's explore a navigation example:
+For this more complex scenario:
 ```csharp
 personBuilder.ComputedProperty(person => person.NumberOfCats, person => person.Pets.Count(pet => pet.Type == "Cat"));
 ```
-Here, the library will monitor changes in the following data:
-- Person's Pets collection, including changes made to the inverse reference in the Pets entities.
-- Pet's Type property.
+The NumberOfCats property will be automatically updated whenever:
+- Person's Pets collection change (add, remove, inverse collection add, inverse collection remove)
+- Pet's property Type changes
 
-Whenever a change occurs in any of these monitored properties, the NumberOfCats property of that person will be automatically updated with the result of the computed expression.
+## Mapping features
 
-For changes in the **Type** property of **Pets**, the library automatically traverses the inverse navigation of **Person.Pets** (i.e., **Pets.Owner**) to identify which **Persons** could be affected by changes in the **Type** of a **Pet**.
+### Computed properties
 
-### Complex example
+Computed properties are updated by doing a **full evaluation** of the expression whenever any used data changes.
 
-Consider a more intricate scenario:
-```csharp
-personBuilder.ComputedProperty(
-  person => person.NumberOfBlackKittens,
-  person => person.Pets.Where(pet => pet.Type == "Cat")
-    .SelectMany(pet => pet.Offsprings)
-    .Where(pet => pet.Color == "Black")
-    .Count()
-);
+Example:
 ```
-In this example, the library also monitors changes to the pets' **Color** property. Whenever a change occurs, it identifies the affected pets by traversing the Offspring's inverse navigation. Subsequently, it determines the affected persons by traversing the Pets' inverse navigation.
+personBuilder.ComputedProperty(person => person.NumberOfCats, person => person.Pets.Count(pet => pet.Type == "Cat"));
+```
+In this example, all pets from all affected persons will be lazy-loaded during re-evaluation.
+
+### Incremental computed properties
+
+Incremental computed properties are updated by **adding the change** of its parts to the previously computed value whenever any used data changes.
+
+Example:
+```
+personBuilder.IncrementalComputedProperty(p => p.NumberOfCats, b => b.AddCollection(person => person.Pets.Where(pet => pet.Type == "Cat"), pet => 1));
+```
+In this example, NumberOfCats is incremented/decremented by 1 based on changes to Pets collection or to Pet's Type property.
+
+## DbContext features
+
+The following DbContext methods are also available for unmapped scenarios:
+- **GetAffectedEntitiesAsync**: Given a computed expression, it returns the root entities affected by current DbContext changes.
+- **GetChangesAsync**: Given a computed expression, it returns the root entities affected by current DbContext changes with their respective original and current values.
+- **GetIncrementalChanges**: Given an incremental computed definition, it returns the root entities affected by current DbContext changes and their incremental change.
 
 ## License
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
