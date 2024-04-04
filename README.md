@@ -38,9 +38,22 @@ protected override void OnModelCreating(ModelBuilder modelBuilder)
 }
 ```
 
-That's it! Now, all defined computed properties will be automatically updated during `dbContext.SaveChanges()`.
+That's it! Now, all defined computed properties will be automatically updated during `dbContext.SaveChanges()`:
+```csharp
+var person = context.Persons.Find(1);
+Console.WriteLine(person.HasCats); // Output: false
+Console.WriteLine(person.NumberOfCats); // Output: 0
 
-Check the rest of the readme to understand each feature.
+var pet = new Pet { Type = "Cat", Owner = person };
+context.Add(pet);
+
+await context.SaveChangesAsync();
+
+Console.WriteLine(person.HasCats); // Output: true
+Console.WriteLine(person.NumberOfCats); // Output: 1
+```
+
+Check the rest of the readme to understand more all features.
 
 ## How it works
 
