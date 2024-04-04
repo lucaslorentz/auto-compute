@@ -1,5 +1,3 @@
-using System.Diagnostics.Contracts;
-
 namespace LLL.ComputedExpression;
 
 public interface IEntityActionProvider

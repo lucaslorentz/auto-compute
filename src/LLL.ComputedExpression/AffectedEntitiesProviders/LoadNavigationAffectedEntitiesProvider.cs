@@ -13,6 +13,6 @@ public class LoadNavigationAffectedEntitiesProvider(
     public async Task<IReadOnlyCollection<object>> GetAffectedEntitiesAsync(object input)
     {
         var affectedEntities = await affectedEntitiesProvider.GetAffectedEntitiesAsync(input);
-        return await navigation.LoadCurrentAsync(input, affectedEntities.ToArray());
+        return await navigation.LoadCurrentAsync(input, affectedEntities);
     }
 }

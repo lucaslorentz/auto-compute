@@ -17,6 +17,9 @@ public interface IAffectedEntitiesProvider<in TInput> : IAffectedEntitiesProvide
 
     Task<IReadOnlyCollection<object>> IAffectedEntitiesProvider.GetAffectedEntitiesAsync(object input)
     {
-        return GetAffectedEntitiesAsync((TInput)input);
+        if (input is not TInput inputTyped)
+            throw new ArgumentException($"Param {nameof(input)} should be of type {typeof(TInput)}");
+
+        return GetAffectedEntitiesAsync(inputTyped);
     }
 }
