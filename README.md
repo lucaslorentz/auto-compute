@@ -95,7 +95,7 @@ Example:
 ```
 personBuilder.IncrementalComputedProperty(p => p.NumberOfCats, b => b.AddCollection(person => person.Pets.Where(pet => pet.Type == "Cat"), pet => 1));
 ```
-In this example, NumberOfCats is incremented/decremented by 1 based on changes to Pets collection or to Pet's Type property.
+In this example, NumberOfCats is incremented/decremented based on changes to Pets collection or to Pet's Type property.
 
 ## DbContext features
 
