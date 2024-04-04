@@ -72,7 +72,7 @@ For this more complex scenario:
 personBuilder.ComputedProperty(person => person.NumberOfCats, person => person.Pets.Count(pet => pet.Type == "Cat"));
 ```
 The NumberOfCats property will be automatically updated whenever:
-- Person's Pets collection change (add, remove, inverse collection add, inverse collection remove)
+- Person's Pets collection change (add, remove, inverse add, inverse remove)
 - Pet's Type property changes
 
 ## Mapping features
