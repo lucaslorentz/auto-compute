@@ -57,7 +57,7 @@ Check the rest of the readme to understand more all features.
 
 ## How it works
 
-This library operates by meticulously analyzing computed expressions and tracking all referenced data within them. It then traverses inverse navigations to pinpoint all entities that could be affected by changes to the referenced data.
+This library operates by meticulously analyzing computed expressions and tracking all referenced data within them. It then traverses inverse navigations to pinpoint all root entities that could be affected by changes to the referenced data.
 
 For this basic scenario:
 ```csharp
@@ -73,7 +73,7 @@ personBuilder.ComputedProperty(person => person.NumberOfCats, person => person.P
 ```
 The NumberOfCats property will be automatically updated whenever:
 - Person's Pets collection change (add, remove, inverse collection add, inverse collection remove)
-- Pet's property Type changes
+- Pet's Type property changes
 
 ## Mapping features
 
