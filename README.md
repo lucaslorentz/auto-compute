@@ -87,9 +87,9 @@ In this example, NumberOfCats is incremented/decremented by 1 based on changes t
 ## DbContext features
 
 The following DbContext methods are also available for unmapped scenarios:
-- **GetAffectedEntitiesAsync**: Given a computed expression, it returns the root entities affected by current DbContext changes.
-- **GetChangesAsync**: Given a computed expression, it returns the root entities affected by current DbContext changes with their respective original and current values.
-- **GetIncrementalChanges**: Given an incremental computed definition, it returns the root entities affected by current DbContext changes and their incremental change.
+- **GetAffectedEntitiesAsync**: Given a computed expression, it returns the root entities affected by the unsaved DbContext changes.
+- **GetChangesAsync**: Given a computed expression, it returns the root entities affected by the unsaved DbContext changes with their respective original and current values.
+- **GetIncrementalChanges**: Given an incremental computed definition, it returns the root entities affected by the unsaved DbContext changes and their respective incremental change.
 
 ## License
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
