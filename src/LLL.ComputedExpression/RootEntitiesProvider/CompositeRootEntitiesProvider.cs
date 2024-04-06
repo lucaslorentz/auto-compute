@@ -1,13 +1,13 @@
 
 namespace LLL.ComputedExpression.RootEntitiesProvider;
 
-public class CompositeRootEntitiesProvider(
-    IReadOnlyCollection<IRootEntitiesProvider> providers
-) : IRootEntitiesProvider
+public class CompositeRootEntitiesProvider<TInput, TRootEntity, TSourceEntity>(
+    IReadOnlyCollection<IRootEntitiesProvider<TInput, TRootEntity, TSourceEntity>> providers
+) : IRootEntitiesProvider<TInput, TRootEntity, TSourceEntity>
 {
-    public async Task<IReadOnlyCollection<object>> GetRootEntities(object input, IReadOnlyCollection<object> entities)
+    public async Task<IReadOnlyCollection<TRootEntity>> GetRootEntities(TInput input, IReadOnlyCollection<TSourceEntity> entities)
     {
-        var rootEntities = new HashSet<object>();
+        var rootEntities = new HashSet<TRootEntity>();
         foreach (var provider in providers)
         {
             foreach (var rootEntity in await provider.GetRootEntities(input, entities))

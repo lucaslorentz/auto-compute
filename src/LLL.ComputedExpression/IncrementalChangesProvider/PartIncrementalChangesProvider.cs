@@ -4,28 +4,29 @@ using LLL.ComputedExpression.Incremental;
 
 namespace LLL.ComputedExpression.IncrementalChangesProvider;
 
-public class PartIncrementalChangesProvider(
-    IIncrementalComputed incrementalComputed,
-    IAffectedEntitiesProvider affectedEntitiesProvider,
-    IEntityActionProvider entityActionProvider,
-    Delegate originalValueGetter,
-    Delegate currentValueGetter,
-    IRootEntitiesProvider originalRootEntitiesProvider,
-    IRootEntitiesProvider currentRootEntitiesProvider
-) : IIncrementalChangesProvider
+public class PartIncrementalChangesProvider<TInput, TRootEntity, TValue, TPartEntity>(
+    IIncrementalComputed<TRootEntity, TValue> incrementalComputed,
+    IAffectedEntitiesProvider<TInput, TPartEntity> affectedEntitiesProvider,
+    IEntityActionProvider<TInput> entityActionProvider,
+    Func<TInput, TPartEntity, TValue> originalValueGetter,
+    Func<TInput, TPartEntity, TValue> currentValueGetter,
+    IRootEntitiesProvider<TInput, TRootEntity, TPartEntity> originalRootEntitiesProvider,
+    IRootEntitiesProvider<TInput, TRootEntity, TPartEntity> currentRootEntitiesProvider
+) : IIncrementalChangesProvider<TInput, TRootEntity, TValue>
+    where TRootEntity : notnull
 {
-    public async Task<IDictionary<object, object?>> GetIncrementalChangesAsync(object input)
+    public async Task<IReadOnlyDictionary<TRootEntity, TValue>> GetIncrementalChangesAsync(TInput input)
     {
-        var incrementalChanges = new ConcurrentDictionary<object, object?>();
+        var incrementalChanges = new ConcurrentDictionary<TRootEntity, TValue>();
 
         foreach (var affectedEntity in await affectedEntitiesProvider.GetAffectedEntitiesAsync(input))
         {
-            var affectedEntityAction = entityActionProvider.GetEntityAction(input, affectedEntity);
+            var affectedEntityAction = entityActionProvider.GetEntityAction(input, affectedEntity!);
 
-            var oldPartValue = affectedEntityAction == EntityAction.Create ? incrementalComputed.Zero : originalValueGetter.DynamicInvoke(input, affectedEntity);
+            var oldPartValue = affectedEntityAction == EntityAction.Create ? incrementalComputed.Zero : originalValueGetter(input, affectedEntity);
             var oldRoots = affectedEntityAction == EntityAction.Create ? [] : await originalRootEntitiesProvider.GetRootEntities(input, [affectedEntity]);
 
-            var newPartValue = affectedEntityAction == EntityAction.Delete ? incrementalComputed.Zero : currentValueGetter.DynamicInvoke(input, affectedEntity);
+            var newPartValue = affectedEntityAction == EntityAction.Delete ? incrementalComputed.Zero : currentValueGetter(input, affectedEntity);
             var newRoots = affectedEntityAction == EntityAction.Delete ? [] : await currentRootEntitiesProvider.GetRootEntities(input, [affectedEntity]);
 
             foreach (var rootEntity in oldRoots)

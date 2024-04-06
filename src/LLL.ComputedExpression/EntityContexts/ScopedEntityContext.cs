@@ -1,3 +1,4 @@
+
 namespace LLL.ComputedExpression.EntityContexts;
 
 public class ScopedEntityContext : EntityContext
@@ -7,10 +8,17 @@ public class ScopedEntityContext : EntityContext
     public ScopedEntityContext(EntityContext parent)
     {
         _parent = parent;
+        InputType = parent.InputType;
+        EntityType = parent.EntityType;
+        RootEntityType = parent.RootEntityType;
         IsTrackingChanges = parent.IsTrackingChanges;
         parent.RegisterChildContext(this);
     }
 
+
+    public override Type InputType { get; }
+    public override Type EntityType { get; }
+    public override Type RootEntityType {get;}
     public override bool IsTrackingChanges { get; }
 
     public override IAffectedEntitiesProvider? GetParentAffectedEntitiesProvider()

@@ -1,14 +1,15 @@
 
 namespace LLL.ComputedExpression.ChangesProvider;
 
-public class DefaultChangesProvider(
-    IAffectedEntitiesProvider affectedEntitiesProvider,
-    Delegate originalValueGetter,
-    Delegate currentValueGetter,
-    IEntityActionProvider entityActionProvider
-) : IChangesProvider
+public class DefaultChangesProvider<TInput, TEntity, TValue>(
+    IAffectedEntitiesProvider<TInput, TEntity> affectedEntitiesProvider,
+    Func<TInput, TEntity, TValue> originalValueGetter,
+    Func<TInput, TEntity, TValue> currentValueGetter,
+    IEntityActionProvider<TInput> entityActionProvider
+) : IChangesProvider<TInput, TEntity, TValue>
+    where TEntity : notnull
 {
-    public async Task<IDictionary<object, (object?, object?)>> GetChangesAsync(object input)
+    public async Task<IReadOnlyDictionary<TEntity, (TValue?, TValue?)>> GetChangesAsync(TInput input)
     {
         var affectedEntities = await affectedEntitiesProvider.GetAffectedEntitiesAsync(input);
 
@@ -16,11 +17,11 @@ public class DefaultChangesProvider(
         {
             var originalValue = entityActionProvider.GetEntityAction(input, e) == EntityAction.Create
                 ? default
-                : originalValueGetter.DynamicInvoke(input, e);
+                : originalValueGetter(input, e);
 
             var currentValue = entityActionProvider.GetEntityAction(input, e) == EntityAction.Delete
                 ? default
-                : currentValueGetter.DynamicInvoke(input, e);
+                : currentValueGetter(input, e);
 
             return (originalValue, currentValue);
         });

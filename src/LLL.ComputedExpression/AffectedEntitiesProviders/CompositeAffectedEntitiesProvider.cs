@@ -1,10 +1,10 @@
 ﻿namespace LLL.ComputedExpression.AffectedEntitiesProviders;
 
-public class CompositeAffectedEntitiesProvider(
-    IReadOnlyCollection<IAffectedEntitiesProvider> providers
-) : IAffectedEntitiesProvider
+public class CompositeAffectedEntitiesProvider<TInput, TEntity>(
+    IReadOnlyCollection<IAffectedEntitiesProvider<TInput, TEntity>> providers
+) : IAffectedEntitiesProvider<TInput, TEntity>
 {
-    private readonly IReadOnlyCollection<IAffectedEntitiesProvider> _providers = providers;
+    private readonly IReadOnlyCollection<IAffectedEntitiesProvider<TInput, TEntity>> _providers = providers;
 
     public string ToDebugString()
     {
@@ -13,9 +13,9 @@ public class CompositeAffectedEntitiesProvider(
         return $"Concat({inner})";
     }
 
-    public async Task<IReadOnlyCollection<object>> GetAffectedEntitiesAsync(object input)
+    public async Task<IReadOnlyCollection<TEntity>> GetAffectedEntitiesAsync(TInput input)
     {
-        var entities = new HashSet<object>();
+        var entities = new HashSet<TEntity>();
         foreach (var provider in _providers)
         {
             foreach (var entity in await provider.GetAffectedEntitiesAsync(input))

@@ -1,4 +1,5 @@
 ﻿using FluentAssertions;
+using LLL.ComputedExpression.EFCore.Internal;
 
 namespace LLL.ComputedExpression.EFCore.Tests.AffectedEntities;
 

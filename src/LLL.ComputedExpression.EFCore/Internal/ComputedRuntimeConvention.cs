@@ -1,5 +1,4 @@
 ﻿using System.Linq.Expressions;
-using System.Runtime.CompilerServices;
 using LLL.ComputedExpression;
 using LLL.ComputedExpression.EFCore.Internal;
 using LLL.ComputedExpression.Incremental;
@@ -127,7 +126,7 @@ class ComputedRuntimeConvention(Func<IModel, IComputedExpressionAnalyzer> comput
         }
         catch (Exception ex)
         {
-            throw new InvalidOperationException($"Invalid computed expression for '{property.DeclaringType.ShortName()}.{property.Name}': {ex.Message}");
+            throw new InvalidOperationException($"Invalid computed expression for '{property.DeclaringType.ShortName()}.{property.Name}': {ex.Message}", ex);
         }
     }
 }

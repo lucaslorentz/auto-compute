@@ -1,12 +1,23 @@
+using LLL.ComputedExpression.Internal;
+
 namespace LLL.ComputedExpression.AffectedEntitiesProviders;
 
 public static class AffectedEntitiesProvider
 {
-    public static IAffectedEntitiesProvider? ComposeAndCleanup(IReadOnlyCollection<IAffectedEntitiesProvider?> providers)
+    public static IAffectedEntitiesProvider? LoadNavigation(
+        this IAffectedEntitiesProvider affectedEntitiesProvider,
+        IEntityNavigation navigation)
+    {
+        var closedType = typeof(LoadNavigationAffectedEntitiesProvider<,,>).MakeGenericType(affectedEntitiesProvider.InputType, affectedEntitiesProvider.EntityType, navigation.TargetEntityType);
+        return (IAffectedEntitiesProvider)Activator.CreateInstance(closedType, affectedEntitiesProvider, navigation)!;
+    }
+
+    public static IAffectedEntitiesProvider? ComposeAndCleanup(
+        IReadOnlyCollection<IAffectedEntitiesProvider?> providers
+    )
     {
         var cleanedUpProviders = providers
             .SelectMany(p => p?.Flatten() ?? [])
-            .Where(p => p is not null)
             .DistinctBy(p => p.ToDebugString())
             .ToArray();
 
@@ -16,6 +27,14 @@ public static class AffectedEntitiesProvider
         if (cleanedUpProviders.Length == 1)
             return cleanedUpProviders[0];
 
-        return new CompositeAffectedEntitiesProvider(cleanedUpProviders);
+        var inputType = cleanedUpProviders.Select(p => p.InputType).Distinct().Single();
+        var entityType = cleanedUpProviders.Select(p => p.EntityType).Distinct().Single();
+
+        var providerType = typeof(IAffectedEntitiesProvider<,>).MakeGenericType(inputType, entityType);
+
+        var convertedCleanupUpProviders = cleanedUpProviders.ToArray(providerType);
+
+        var closedType = typeof(CompositeAffectedEntitiesProvider<,>).MakeGenericType(inputType, entityType);
+        return (IAffectedEntitiesProvider)Activator.CreateInstance(closedType, convertedCleanupUpProviders)!;
     }
 }
