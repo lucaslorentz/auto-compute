@@ -5,7 +5,7 @@ public interface IEntityActionProvider
     EntityAction GetEntityAction(object input, object entity);
 }
 
-public interface IEntityActionProvider<TInput> : IEntityActionProvider
+public interface IEntityActionProvider<in TInput> : IEntityActionProvider
 {
     EntityAction GetEntityAction(TInput input, object entity);
 

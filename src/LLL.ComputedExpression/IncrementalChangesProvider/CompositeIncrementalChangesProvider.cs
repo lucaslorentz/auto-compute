@@ -4,14 +4,15 @@ using LLL.ComputedExpression.Incremental;
 
 namespace LLL.ComputedExpression.IncrementalChangesProvider;
 
-public class CompositeIncrementalChangesProvider(
-    IIncrementalComputed incrementalComputed,
-    IReadOnlyCollection<IIncrementalChangesProvider> providers
-) : IIncrementalChangesProvider
+public class CompositeIncrementalChangesProvider<TInput, TRootEntity, TValue>(
+    IIncrementalComputed<TRootEntity, TValue> incrementalComputed,
+    IReadOnlyCollection<IIncrementalChangesProvider<TInput, TRootEntity, TValue>> providers
+) : IIncrementalChangesProvider<TInput, TRootEntity, TValue>
+    where TRootEntity : notnull
 {
-    public async Task<IDictionary<object, object?>> GetIncrementalChangesAsync(object input)
+    public async Task<IReadOnlyDictionary<TRootEntity, TValue>> GetIncrementalChangesAsync(TInput input)
     {
-        var aggregated = new ConcurrentDictionary<object, object?>();
+        var aggregated = new ConcurrentDictionary<TRootEntity, TValue>();
 
         foreach (var provider in providers)
         {

@@ -6,6 +6,7 @@ using LLL.ComputedExpression.EntityContexts;
 using LLL.ComputedExpression.ExpressionVisitors;
 using LLL.ComputedExpression.Incremental;
 using LLL.ComputedExpression.IncrementalChangesProvider;
+using LLL.ComputedExpression.Internal;
 
 namespace LLL.ComputedExpression;
 
@@ -40,7 +41,7 @@ public class ComputedExpressionAnalyzer<TInput> : IComputedExpressionAnalyzer
     public ComputedExpressionAnalyzer<TInput> AddStopTrackingDecision(
         IStopTrackingDecision stopTrackingDecision)
     {
-        _entityContextPropagators.Insert(0, new UntrackedEntityContextPropagator(
+        _entityContextPropagators.Insert(0, new UntrackedEntityContextPropagator<TInput>(
             stopTrackingDecision
         ));
         return this;
@@ -77,21 +78,6 @@ public class ComputedExpressionAnalyzer<TInput> : IComputedExpressionAnalyzer
         return entityContext.GetAffectedEntitiesProvider();
     }
 
-    public IIncrementalChangesProvider CreateIncrementalChangesProvider(
-        IIncrementalComputed incrementalComputed)
-    {
-        var providers = new List<IIncrementalChangesProvider>();
-
-        foreach (var incrementalPart in incrementalComputed.Parts)
-        {
-            var provider = CreateIncrementalChangesProvider(incrementalComputed, incrementalPart);
-            if (provider is not null)
-                providers.Add(provider);
-        }
-
-        return new CompositeIncrementalChangesProvider(incrementalComputed, providers);
-    }
-
     public IChangesProvider? CreateChangesProvider(LambdaExpression computed)
     {
         var affectedEntitiesProvider = CreateAffectedEntitiesProvider(computed);
@@ -100,11 +86,19 @@ public class ComputedExpressionAnalyzer<TInput> : IComputedExpressionAnalyzer
         var originalValueGetter = GetOriginalValueExpression(computed).Compile();
         var currentValueGetter = GetCurrentValueExpression(computed).Compile();
         var entityActionProvider = RequireEntityActionProvider();
-        return new DefaultChangesProvider(
+
+        var entityType = computed.Parameters[0].Type;
+        var valueType = computed.Body.Type;
+
+        var closedType = typeof(DefaultChangesProvider<,,>)
+            .MakeGenericType(typeof(TInput), entityType, valueType);
+
+        return (IChangesProvider)Activator.CreateInstance(
+            closedType,
             affectedEntitiesProvider,
             originalValueGetter,
             currentValueGetter,
-            entityActionProvider);
+            entityActionProvider)!;
     }
 
     public LambdaExpression GetOriginalValueExpression(LambdaExpression computed)
@@ -125,14 +119,81 @@ public class ComputedExpressionAnalyzer<TInput> : IComputedExpressionAnalyzer
         return Expression.Lambda(computed.Body, [inputParameter, .. computed.Parameters]);
     }
 
+    public IIncrementalChangesProvider CreateIncrementalChangesProvider(
+        IIncrementalComputed incrementalComputed)
+    {
+        var providers = new List<IIncrementalChangesProvider>();
+
+        foreach (var incrementalPart in incrementalComputed.Parts)
+        {
+            var provider = CreatePartIncrementalChangesProvider(incrementalPart);
+            if (provider is not null)
+                providers.Add(provider);
+        }
+
+        var providerType = typeof(IIncrementalChangesProvider<,,>)
+            .MakeGenericType(typeof(TInput), incrementalComputed.EntityType, incrementalComputed.ValueType);
+
+        var convertedCleanupUpProviders = providers.ToArray(providerType);
+
+        var closedType = typeof(CompositeIncrementalChangesProvider<,,>)
+            .MakeGenericType(typeof(TInput), incrementalComputed.EntityType, incrementalComputed.ValueType);
+
+        return (IIncrementalChangesProvider)Activator.CreateInstance(closedType, incrementalComputed, convertedCleanupUpProviders)!;
+
+        IIncrementalChangesProvider? CreatePartIncrementalChangesProvider(
+            IncrementalComputedPart incrementalComputedPart)
+        {
+            var entityActionProvider = RequireEntityActionProvider();
+
+            var entityContext = GetEntityContext(
+                incrementalComputedPart.Navigation,
+                incrementalComputedPart.Navigation.Body,
+                incrementalComputedPart.IsMany ? EntityContextKeys.Element : EntityContextKeys.None);
+
+            var valueAffectedEntitiesProvider = CreateAffectedEntitiesProvider(incrementalComputedPart.ValueSelector);
+            var rootRelationshipAffectedEntitiesProvider = entityContext.GetAffectedEntitiesProviderInverse();
+            var originalValueGetter = GetOriginalValueExpression(incrementalComputedPart.ValueSelector).Compile();
+            var currentValueGetter = GetCurrentValueExpression(incrementalComputedPart.ValueSelector).Compile();
+            var originalRootEntitiesProvider = entityContext.GetOriginalRootEntitiesProvider();
+            var currentRootEntitiesProvider = entityContext.GetCurrentRootEntitiesProvider();
+
+            var composedAffectedEntitiesProvider = AffectedEntitiesProvider.ComposeAndCleanup([
+                valueAffectedEntitiesProvider,
+                rootRelationshipAffectedEntitiesProvider
+            ]);
+
+            if (composedAffectedEntitiesProvider is null)
+                return null;
+
+            var partEntityType = incrementalComputedPart.ValueSelector.Parameters[0].Type;
+
+            var closedType = typeof(PartIncrementalChangesProvider<,,,>)
+                .MakeGenericType(typeof(TInput), incrementalComputed.EntityType, incrementalComputed.ValueType, partEntityType);
+
+            return (IIncrementalChangesProvider)Activator.CreateInstance(
+                closedType,
+                incrementalComputed,
+                composedAffectedEntitiesProvider,
+                entityActionProvider,
+                originalValueGetter,
+                currentValueGetter,
+                originalRootEntitiesProvider,
+                currentRootEntitiesProvider
+            )!;
+        }
+    }
+
     private EntityContext GetEntityContext(
         LambdaExpression computed,
         Expression node,
         string entityContextKey)
     {
-        var analysis = new ComputedExpressionAnalysis(this);
+        var rootEntityType = computed.Parameters[0].Type;
 
-        var entityContext = new RootEntityContext();
+        var analysis = new ComputedExpressionAnalysis(this, rootEntityType);
+
+        var entityContext = new RootEntityContext(typeof(TInput), rootEntityType);
 
         analysis.AddEntityContextProvider(computed.Parameters[0], (key) => key == EntityContextKeys.None ? entityContext : null);
 
@@ -147,43 +208,6 @@ public class ComputedExpressionAnalyzer<TInput> : IComputedExpressionAnalyzer
         ).Visit(computed);
 
         return analysis.ResolveEntityContext(node, entityContextKey);
-    }
-
-    private IIncrementalChangesProvider? CreateIncrementalChangesProvider(
-        IIncrementalComputed incrementalComputed,
-        IncrementalComputedPart incrementalComputedPart)
-    {
-        var entityActionProvider = RequireEntityActionProvider();
-
-        var entityContext = GetEntityContext(
-            incrementalComputedPart.Navigation,
-            incrementalComputedPart.Navigation.Body,
-            incrementalComputedPart.IsMany ? EntityContextKeys.Element : EntityContextKeys.None);
-
-        var valueAffectedEntitiesProvider = CreateAffectedEntitiesProvider(incrementalComputedPart.ValueSelector);
-        var rootRelationshipAffectedEntitiesProvider = entityContext.GetAffectedEntitiesProviderInverse();
-        var originalValueGetter = GetOriginalValueExpression(incrementalComputedPart.ValueSelector).Compile();
-        var currentValueGetter = GetCurrentValueExpression(incrementalComputedPart.ValueSelector).Compile();
-        var originalRootEntitiesProvider = entityContext.GetOriginalRootEntitiesProvider();
-        var currentRootEntitiesProvider = entityContext.GetCurrentRootEntitiesProvider();
-
-        var composedAffectedEntitiesProvider = AffectedEntitiesProvider.ComposeAndCleanup([
-            valueAffectedEntitiesProvider,
-            rootRelationshipAffectedEntitiesProvider
-        ]);
-
-        if (composedAffectedEntitiesProvider is null)
-            return null;
-
-        return new PartIncrementalChangesProvider(
-            incrementalComputed,
-            composedAffectedEntitiesProvider,
-            entityActionProvider,
-            originalValueGetter,
-            currentValueGetter,
-            originalRootEntitiesProvider,
-            currentRootEntitiesProvider
-        );
     }
 
     private IEntityActionProvider<TInput> RequireEntityActionProvider()

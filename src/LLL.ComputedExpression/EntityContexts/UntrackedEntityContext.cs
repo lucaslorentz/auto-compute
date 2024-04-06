@@ -2,8 +2,15 @@
 
 namespace LLL.ComputedExpression.EntityContexts;
 
-public class UntrackedEntityContext : EntityContext
+public class UntrackedEntityContext(
+    Type inputType,
+    Type entityType,
+    Type rootEntityType
+) : EntityContext
 {
+    public override Type InputType => inputType;
+    public override Type EntityType => entityType;
+    public override Type RootEntityType => rootEntityType;
     public override bool IsTrackingChanges => false;
 
     public override IAffectedEntitiesProvider? GetParentAffectedEntitiesProvider()
@@ -18,13 +25,17 @@ public class UntrackedEntityContext : EntityContext
 
     public override IRootEntitiesProvider GetOriginalRootEntitiesProvider()
     {
-        // TODO: Implement
-        return new EmptyRootEntitiesProvider();
+        var closedType = typeof(EmptyRootEntitiesProvider<,,>)
+            .MakeGenericType(InputType, RootEntityType, EntityType);
+
+        return (IRootEntitiesProvider)Activator.CreateInstance(closedType)!;
     }
 
     public override IRootEntitiesProvider GetCurrentRootEntitiesProvider()
     {
-        // TODO: Implement
-        return new EmptyRootEntitiesProvider();
+        var closedType = typeof(EmptyRootEntitiesProvider<,,>)
+            .MakeGenericType(InputType, RootEntityType, EntityType);
+
+        return (IRootEntitiesProvider)Activator.CreateInstance(closedType)!;
     }
 }

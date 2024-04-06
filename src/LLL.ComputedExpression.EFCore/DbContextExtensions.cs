@@ -5,7 +5,6 @@ using LLL.ComputedExpression.EFCore.Internal;
 using LLL.ComputedExpression.Incremental;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
-using Microsoft.EntityFrameworkCore.Query;
 
 namespace LLL.ComputedExpression.EFCore;
 
@@ -21,73 +20,33 @@ public static class DbContextExtensions
         return optionsBuilder;
     }
 
-    public static IAffectedEntitiesProvider? GetAffectedEntitiesProvider(this DbContext dbContext, LambdaExpression computedExpression)
-    {
-        var analyzer = GetComputedExpressionAnalyzer(dbContext);
-
-        var cache = dbContext.GetService<IConcurrentCreationCache>();
-
-        var cacheKey = (
-            Analyzer: analyzer,
-            Puropse: "AffectedEntities",
-            ExpressionKey: new ExpressionCacheKey(computedExpression, ExpressionEqualityComparer.Instance)
-        );
-
-        return cache.GetOrCreate(
-            cacheKey,
-            static (k) => k.Analyzer.CreateAffectedEntitiesProvider((LambdaExpression)k.ExpressionKey.Expression));
-    }
-
-    public static async Task<IReadOnlyCollection<TEntity>> GetAffectedEntitiesAsync<TEntity, P>(
-        this DbContext dbContext, Expression<Func<TEntity, P>> computedExpression)
+    public static async Task<IReadOnlyCollection<TEntity>> GetAffectedEntitiesAsync<TEntity, TValue>(
+        this DbContext dbContext, Expression<Func<TEntity, TValue>> computedExpression)
     {
         var affectedEntitiesProvider = dbContext.GetAffectedEntitiesProvider(computedExpression);
         if (affectedEntitiesProvider is null)
             return [];
 
-        var affectedEntities = await affectedEntitiesProvider.GetAffectedEntitiesAsync(new EFCoreComputedInput(dbContext));
-        return affectedEntities.OfType<TEntity>().ToArray();
+        return await affectedEntitiesProvider.GetAffectedEntitiesAsync(new EFCoreComputedInput(dbContext));
     }
 
-    public static IChangesProvider? GetChangesProviderAsync<TEntity, P>(
-        this DbContext dbContext, Expression<Func<TEntity, P>> computedExpression)
-        where TEntity : notnull
-    {
-        var analyzer = GetComputedExpressionAnalyzer(dbContext);
-
-        var cache = dbContext.GetService<IConcurrentCreationCache>();
-
-        var cacheKey = (
-            Analyzer: analyzer,
-            Purpose: "ChangesProvider",
-            ExpressionKey: new ExpressionCacheKey(computedExpression, ExpressionEqualityComparer.Instance)
-        );
-
-        return cache.GetOrCreate(
-            cacheKey,
-            static (k) => k.Analyzer.CreateChangesProvider((LambdaExpression)k.ExpressionKey.Expression));
-    }
-
-    public static async Task<IReadOnlyDictionary<TEntity, (P? originalValue, P? newValue)>> GetChangesAsync<TEntity, P>(
-        this DbContext dbContext, Expression<Func<TEntity, P>> computedExpression)
+    public static async Task<IReadOnlyDictionary<TEntity, (TValue? originalValue, TValue? newValue)>> GetChangesAsync<TEntity, TValue>(
+        this DbContext dbContext, Expression<Func<TEntity, TValue?>> computedExpression)
         where TEntity : notnull
     {
         var changesProvider = dbContext.GetChangesProviderAsync(computedExpression);
         if (changesProvider is null)
-            return ImmutableDictionary<TEntity, (P?, P?)>.Empty;
+            return ImmutableDictionary<TEntity, (TValue?, TValue?)>.Empty;
 
-        var changes = await changesProvider.GetChangesAsync(new EFCoreComputedInput(dbContext));
-        return changes.ToDictionary(
-            kv => (TEntity)kv.Key,
-            kv => ((P?)kv.Value.OriginalValue, (P?)kv.Value.NewValue));
+        return await changesProvider.GetChangesAsync(new EFCoreComputedInput(dbContext));
     }
 
-    public static async Task<IReadOnlyDictionary<TEntity, V>> GetIncrementalChanges<TEntity, V>(
-        this DbContext dbContext, IIncrementalComputed<TEntity, V> incrementalComputed)
+    public static async Task<IReadOnlyDictionary<TEntity, TValue>> GetIncrementalChanges<TEntity, TValue>(
+        this DbContext dbContext, IIncrementalComputed<TEntity, TValue> incrementalComputed)
         where TEntity : notnull
-        where V : notnull
+        where TValue : notnull
     {
-        var analyzer = GetComputedExpressionAnalyzer(dbContext);
+        var analyzer = dbContext.GetComputedExpressionAnalyzer();
 
         var cache = dbContext.GetService<IConcurrentCreationCache>();
 
@@ -99,13 +58,12 @@ public static class DbContextExtensions
 
         var incrementalChangeProvider = cache.GetOrCreate(
             cacheKey,
-            static (k) => k.analyzer.CreateIncrementalChangesProvider(
+            static (k) => (IIncrementalChangesProvider<IEFCoreComputedInput, TEntity, TValue>)k.analyzer.CreateIncrementalChangesProvider(
                 k.incrementalComputed));
 
         var input = new EFCoreComputedInput(dbContext);
 
-        var changes = await incrementalChangeProvider.GetIncrementalChangesAsync(input);
-        return changes.ToDictionary(kv => (TEntity)kv.Key, kv => (V)kv.Value!);
+        return await incrementalChangeProvider.GetIncrementalChangesAsync(input);
     }
 
     public static async Task<int> UpdateComputedsAsync(this DbContext dbContext)
@@ -127,13 +85,5 @@ public static class DbContextExtensions
                 break;
         }
         return totalChanges;
-    }
-
-    private static IComputedExpressionAnalyzer GetComputedExpressionAnalyzer(DbContext dbContext)
-    {
-        if (dbContext.Model.FindRuntimeAnnotation(ComputedAnnotationNames.ExpressionAnalyzer)?.Value is not IComputedExpressionAnalyzer analyzer)
-            throw new Exception($"Cannot find {ComputedAnnotationNames.ExpressionAnalyzer} for model");
-
-        return analyzer;
     }
 }

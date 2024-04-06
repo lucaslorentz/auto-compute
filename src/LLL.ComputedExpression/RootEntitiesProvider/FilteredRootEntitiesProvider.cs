@@ -1,13 +1,13 @@
 ﻿namespace LLL.ComputedExpression.RootEntitiesProvider;
 
-public class FilteredRootEntitiesProvider(
-    IRootEntitiesProvider parent,
-    Delegate filter
-) : IRootEntitiesProvider
+public class FilteredRootEntitiesProvider<TInput, TRootEntity, TSourceEntity>(
+    IRootEntitiesProvider<TInput, TRootEntity, TSourceEntity> parent,
+    Func<TInput, TSourceEntity, bool> filter
+) : IRootEntitiesProvider<TInput, TRootEntity, TSourceEntity>
 {
-    public async Task<IReadOnlyCollection<object>> GetRootEntities(object input, IReadOnlyCollection<object> entities)
+    public async Task<IReadOnlyCollection<TRootEntity>> GetRootEntities(TInput input, IReadOnlyCollection<TSourceEntity> entities)
     {
-        var filteredEntities = entities.Where(e => (bool)filter.DynamicInvoke(input, e)!).ToArray();
+        var filteredEntities = entities.Where(e => filter(input, e)).ToArray();
         return await parent.GetRootEntities(input, filteredEntities);
     }
 }

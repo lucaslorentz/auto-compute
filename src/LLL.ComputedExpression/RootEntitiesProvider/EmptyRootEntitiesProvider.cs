@@ -1,9 +1,9 @@
 
 namespace LLL.ComputedExpression.RootEntitiesProvider;
 
-public class EmptyRootEntitiesProvider : IRootEntitiesProvider
+public class EmptyRootEntitiesProvider<TInput, TRootEntity, TSourceEntity> : IRootEntitiesProvider<TInput, TRootEntity, TSourceEntity>
 {
-    public async Task<IReadOnlyCollection<object>> GetRootEntities(object input, IReadOnlyCollection<object> entities)
+    public async Task<IReadOnlyCollection<TRootEntity>> GetRootEntities(TInput input, IReadOnlyCollection<TSourceEntity> entities)
     {
         return [];
     }

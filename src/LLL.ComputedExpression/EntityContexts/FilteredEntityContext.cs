@@ -21,10 +21,16 @@ public class FilteredEntityContext : EntityContext
         _parameterContext = parameterContext;
         _filterLambda = filterLambda;
         _analyzer = analyzer;
+        InputType = parent.InputType;
+        EntityType = parent.EntityType;
+        RootEntityType = parent.RootEntityType;
         IsTrackingChanges = parent.IsTrackingChanges;
         parent.RegisterChildContext(this);
     }
 
+    public override Type InputType { get; }
+    public override Type EntityType { get; }
+    public override Type RootEntityType { get; }
     public override bool IsTrackingChanges { get; }
 
     public override IAffectedEntitiesProvider? GetParentAffectedEntitiesProvider()
@@ -43,12 +49,24 @@ public class FilteredEntityContext : EntityContext
     public override IRootEntitiesProvider GetOriginalRootEntitiesProvider()
     {
         var filter = _analyzer.GetOriginalValueExpression(_filterLambda);
-        return new FilteredRootEntitiesProvider(_parent.GetOriginalRootEntitiesProvider(), filter.Compile());
+
+        var closedType = typeof(FilteredRootEntitiesProvider<,,>)
+            .MakeGenericType(InputType, RootEntityType, EntityType);
+
+        return (IRootEntitiesProvider)Activator.CreateInstance(
+            closedType,
+            [_parent.GetOriginalRootEntitiesProvider(), filter.Compile()])!;
     }
 
     public override IRootEntitiesProvider GetCurrentRootEntitiesProvider()
     {
         var filter = _analyzer.GetCurrentValueExpression(_filterLambda);
-        return new FilteredRootEntitiesProvider(_parent.GetCurrentRootEntitiesProvider(), filter.Compile());
+
+        var closedType = typeof(FilteredRootEntitiesProvider<,,>)
+            .MakeGenericType(InputType, RootEntityType, EntityType);
+
+        return (IRootEntitiesProvider)Activator.CreateInstance(
+            closedType,
+            [_parent.GetCurrentRootEntitiesProvider(), filter.Compile()])!;
     }
 }

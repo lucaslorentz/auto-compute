@@ -18,6 +18,9 @@ public class NavigationEntityContext : EntityContext
         parent.RegisterChildContext(this);
     }
 
+    public override Type InputType => _parent.InputType;
+    public override Type EntityType => _navigation.TargetEntityType;
+    public override Type RootEntityType => _parent.RootEntityType;
     public override bool IsTrackingChanges { get; }
 
     public override IAffectedEntitiesProvider? GetParentAffectedEntitiesProvider()
@@ -27,17 +30,17 @@ public class NavigationEntityContext : EntityContext
         if (affectedEntitiesProvider is null)
             return null;
 
-        return new LoadNavigationAffectedEntitiesProvider(affectedEntitiesProvider, _navigation.GetInverse());
+        return affectedEntitiesProvider.LoadNavigation(_navigation.GetInverse());
     }
 
     public override IAffectedEntitiesProvider? GetAffectedEntitiesProviderInverse()
     {
         var navigationAffectedEntitiesProvider = _navigation.GetInverse().GetAffectedEntitiesProvider();
         var parentAffectedEntitiesProvider = _parent.GetAffectedEntitiesProviderInverse();
-        
+
         var loadedFromParentAffectedEntitiesProvider = parentAffectedEntitiesProvider is null
             ? null
-            : new LoadNavigationAffectedEntitiesProvider(parentAffectedEntitiesProvider, _navigation);
+            : parentAffectedEntitiesProvider.LoadNavigation(_navigation);
 
         return AffectedEntitiesProvider.ComposeAndCleanup([
             navigationAffectedEntitiesProvider,
@@ -47,11 +50,17 @@ public class NavigationEntityContext : EntityContext
 
     public override IRootEntitiesProvider GetOriginalRootEntitiesProvider()
     {
-        return new LoadOriginalNavigationRootEntitiesProvider(_parent.GetOriginalRootEntitiesProvider(), _navigation.GetInverse());
+        var closedType = typeof(LoadOriginalNavigationRootEntitiesProvider<,,,>)
+            .MakeGenericType(InputType, RootEntityType, EntityType, _parent.EntityType);
+
+        return (IRootEntitiesProvider)Activator.CreateInstance(closedType, _parent.GetOriginalRootEntitiesProvider(), _navigation.GetInverse())!;
     }
 
     public override IRootEntitiesProvider GetCurrentRootEntitiesProvider()
     {
-        return new LoadCurrentNavigationRootEntitiesProvider(_parent.GetCurrentRootEntitiesProvider(), _navigation.GetInverse());
+        var closedType = typeof(LoadCurrentNavigationRootEntitiesProvider<,,,>)
+            .MakeGenericType(InputType, RootEntityType, EntityType, _parent.EntityType);
+
+        return (IRootEntitiesProvider)Activator.CreateInstance(closedType, _parent.GetCurrentRootEntitiesProvider(), _navigation.GetInverse())!;
     }
 }

@@ -10,6 +10,9 @@ public abstract class EntityContext
     public IEnumerable<IEntityMember> AccessedMembers => _accessedMembers;
     public IEnumerable<EntityContext> ChildContexts => _childContexts;
 
+    public abstract Type InputType { get; }
+    public abstract Type RootEntityType { get; }
+    public abstract Type EntityType { get; }
     public abstract bool IsTrackingChanges { get; }
 
     public void RegisterAccessedMember(IEntityMember member)

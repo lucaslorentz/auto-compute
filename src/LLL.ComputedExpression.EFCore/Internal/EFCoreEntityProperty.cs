@@ -4,7 +4,9 @@ using Microsoft.EntityFrameworkCore.Metadata;
 
 namespace LLL.ComputedExpression.EFCore.Internal;
 
-public class EFCoreEntityProperty(IProperty property) : IEntityProperty
+public class EFCoreEntityProperty<TEntity>(
+    IProperty property
+) : IEntityProperty<IEFCoreComputedInput, TEntity>
 {
     public virtual string Name => property.Name;
 
@@ -15,18 +17,18 @@ public class EFCoreEntityProperty(IProperty property) : IEntityProperty
 
     public virtual IAffectedEntitiesProvider? GetAffectedEntitiesProvider()
     {
-        return new EFCorePropertyAffectedEntitiesProvider(property);
+        return new EFCorePropertyAffectedEntitiesProvider<TEntity>(property);
     }
 
     public virtual Expression CreateOriginalValueExpression(
         IEntityMemberAccess<IEntityProperty> memberAccess,
         Expression inputExpression)
     {
-        var originalValueGetter = static (IProperty property, IEFCoreComputedInput input, object ent) =>
+        var originalValueGetter = static (IProperty property, IEFCoreComputedInput input, TEntity ent) =>
         {
             var dbContext = input.DbContext;
 
-            var entityEntry = dbContext.Entry(ent);
+            var entityEntry = dbContext.Entry(ent!);
 
             if (entityEntry.State == EntityState.Added)
                 throw new InvalidOperationException("Cannot retrieve the original value of an added entity");

@@ -88,6 +88,7 @@ public static class Utilities
             yield return originalValue;
         }
     }
+    
     public static IEnumerable<object> GetEntities(this NavigationEntry navigationEntry)
     {
         var currentValue = navigationEntry.CurrentValue;
