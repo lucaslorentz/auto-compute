@@ -116,7 +116,13 @@ public class ComputedExpressionAnalyzer<TInput> : IComputedExpressionAnalyzer
     public LambdaExpression GetCurrentValueExpression(LambdaExpression computed)
     {
         var inputParameter = Expression.Parameter(typeof(TInput), "input");
-        return Expression.Lambda(computed.Body, [inputParameter, .. computed.Parameters]);
+
+        var newBody = new ChangeToCurrentValueVisitor(
+            inputParameter,
+            _memberAccessLocators
+        ).Visit(computed.Body)!;
+
+        return Expression.Lambda(newBody, [inputParameter, .. computed.Parameters]);
     }
 
     public IIncrementalChangesProvider CreateIncrementalChangesProvider(

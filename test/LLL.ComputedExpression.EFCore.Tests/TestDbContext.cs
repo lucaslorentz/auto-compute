@@ -15,7 +15,6 @@ public static class TestDbContext
 
         var contextOptions = new DbContextOptionsBuilder<TDbContext>()
             .UseSqlite(connection)
-            .UseLazyLoadingProxies()
             .UseComputeds()
             .ReplaceService<IModelCacheKeyFactory, CustomizedModelCacheKeyFactory>()
             .Options;

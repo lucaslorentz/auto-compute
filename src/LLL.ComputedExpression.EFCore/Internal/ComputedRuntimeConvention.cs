@@ -58,16 +58,18 @@ class ComputedRuntimeConvention(Func<IModel, IComputedExpressionAnalyzer> comput
             if (affectedEntitiesProvider is null)
                 return;
 
-            var compiledExpression = computedExpression.Compile();
+            var currentValueGetter = computedExpressionAnalyzer.GetCurrentValueExpression(computedExpression)
+                .Compile();
 
             computedUpdaters.Add(async (dbContext) =>
             {
                 var changes = 0;
-                foreach (var affectedEntity in await affectedEntitiesProvider.GetAffectedEntitiesAsync(new EFCoreComputedInput(dbContext)))
+                var input = new EFCoreComputedInput(dbContext);
+                foreach (var affectedEntity in await affectedEntitiesProvider.GetAffectedEntitiesAsync(input))
                 {
                     var affectedEntry = dbContext.Entry(affectedEntity);
                     var propertyEntry = affectedEntry.Property(property);
-                    var newValue = compiledExpression.DynamicInvoke(affectedEntity);
+                    var newValue = currentValueGetter.DynamicInvoke(input, affectedEntity);
                     var valueComparer = property.GetValueComparer();
                     if (!valueComparer.Equals(propertyEntry.CurrentValue, newValue))
                     {
