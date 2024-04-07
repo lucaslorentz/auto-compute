@@ -46,4 +46,31 @@ public class EFCoreEntityProperty<TEntity>(
             property.ClrType
         );
     }
+
+    public virtual Expression CreateCurrentValueExpression(
+        IEntityMemberAccess<IEntityProperty> memberAccess,
+        Expression inputExpression)
+    {
+        var currentValueGetter = static (IProperty property, IEFCoreComputedInput input, TEntity ent) =>
+        {
+            var dbContext = input.DbContext;
+
+            var entityEntry = dbContext.Entry(ent!);
+
+            if (entityEntry.State == EntityState.Deleted)
+                throw new InvalidOperationException("Cannot retrieve the current value of a deleted entity");
+
+            return entityEntry.Property(property).CurrentValue;
+        };
+
+        return Expression.Convert(
+            Expression.Invoke(
+                Expression.Constant(currentValueGetter),
+                Expression.Constant(property),
+                inputExpression,
+                memberAccess.FromExpression
+            ),
+            property.ClrType
+        );
+    }
 }

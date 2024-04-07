@@ -84,7 +84,40 @@ public class EFCoreEntityNavigation<TSourceEntity, TTargetEntity>(
             if (entityEntry.State == EntityState.Added)
                 throw new InvalidOperationException("Cannot retrieve the original value of an added entity");
 
-            return entityEntry.Navigation(navigation).GetOriginalValue();
+            var navigationEntry = entityEntry.Navigation(navigation);
+
+            return navigationEntry.GetOriginalValue();
+        };
+
+        return Expression.Convert(
+            Expression.Invoke(
+                Expression.Constant(originalValueGetter),
+                Expression.Constant(navigation),
+                inputExpression,
+                memberAccess.FromExpression
+            ),
+            navigation.ClrType
+        );
+    }
+
+    public virtual Expression CreateCurrentValueExpression(
+        IEntityMemberAccess<IEntityNavigation> memberAccess,
+        Expression inputExpression)
+    {
+        var originalValueGetter = static (INavigation navigation, IEFCoreComputedInput input, TSourceEntity ent) =>
+        {
+            var dbContext = input.DbContext;
+
+            var entityEntry = dbContext.Entry(ent!);
+
+            if (entityEntry.State == EntityState.Deleted)
+                throw new InvalidOperationException("Cannot retrieve the current value of a deleted entity");
+
+            var navigationEntry = entityEntry.Navigation(navigation);
+            if (!navigationEntry.IsLoaded)
+                navigationEntry.Load();
+
+            return navigationEntry.CurrentValue;
         };
 
         return Expression.Convert(
