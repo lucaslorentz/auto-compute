@@ -40,7 +40,7 @@ public class FilteredEntityContext : EntityContext
 
     public override IAffectedEntitiesProvider? GetAffectedEntitiesProviderInverse()
     {
-        return AffectedEntitiesProvider.ComposeAndCleanup([
+        return AffectedEntitiesProviderExtensions.ComposeAndCleanup([
             _parent.GetAffectedEntitiesProviderInverse(),
             _parameterContext.GetAffectedEntitiesProvider()
         ]);

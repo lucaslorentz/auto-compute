@@ -6,52 +6,46 @@ namespace LLL.ComputedExpression.IncrementalChangesProvider;
 
 public class PartIncrementalChangesProvider<TInput, TRootEntity, TValue, TPartEntity>(
     IIncrementalComputed<TRootEntity, TValue> incrementalComputed,
-    IAffectedEntitiesProvider<TInput, TPartEntity> affectedEntitiesProvider,
-    IEntityActionProvider<TInput> entityActionProvider,
-    Func<TInput, TPartEntity, TValue> originalValueGetter,
-    Func<TInput, TPartEntity, TValue> currentValueGetter,
-    IRootEntitiesProvider<TInput, TRootEntity, TPartEntity> originalRootEntitiesProvider,
-    IRootEntitiesProvider<TInput, TRootEntity, TPartEntity> currentRootEntitiesProvider
+    IChangesProvider<TInput, TPartEntity, TValue> valueChangesProvider,
+    IChangesProvider<TInput, TPartEntity, IReadOnlyCollection<TRootEntity>> rootsChangesProvider
 ) : IIncrementalChangesProvider<TInput, TRootEntity, TValue>
     where TRootEntity : notnull
+    where TPartEntity : class
 {
+    readonly IChangesProvider<TInput, TPartEntity, (TValue Value, IReadOnlyCollection<TRootEntity> Roots)> _changesProvider = valueChangesProvider
+        .SkipEqualValues(incrementalComputed.GetValueEqualityComparer())
+        .Combine(rootsChangesProvider, (a, b) => (Value: a, Roots: b))
+        .CreateContinuedChangesProvider();
+
     public async Task<IReadOnlyDictionary<TRootEntity, TValue>> GetIncrementalChangesAsync(TInput input)
     {
         var incrementalChanges = new ConcurrentDictionary<TRootEntity, TValue>();
 
-        foreach (var affectedEntity in await affectedEntitiesProvider.GetAffectedEntitiesAsync(input))
+        foreach (var kv in await _changesProvider.GetChangesAsync(input))
         {
-            var affectedEntityAction = entityActionProvider.GetEntityAction(input, affectedEntity!);
-
-            var oldPartValue = affectedEntityAction == EntityAction.Create ? incrementalComputed.Zero : originalValueGetter(input, affectedEntity);
-            var oldRoots = affectedEntityAction == EntityAction.Create ? [] : await originalRootEntitiesProvider.GetRootEntities(input, [affectedEntity]);
-
-            var newPartValue = affectedEntityAction == EntityAction.Delete ? incrementalComputed.Zero : currentValueGetter(input, affectedEntity);
-            var newRoots = affectedEntityAction == EntityAction.Delete ? [] : await currentRootEntitiesProvider.GetRootEntities(input, [affectedEntity]);
-
-            foreach (var rootEntity in oldRoots)
+            foreach (var rootEntity in kv.Value.Original.Roots)
             {
                 incrementalChanges.AddOrUpdate(
                     rootEntity,
                     (k) => incrementalComputed.Remove(
                         incrementalComputed.Zero,
-                        oldPartValue!
+                        kv.Value.Original.Value
                     ),
                     (k, v) => incrementalComputed.Remove(
                         v,
-                        oldPartValue!
+                        kv.Value.Original.Value
                     )
                 );
             }
 
-            foreach (var rootEntity in newRoots)
+            foreach (var rootEntity in kv.Value.Current.Roots)
             {
                 incrementalChanges.AddOrUpdate(
                     rootEntity,
-                    (k) => newPartValue!,
+                    (k) => kv.Value.Current.Value,
                     (k, v) => incrementalComputed.Add(
                         v,
-                        newPartValue!
+                        kv.Value.Current.Value
                     )
                 );
             }

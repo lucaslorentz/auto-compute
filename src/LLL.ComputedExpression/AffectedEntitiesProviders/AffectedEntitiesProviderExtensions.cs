@@ -2,7 +2,7 @@ using LLL.ComputedExpression.Internal;
 
 namespace LLL.ComputedExpression.AffectedEntitiesProviders;
 
-public static class AffectedEntitiesProvider
+public static class AffectedEntitiesProviderExtensions
 {
     public static IAffectedEntitiesProvider? LoadNavigation(
         this IAffectedEntitiesProvider affectedEntitiesProvider,
@@ -10,6 +10,13 @@ public static class AffectedEntitiesProvider
     {
         var closedType = typeof(LoadNavigationAffectedEntitiesProvider<,,>).MakeGenericType(affectedEntitiesProvider.InputType, affectedEntitiesProvider.EntityType, navigation.TargetEntityType);
         return (IAffectedEntitiesProvider)Activator.CreateInstance(closedType, affectedEntitiesProvider, navigation)!;
+    }
+
+    public static IAffectedEntitiesProvider<TInput, TEntity>? ComposeAndCleanup<TInput, TEntity>(
+        IReadOnlyCollection<IAffectedEntitiesProvider<TInput, TEntity>?> providers
+    )
+    {
+        return (IAffectedEntitiesProvider<TInput, TEntity>)ComposeAndCleanup((IReadOnlyCollection<IAffectedEntitiesProvider?>)providers)!;
     }
 
     public static IAffectedEntitiesProvider? ComposeAndCleanup(

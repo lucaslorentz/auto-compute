@@ -42,7 +42,7 @@ public class NavigationEntityContext : EntityContext
             ? null
             : parentAffectedEntitiesProvider.LoadNavigation(_navigation);
 
-        return AffectedEntitiesProvider.ComposeAndCleanup([
+        return AffectedEntitiesProviderExtensions.ComposeAndCleanup([
             navigationAffectedEntitiesProvider,
             loadedFromParentAffectedEntitiesProvider
         ]);

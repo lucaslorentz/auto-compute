@@ -30,13 +30,13 @@ public static class DbContextExtensions
         return await affectedEntitiesProvider.GetAffectedEntitiesAsync(new EFCoreComputedInput(dbContext));
     }
 
-    public static async Task<IReadOnlyDictionary<TEntity, (TValue? originalValue, TValue? newValue)>> GetChangesAsync<TEntity, TValue>(
-        this DbContext dbContext, Expression<Func<TEntity, TValue?>> computedExpression)
-        where TEntity : notnull
+    public static async Task<IReadOnlyDictionary<TEntity, IValueChange<TValue>>> GetChangesAsync<TEntity, TValue>(
+        this DbContext dbContext, Expression<Func<TEntity, TValue>> computedExpression)
+        where TEntity : class
     {
         var changesProvider = dbContext.GetChangesProviderAsync(computedExpression);
         if (changesProvider is null)
-            return ImmutableDictionary<TEntity, (TValue?, TValue?)>.Empty;
+            return ImmutableDictionary<TEntity, IValueChange<TValue>>.Empty;
 
         return await changesProvider.GetChangesAsync(new EFCoreComputedInput(dbContext));
     }

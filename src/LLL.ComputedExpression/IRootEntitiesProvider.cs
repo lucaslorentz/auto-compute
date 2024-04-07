@@ -7,7 +7,7 @@ public interface IRootEntitiesProvider
 
 public interface IRootEntitiesProvider<in TInput, TRootEntity, TSourceEntity> : IRootEntitiesProvider
 {
-    Task<IReadOnlyCollection<TRootEntity>> GetRootEntities(TInput input, IReadOnlyCollection<TSourceEntity> entities);
+    Task<IReadOnlyCollection<TRootEntity>> GetRootEntitiesAsync(TInput input, IReadOnlyCollection<TSourceEntity> entities);
 
     async Task<IReadOnlyCollection<object>> IRootEntitiesProvider.GetRootEntities(object input, IReadOnlyCollection<object> entities)
     {
@@ -16,6 +16,6 @@ public interface IRootEntitiesProvider<in TInput, TRootEntity, TSourceEntity> : 
 
         var entitiesTyped = entities.Cast<TSourceEntity>().ToArray();
 
-        return (IReadOnlyCollection<object>)await GetRootEntities(inputTyped, entitiesTyped);
+        return (IReadOnlyCollection<object>)await GetRootEntitiesAsync(inputTyped, entitiesTyped);
     }
 }

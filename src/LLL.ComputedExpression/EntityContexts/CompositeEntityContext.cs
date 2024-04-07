@@ -38,7 +38,7 @@ public class CompositeEntityContext : EntityContext
         foreach (var parent in _parents)
             providers.Add(parent.GetAffectedEntitiesProviderInverse());
 
-        return AffectedEntitiesProvider.ComposeAndCleanup(providers);
+        return AffectedEntitiesProviderExtensions.ComposeAndCleanup(providers);
     }
 
     public override IRootEntitiesProvider GetOriginalRootEntitiesProvider()
