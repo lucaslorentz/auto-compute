@@ -114,7 +114,7 @@ public class EFCoreEntityNavigation<TSourceEntity, TTargetEntity>(
                 throw new InvalidOperationException("Cannot retrieve the current value of a deleted entity");
 
             var navigationEntry = entityEntry.Navigation(navigation);
-            if (!navigationEntry.IsLoaded)
+            if (!navigationEntry.IsLoaded && entityEntry.State != EntityState.Detached)
                 navigationEntry.Load();
 
             return navigationEntry.CurrentValue;
