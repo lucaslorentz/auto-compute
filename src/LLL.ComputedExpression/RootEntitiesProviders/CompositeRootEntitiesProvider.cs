@@ -1,5 +1,5 @@
 
-namespace LLL.ComputedExpression.RootEntitiesProvider;
+namespace LLL.ComputedExpression.RootEntitiesProviders;
 
 public class CompositeRootEntitiesProvider<TInput, TRootEntity, TSourceEntity>(
     IReadOnlyCollection<IRootEntitiesProvider<TInput, TRootEntity, TSourceEntity>> providers

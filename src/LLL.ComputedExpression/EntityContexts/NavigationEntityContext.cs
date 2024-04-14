@@ -1,5 +1,5 @@
 ﻿using LLL.ComputedExpression.AffectedEntitiesProviders;
-using LLL.ComputedExpression.RootEntitiesProvider;
+using LLL.ComputedExpression.RootEntitiesProviders;
 
 namespace LLL.ComputedExpression.EntityContexts;
 

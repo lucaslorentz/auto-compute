@@ -4,7 +4,7 @@ using LLL.ComputedExpression.EntityContextPropagators;
 using LLL.ComputedExpression.EntityContexts;
 using LLL.ComputedExpression.ExpressionVisitors;
 using LLL.ComputedExpression.Incremental;
-using LLL.ComputedExpression.IncrementalChangesProvider;
+using LLL.ComputedExpression.IncrementalChangesProviders;
 using LLL.ComputedExpression.Internal;
 
 namespace LLL.ComputedExpression;

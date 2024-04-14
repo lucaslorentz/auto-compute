@@ -1,5 +1,5 @@
 
-namespace LLL.ComputedExpression.RootEntitiesProvider;
+namespace LLL.ComputedExpression.RootEntitiesProviders;
 
 public class EmptyRootEntitiesProvider<TInput, TRootEntity, TSourceEntity> : IRootEntitiesProvider<TInput, TRootEntity, TSourceEntity>
 {

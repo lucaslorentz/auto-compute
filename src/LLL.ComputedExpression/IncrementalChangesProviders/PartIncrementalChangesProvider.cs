@@ -2,7 +2,7 @@
 using System.Collections.Concurrent;
 using LLL.ComputedExpression.Incremental;
 
-namespace LLL.ComputedExpression.IncrementalChangesProvider;
+namespace LLL.ComputedExpression.IncrementalChangesProviders;
 
 public class PartIncrementalChangesProvider<TInput, TRootEntity, TValue, TPartEntity>(
     IIncrementalComputed<TRootEntity, TValue> incrementalComputed,

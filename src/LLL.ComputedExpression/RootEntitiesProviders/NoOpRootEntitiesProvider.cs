@@ -1,5 +1,5 @@
 
-namespace LLL.ComputedExpression.RootEntitiesProvider;
+namespace LLL.ComputedExpression.RootEntitiesProviders;
 
 public class NoOpRootEntitiesProvider<TInput, TEntity>
     : IRootEntitiesProvider<TInput, TEntity, TEntity>

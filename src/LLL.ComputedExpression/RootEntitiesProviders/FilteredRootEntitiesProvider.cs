@@ -1,4 +1,4 @@
-﻿namespace LLL.ComputedExpression.RootEntitiesProvider;
+﻿namespace LLL.ComputedExpression.RootEntitiesProviders;
 
 public class FilteredRootEntitiesProvider<TInput, TRootEntity, TSourceEntity>(
     IRootEntitiesProvider<TInput, TRootEntity, TSourceEntity> parent,
