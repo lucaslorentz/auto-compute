@@ -15,9 +15,13 @@ internal class ChangeToCurrentValueVisitor(
             {
                 var propertyAccess = propertyAccessLocator.GetEntityMemberAccess(node);
                 if (propertyAccess is not null)
-                    return propertyAccess.Member.CreateCurrentValueExpression(
+                {
+                    var modifiedNode = propertyAccess.Member.CreateCurrentValueExpression(
                         propertyAccess,
                         inputExpression);
+
+                    return base.Visit(modifiedNode);
+                }
             }
         }
 

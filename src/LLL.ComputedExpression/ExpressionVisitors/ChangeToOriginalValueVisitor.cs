@@ -15,9 +15,13 @@ internal class ChangeToOriginalValueVisitor(
             {
                 var propertyAccess = propertyAccessLocator.GetEntityMemberAccess(node);
                 if (propertyAccess is not null)
-                    return propertyAccess.Member.CreateOriginalValueExpression(
+                {
+                    var modifiedNode = propertyAccess.Member.CreateOriginalValueExpression(
                         propertyAccess,
                         inputExpression);
+
+                    return base.Visit(modifiedNode);
+                }
             }
         }
 
