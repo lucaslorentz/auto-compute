@@ -51,12 +51,15 @@ public static class DbContextExtensions
     }
 
     public static IChangesProvider<IEFCoreComputedInput, TEntity, TValue>? GetChangesProviderAsync<TEntity, TValue>(
-        this DbContext dbContext, Expression<Func<TEntity, TValue>> computedExpression)
+        this DbContext dbContext,
+        Expression<Func<TEntity, TValue>> computedExpression)
         where TEntity : notnull
     {
         var changesProvider = dbContext.GetChangesProviderAsync((LambdaExpression)computedExpression);
+
         if (changesProvider is null)
             return null;
+
         return (IChangesProvider<IEFCoreComputedInput, TEntity, TValue>)changesProvider;
     }
 

@@ -1,5 +1,5 @@
 ﻿using LLL.ComputedExpression.AffectedEntitiesProviders;
-using LLL.ComputedExpression.RootEntitiesProvider;
+using LLL.ComputedExpression.RootEntitiesProviders;
 
 namespace LLL.ComputedExpression.EntityContexts;
 
@@ -42,7 +42,7 @@ public class NavigationEntityContext : EntityContext
             ? null
             : parentAffectedEntitiesProvider.LoadNavigation(_navigation);
 
-        return AffectedEntitiesProvider.ComposeAndCleanup([
+        return AffectedEntitiesProviderExtensions.ComposeAndCleanup([
             navigationAffectedEntitiesProvider,
             loadedFromParentAffectedEntitiesProvider
         ]);

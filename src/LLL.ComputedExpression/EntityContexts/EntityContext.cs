@@ -39,7 +39,7 @@ public abstract class EntityContext
                 providers.Add(provider);
         }
 
-        return AffectedEntitiesProvider.ComposeAndCleanup(providers);
+        return AffectedEntitiesProviderExtensions.ComposeAndCleanup(providers);
     }
 
     public abstract IAffectedEntitiesProvider? GetParentAffectedEntitiesProvider();

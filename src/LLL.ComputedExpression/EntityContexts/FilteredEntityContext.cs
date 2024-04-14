@@ -1,6 +1,6 @@
 using System.Linq.Expressions;
 using LLL.ComputedExpression.AffectedEntitiesProviders;
-using LLL.ComputedExpression.RootEntitiesProvider;
+using LLL.ComputedExpression.RootEntitiesProviders;
 
 namespace LLL.ComputedExpression.EntityContexts;
 
@@ -40,7 +40,7 @@ public class FilteredEntityContext : EntityContext
 
     public override IAffectedEntitiesProvider? GetAffectedEntitiesProviderInverse()
     {
-        return AffectedEntitiesProvider.ComposeAndCleanup([
+        return AffectedEntitiesProviderExtensions.ComposeAndCleanup([
             _parent.GetAffectedEntitiesProviderInverse(),
             _parameterContext.GetAffectedEntitiesProvider()
         ]);

@@ -17,8 +17,8 @@ public class FilteredCollectionTests
         person.Pets.Add(pet);
 
         var changes = await context.GetChangesAsync(_computedExpression);
-        changes.Should().BeEquivalentTo(new Dictionary<Person, (int, int)>{
-            { person, (1, 2)}
+        changes.Should().BeEquivalentTo(new Dictionary<Person, ConstValueChange<int>>{
+            { person, new ConstValueChange<int>(1, 2)}
         });
     }
 
@@ -32,8 +32,8 @@ public class FilteredCollectionTests
         context.Add(pet);
 
         var changes = await context.GetChangesAsync(_computedExpression);
-        changes.Should().BeEquivalentTo(new Dictionary<Person, (int, int)>{
-            { person, (1, 2)}
+        changes.Should().BeEquivalentTo(new Dictionary<Person, ConstValueChange<int>>{
+            { person, new ConstValueChange<int>(1, 2)}
         });
     }
 
@@ -46,8 +46,8 @@ public class FilteredCollectionTests
         pet.Type = "Modified";
 
         var changes = await context.GetChangesAsync(_computedExpression);
-        changes.Should().BeEquivalentTo(new Dictionary<Person, (int, int)>{
-            { pet.Owner!, (1, 0)}
+        changes.Should().BeEquivalentTo(new Dictionary<Person, ConstValueChange<int>>{
+            { pet.Owner!, new ConstValueChange<int>(1, 0)}
         });
     }
 
@@ -61,8 +61,8 @@ public class FilteredCollectionTests
         person.Pets.Remove(pet);
 
         var changes = await context.GetChangesAsync(_computedExpression);
-        changes.Should().BeEquivalentTo(new Dictionary<Person, (int, int)>{
-            { person, (1, 0)}
+        changes.Should().BeEquivalentTo(new Dictionary<Person, ConstValueChange<int>>{
+            { person, new ConstValueChange<int>(1, 0)}
         });
     }
 
@@ -76,8 +76,8 @@ public class FilteredCollectionTests
         pet.Owner = null;
 
         var changes = await context.GetChangesAsync(_computedExpression);
-        changes.Should().BeEquivalentTo(new Dictionary<Person, (int, int)>{
-            { person, (1, 0)}
+        changes.Should().BeEquivalentTo(new Dictionary<Person, ConstValueChange<int>>{
+            { person, new ConstValueChange<int>(1, 0)}
         });
     }
 }

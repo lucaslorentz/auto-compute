@@ -9,6 +9,7 @@ public interface IIncrementalComputed
     object? Add(object? a, object? b);
     object? Remove(object? a, object? b);
     List<IncrementalComputedPart> Parts { get; }
+    object GetValueEqualityComparer();
 }
 
 public interface IIncrementalComputed<TEntity, TValue> : IIncrementalComputed
@@ -41,4 +42,6 @@ public interface IIncrementalComputed<TEntity, TValue> : IIncrementalComputed
 
         return Remove(aTyped, bTyped);
     }
+    new IEqualityComparer<TValue> GetValueEqualityComparer() => EqualityComparer<TValue>.Default;
+    object IIncrementalComputed.GetValueEqualityComparer() => GetValueEqualityComparer();
 }

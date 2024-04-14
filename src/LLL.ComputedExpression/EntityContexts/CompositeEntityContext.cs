@@ -1,5 +1,5 @@
 ﻿using LLL.ComputedExpression.AffectedEntitiesProviders;
-using LLL.ComputedExpression.RootEntitiesProvider;
+using LLL.ComputedExpression.RootEntitiesProviders;
 using LLL.ComputedExpression.Internal;
 
 namespace LLL.ComputedExpression.EntityContexts;
@@ -38,7 +38,7 @@ public class CompositeEntityContext : EntityContext
         foreach (var parent in _parents)
             providers.Add(parent.GetAffectedEntitiesProviderInverse());
 
-        return AffectedEntitiesProvider.ComposeAndCleanup(providers);
+        return AffectedEntitiesProviderExtensions.ComposeAndCleanup(providers);
     }
 
     public override IRootEntitiesProvider GetOriginalRootEntitiesProvider()
