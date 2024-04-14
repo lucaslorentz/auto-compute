@@ -29,7 +29,7 @@ public class EFCoreEntityNavigation<TSourceEntity, TTargetEntity>(
         {
             var targetEntry = input.DbContext.Entry(sourceEntity!);
             if (targetEntry.State == EntityState.Added)
-                throw new Exception("Cannot get old value of an added entity");
+                throw new Exception($"Cannot access navigation '{navigation}' original value for an added entity");
 
             var navigationEntry = targetEntry.Navigation(navigation);
 
@@ -82,7 +82,7 @@ public class EFCoreEntityNavigation<TSourceEntity, TTargetEntity>(
             var entityEntry = dbContext.Entry(ent!);
 
             if (entityEntry.State == EntityState.Added)
-                throw new InvalidOperationException("Cannot retrieve the original value of an added entity");
+                throw new Exception($"Cannot access navigation '{navigation}' original value for an added entity");
 
             var navigationEntry = entityEntry.Navigation(navigation);
 
@@ -111,7 +111,7 @@ public class EFCoreEntityNavigation<TSourceEntity, TTargetEntity>(
             var entityEntry = dbContext.Entry(ent!);
 
             if (entityEntry.State == EntityState.Deleted)
-                throw new InvalidOperationException("Cannot retrieve the current value of a deleted entity");
+                throw new Exception($"Cannot access navigation '{navigation}' current value for a deleted entity");
 
             var navigationEntry = entityEntry.Navigation(navigation);
             if (!navigationEntry.IsLoaded && entityEntry.State != EntityState.Detached)

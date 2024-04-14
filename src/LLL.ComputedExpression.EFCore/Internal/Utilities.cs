@@ -24,7 +24,7 @@ public static class Utilities
                 navigationEntry.Load();
 
             var inverseNavigation = navigation.Inverse
-                ?? throw new Exception("No inverse to compute original vlaue");
+                ?? throw new Exception($"No inverse to compute original value for navigation '{navigation}'");
 
             var currentValue = navigationEntry.CurrentValue as IEnumerable;
             if (currentValue is not null)
@@ -88,7 +88,7 @@ public static class Utilities
             yield return originalValue;
         }
     }
-    
+
     public static IEnumerable<object> GetEntities(this NavigationEntry navigationEntry)
     {
         var currentValue = navigationEntry.CurrentValue;

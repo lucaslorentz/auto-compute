@@ -31,7 +31,7 @@ public class EFCoreEntityProperty<TEntity>(
             var entityEntry = dbContext.Entry(ent!);
 
             if (entityEntry.State == EntityState.Added)
-                throw new InvalidOperationException("Cannot retrieve the original value of an added entity");
+                throw new Exception($"Cannot access property '{property}' original value for an added entity");
 
             return entityEntry.Property(property).OriginalValue;
         };
@@ -58,7 +58,7 @@ public class EFCoreEntityProperty<TEntity>(
             var entityEntry = dbContext.Entry(ent!);
 
             if (entityEntry.State == EntityState.Deleted)
-                throw new InvalidOperationException("Cannot retrieve the current value of a deleted entity");
+                throw new Exception($"Cannot access property '{property}' current value for a deleted entity");
 
             return entityEntry.Property(property).CurrentValue;
         };

@@ -66,7 +66,7 @@ public class LinqMethodsEntityContextPropagator
                     case nameof(Enumerable.Where):
                         {
                             var filterLambda = GetLambda(methodCallExpression.Arguments[1])
-                                ?? throw new Exception("Where witout lambda is not supported");
+                                ?? throw new Exception("Where without lambda is not supported");
 
                             analysis.PropagateEntityContext(
                                 methodCallExpression.Arguments[0],
