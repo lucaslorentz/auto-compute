@@ -89,12 +89,13 @@ public class ComputedExpressionAnalyzer<TInput> : IComputedExpressionAnalyzer
         return entityContext.GetAffectedEntitiesProvider();
     }
 
-    public IChangesProvider CreateChangesProvider(LambdaExpression computed)
+    public IChangesProvider CreateChangesProvider(LambdaExpression computed, object? valueEqualityComparer = null)
     {
-        return CreateChangesProvider(PrepareLambda(computed));
+        return CreateChangesProvider(PrepareLambda(computed), valueEqualityComparer
+            ?? computed.Body.Type.GetDefaultEqualityComparer());
     }
 
-    private IChangesProvider CreateChangesProvider(PreparedLambda computed)
+    private IChangesProvider CreateChangesProvider(PreparedLambda computed, object valueEqualityComparer)
     {
         var affectedEntitiesProvider = CreateAffectedEntitiesProvider(computed);
         var originalValueGetter = GetOriginalValueExpression(computed).Compile();
@@ -112,7 +113,8 @@ public class ComputedExpressionAnalyzer<TInput> : IComputedExpressionAnalyzer
             affectedEntitiesProvider,
             originalValueGetter,
             currentValueGetter,
-            entityActionProvider)!;
+            entityActionProvider,
+            valueEqualityComparer)!;
     }
 
     public LambdaExpression GetOriginalValueExpression(LambdaExpression computed)
@@ -176,7 +178,9 @@ public class ComputedExpressionAnalyzer<TInput> : IComputedExpressionAnalyzer
         {
             var entityActionProvider = RequireEntityActionProvider();
 
-            var valueChangesProvider = CreateChangesProvider(PrepareLambda(incrementalComputedPart.ValueSelector));
+            var valueChangesProvider = CreateChangesProvider(
+                PrepareLambda(incrementalComputedPart.ValueSelector),
+                incrementalComputed.GetValueEqualityComparer());
 
             var rootsChangesProvider = CreateRootEntitiesChangesProvider(
                 PrepareLambda(incrementalComputedPart.Navigation),

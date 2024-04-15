@@ -94,4 +94,30 @@ public class IncrementalFilteredCollectionTests
             { person, -1}
         });
     }
+
+    [Fact]
+    public async void DeltaTest()
+    {
+        using var context = await TestDbContext.Create<PersonDbContext>();
+
+        var person = context!.Set<Person>().Find(1)!;
+
+        // Add a cat
+        person.Pets.Add(new Pet { Type = "Cat" });
+        var changes = await context.GetIncrementalChanges(_incrementalComputed);
+        changes.Should().BeEquivalentTo(new Dictionary<Person, int>{
+            { person, 1}
+        });
+
+        // No other change
+        changes = await context.GetIncrementalChanges(_incrementalComputed);
+        changes.Should().BeEmpty();
+
+        // Remove a cat
+        person.Pets.RemoveAt(0);
+        changes = await context.GetIncrementalChanges(_incrementalComputed);
+        changes.Should().BeEquivalentTo(new Dictionary<Person, int>{
+            { person, -1}
+        });
+    }
 }

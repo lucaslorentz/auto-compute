@@ -1,4 +1,6 @@
+using System.Collections.Concurrent;
 using System.Linq.Expressions;
+using System.Runtime.CompilerServices;
 using LLL.ComputedExpression.Caching;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
@@ -33,7 +35,7 @@ public static class DbContextExtensions
         return (IAffectedEntitiesProvider<IEFCoreComputedInput, TEntity>)affectedEntitiesProvider;
     }
 
-    public static IChangesProvider? GetChangesProviderAsync(this DbContext dbContext, LambdaExpression computedExpression)
+    public static IChangesProvider? GetChangesProvider(this DbContext dbContext, LambdaExpression computedExpression)
     {
         var analyzer = GetComputedExpressionAnalyzer(dbContext);
 
@@ -50,12 +52,38 @@ public static class DbContextExtensions
             static (k) => k.Analyzer.CreateChangesProvider((LambdaExpression)k.ExpressionKey.Expression));
     }
 
-    public static IChangesProvider<IEFCoreComputedInput, TEntity, TValue>? GetChangesProviderAsync<TEntity, TValue>(
+    public static IChangesProvider<IEFCoreComputedInput, TEntity, TValue>? GetChangesProvider<TEntity, TValue>(
         this DbContext dbContext,
         Expression<Func<TEntity, TValue>> computedExpression)
         where TEntity : notnull
     {
-        var changesProvider = dbContext.GetChangesProviderAsync((LambdaExpression)computedExpression);
+        var changesProvider = dbContext.GetChangesProvider((LambdaExpression)computedExpression);
+
+        if (changesProvider is null)
+            return null;
+
+        return (IChangesProvider<IEFCoreComputedInput, TEntity, TValue>)changesProvider;
+    }
+
+    private readonly static ConditionalWeakTable<DbContext, ConcurrentDictionary<IChangesProvider, IChangesProvider>> _dbContextsDeltaChangesProvider = [];
+
+    public static IChangesProvider? GetDeltaChangesProvider(this DbContext dbContext, LambdaExpression computedExpression)
+    {
+        var changesProvider = dbContext.GetChangesProvider(computedExpression);
+        if (changesProvider is null)
+            return null;
+
+        var deltaChangesProvider = _dbContextsDeltaChangesProvider.GetOrCreateValue(dbContext);
+
+        return deltaChangesProvider.GetOrAdd(changesProvider, static k => k.CreateDeltaChangesProvider());
+    }
+
+    public static IChangesProvider<IEFCoreComputedInput, TEntity, TValue>? GetDeltaChangesProvider<TEntity, TValue>(
+        this DbContext dbContext,
+        Expression<Func<TEntity, TValue>> computedExpression)
+        where TEntity : notnull
+    {
+        var changesProvider = dbContext.GetDeltaChangesProvider((LambdaExpression)computedExpression);
 
         if (changesProvider is null)
             return null;

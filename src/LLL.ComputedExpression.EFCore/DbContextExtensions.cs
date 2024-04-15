@@ -34,7 +34,18 @@ public static class DbContextExtensions
         this DbContext dbContext, Expression<Func<TEntity, TValue>> computedExpression)
         where TEntity : class
     {
-        var changesProvider = dbContext.GetChangesProviderAsync(computedExpression);
+        var changesProvider = dbContext.GetChangesProvider(computedExpression);
+        if (changesProvider is null)
+            return ImmutableDictionary<TEntity, IValueChange<TValue>>.Empty;
+
+        return await changesProvider.GetChangesAsync(new EFCoreComputedInput(dbContext));
+    }
+
+    public static async Task<IReadOnlyDictionary<TEntity, IValueChange<TValue>>> GetDeltaChangesAsync<TEntity, TValue>(
+        this DbContext dbContext, Expression<Func<TEntity, TValue>> computedExpression)
+        where TEntity : class
+    {
+        var changesProvider = dbContext.GetDeltaChangesProvider(computedExpression);
         if (changesProvider is null)
             return ImmutableDictionary<TEntity, IValueChange<TValue>>.Empty;
 

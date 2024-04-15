@@ -12,10 +12,9 @@ public class PartIncrementalChangesProvider<TInput, TRootEntity, TValue, TPartEn
     where TRootEntity : notnull
     where TPartEntity : class
 {
-    readonly IChangesProvider<TInput, TPartEntity, (TValue Value, IReadOnlyCollection<TRootEntity> Roots)> _changesProvider = valueChangesProvider
-        .SkipEqualValues(incrementalComputed.GetValueEqualityComparer())
-        .Combine(rootsChangesProvider, (a, b) => (Value: a, Roots: b))
-        .CreateContinuedChangesProvider();
+    readonly IChangesProvider<TInput, TPartEntity, PartChange<TValue, TRootEntity>> _changesProvider = valueChangesProvider
+        .Combine(rootsChangesProvider, (value, rootEntities) => new PartChange<TValue, TRootEntity>(value, rootEntities), EqualityComparer<PartChange<TValue, TRootEntity>>.Default)
+        .CreateDeltaChangesProvider();
 
     public async Task<IReadOnlyDictionary<TRootEntity, TValue>> GetIncrementalChangesAsync(TInput input)
     {

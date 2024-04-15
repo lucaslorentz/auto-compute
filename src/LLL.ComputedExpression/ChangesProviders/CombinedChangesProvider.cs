@@ -3,11 +3,12 @@ namespace LLL.ComputedExpression.ChangesProviders;
 public class CombinedChangesProvider<TInput, TEntity, TValueA, TValueB, TValueC>(
     IChangesProvider<TInput, TEntity, TValueA> changesProviderA,
     IChangesProvider<TInput, TEntity, TValueB> changesProviderB,
-    Func<TValueA, TValueB, TValueC> combineValue
-) : IChangesProvider<TInput, TEntity, TValueC>
+    Func<TValueA, TValueB, TValueC> combineValue,
+    IEqualityComparer<TValueC> valueEqualityComparer
+) : ChangesProvider<TInput, TEntity, TValueC>(valueEqualityComparer)
     where TEntity : class
 {
-    public async Task<IReadOnlyDictionary<TEntity, IValueChange<TValueC>>> GetChangesAsync(TInput input)
+    protected override async Task<IReadOnlyDictionary<TEntity, IValueChange<TValueC>>> GetUnfilteredChangesAsync(TInput input)
     {
         var changesFromA = await changesProviderA.GetChangesAsync(input);
         var changesFromB = await changesProviderB.GetChangesAsync(input);
@@ -28,7 +29,7 @@ public class CombinedChangesProvider<TInput, TEntity, TValueA, TValueB, TValueC>
         return result;
     }
 
-    public async Task<IValueChange<TValueC>> GetChangeAsync(TInput input, TEntity entity)
+    public override async Task<IValueChange<TValueC>> GetChangeAsync(TInput input, TEntity entity)
     {
         var valueA = await changesProviderA.GetChangeAsync(input, entity);
         var valueB = await changesProviderB.GetChangeAsync(input, entity);

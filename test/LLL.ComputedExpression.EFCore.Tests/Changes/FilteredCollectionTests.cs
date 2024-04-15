@@ -80,4 +80,30 @@ public class FilteredCollectionTests
             { person, new ConstValueChange<int>(1, 0)}
         });
     }
+
+    [Fact]
+    public async void DeltaChangesTest()
+    {
+        using var context = await TestDbContext.Create<PersonDbContext>();
+
+        var person = context!.Set<Person>().Find(1)!;
+
+        // Add a cat
+        person.Pets.Add(new Pet { Type = "Cat" });
+        var changes = await context.GetDeltaChangesAsync(_computedExpression);
+        changes.Should().BeEquivalentTo(new Dictionary<Person, ConstValueChange<int>>{
+            { person, new ConstValueChange<int>(1, 2)}
+        });
+
+        // No other change
+        changes = await context.GetDeltaChangesAsync(_computedExpression);
+        changes.Should().BeEmpty();
+
+        // Remove a cat
+        person.Pets.RemoveAt(0);
+        changes = await context.GetDeltaChangesAsync(_computedExpression);
+        changes.Should().BeEquivalentTo(new Dictionary<Person, ConstValueChange<int>>{
+            { person, new ConstValueChange<int>(2, 1)}
+        });
+    }
 }

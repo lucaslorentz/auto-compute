@@ -4,8 +4,9 @@ public class LambdaValueChangesProvider<TInput, TEntity, TValue>(
     IAffectedEntitiesProvider<TInput, TEntity>? affectedEntitiesProvider,
     Func<TInput, TEntity, TValue> originalValueGetter,
     Func<TInput, TEntity, TValue> currentValueGetter,
-    IEntityActionProvider<TInput> entityActionProvider
-) : AffectedEntitiesChangesProvider<TInput, TEntity, TValue>(affectedEntitiesProvider)
+    IEntityActionProvider<TInput> entityActionProvider,
+    IEqualityComparer<TValue> valueEqualityComparer
+) : AffectedEntitiesChangesProvider<TInput, TEntity, TValue>(affectedEntitiesProvider, valueEqualityComparer)
     where TEntity : class
 {
     public async override Task<IValueChange<TValue>> GetChangeAsync(TInput input, TEntity entity)

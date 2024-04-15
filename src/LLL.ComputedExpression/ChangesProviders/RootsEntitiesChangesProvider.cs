@@ -5,7 +5,9 @@ public class RootsChangesProvider<TInput, TEntity, TRootEntity>(
     IRootEntitiesProvider<TInput, TRootEntity, TEntity> originalRootsProvider,
     IRootEntitiesProvider<TInput, TRootEntity, TEntity> currentRootsProvider,
     IEntityActionProvider<TInput> entityActionProvider
-) : AffectedEntitiesChangesProvider<TInput, TEntity, IReadOnlyCollection<TRootEntity>>(affectedEntitiesProvider)
+) : AffectedEntitiesChangesProvider<TInput, TEntity, IReadOnlyCollection<TRootEntity>>(
+    affectedEntitiesProvider,
+    EqualityComparer<IReadOnlyCollection<TRootEntity>>.Default)
     where TEntity : class
 {
     public async override Task<IValueChange<IReadOnlyCollection<TRootEntity>>> GetChangeAsync(TInput input, TEntity entity)
