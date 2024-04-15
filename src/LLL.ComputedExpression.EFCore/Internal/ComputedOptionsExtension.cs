@@ -1,4 +1,5 @@
-﻿using LLL.ComputedExpression.Caching;
+﻿using System.Linq.Expressions;
+using LLL.ComputedExpression.Caching;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
 using Microsoft.EntityFrameworkCore.Metadata.Conventions.Infrastructure;
@@ -12,21 +13,23 @@ public class ComputedOptionsExtension : IDbContextOptionsExtension
 
     public Func<IModel, ComputedExpressionAnalyzer<IEFCoreComputedInput>>? AnalyzerFactory { get; set; }
 
-    public List<Action<IModel, ComputedExpressionAnalyzer<IEFCoreComputedInput>>> AnalyzerConfigurations { get; } = [];
+    public List<Action<IServiceProvider, IModel, ComputedExpressionAnalyzer<IEFCoreComputedInput>>> AnalyzerConfigurations { get; } = [];
+
+    public IList<Func<LambdaExpression, LambdaExpression>> ExpressionModifiers { get; } = [];
 
     public void ApplyServices(IServiceCollection services)
     {
-        services.AddSingleton<Func<IModel, IComputedExpressionAnalyzer>>(model =>
+        services.AddSingleton(s => new Func<IModel, IComputedExpressionAnalyzer>((model) =>
         {
             var analyzer = AnalyzerFactory is not null
                 ? AnalyzerFactory(model)
                 : DefaultAnalyzerFactory(model);
 
             foreach (var customize in AnalyzerConfigurations)
-                customize(model, analyzer);
+                customize(s, model, analyzer);
 
             return analyzer;
-        });
+        }));
 
         services.AddSingleton<IConcurrentCreationCache, ConcurrentCreationMemoryCache>();
         services.AddScoped<IConventionSetPlugin, ComputedConventionSetPlugin>();
@@ -40,7 +43,7 @@ public class ComputedOptionsExtension : IDbContextOptionsExtension
     {
         return ComputedExpressionAnalyzer<IEFCoreComputedInput>
             .CreateWithDefaults()
-            .AddEntityMemberAccessLocator(new EFCoreMemberAccessLocator(model))
+            .AddEntityMemberAccessLocator(new EFCoreEntityMemberAccessLocator(model))
             .SetEntityActionProvider(new EFCoreEntityActionProvider());
     }
 

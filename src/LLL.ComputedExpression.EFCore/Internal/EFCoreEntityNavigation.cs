@@ -29,7 +29,7 @@ public class EFCoreEntityNavigation<TSourceEntity, TTargetEntity>(
         {
             var targetEntry = input.DbContext.Entry(sourceEntity!);
             if (targetEntry.State == EntityState.Added)
-                throw new Exception($"Cannot access navigation '{navigation}' original value for an added entity");
+                throw new Exception($"Cannot access navigation '{navigation.DeclaringType.ShortName()}.{navigation.Name}' original value for an added entity");
 
             var navigationEntry = targetEntry.Navigation(navigation);
 
@@ -75,14 +75,14 @@ public class EFCoreEntityNavigation<TSourceEntity, TTargetEntity>(
         IEntityMemberAccess<IEntityNavigation> memberAccess,
         Expression inputExpression)
     {
-        var originalValueGetter = static (INavigation navigation, IEFCoreComputedInput input, TSourceEntity ent) =>
+        var valueGetter = static (INavigation navigation, IEFCoreComputedInput input, TSourceEntity ent) =>
         {
             var dbContext = input.DbContext;
 
             var entityEntry = dbContext.Entry(ent!);
 
             if (entityEntry.State == EntityState.Added)
-                throw new Exception($"Cannot access navigation '{navigation}' original value for an added entity");
+                throw new Exception($"Cannot access navigation '{navigation.DeclaringType.ShortName()}.{navigation.Name}' original value for an added entity");
 
             var navigationEntry = entityEntry.Navigation(navigation);
 
@@ -91,7 +91,7 @@ public class EFCoreEntityNavigation<TSourceEntity, TTargetEntity>(
 
         return Expression.Convert(
             Expression.Invoke(
-                Expression.Constant(originalValueGetter),
+                Expression.Constant(valueGetter),
                 Expression.Constant(navigation),
                 inputExpression,
                 memberAccess.FromExpression
@@ -104,14 +104,14 @@ public class EFCoreEntityNavigation<TSourceEntity, TTargetEntity>(
         IEntityMemberAccess<IEntityNavigation> memberAccess,
         Expression inputExpression)
     {
-        var originalValueGetter = static (INavigation navigation, IEFCoreComputedInput input, TSourceEntity ent) =>
+        var valueGetter = static (INavigation navigation, IEFCoreComputedInput input, TSourceEntity ent) =>
         {
             var dbContext = input.DbContext;
 
             var entityEntry = dbContext.Entry(ent!);
 
             if (entityEntry.State == EntityState.Deleted)
-                throw new Exception($"Cannot access navigation '{navigation}' current value for a deleted entity");
+                throw new Exception($"Cannot access navigation '{navigation.DeclaringType.ShortName()}.{navigation.Name}' current value for a deleted entity");
 
             var navigationEntry = entityEntry.Navigation(navigation);
             if (!navigationEntry.IsLoaded && entityEntry.State != EntityState.Detached)
@@ -122,7 +122,7 @@ public class EFCoreEntityNavigation<TSourceEntity, TTargetEntity>(
 
         return Expression.Convert(
             Expression.Invoke(
-                Expression.Constant(originalValueGetter),
+                Expression.Constant(valueGetter),
                 Expression.Constant(navigation),
                 inputExpression,
                 memberAccess.FromExpression

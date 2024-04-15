@@ -68,6 +68,9 @@ class ComputedRuntimeConvention(Func<IModel, IComputedExpressionAnalyzer> comput
                 foreach (var affectedEntity in await affectedEntitiesProvider.GetAffectedEntitiesAsync(input))
                 {
                     var affectedEntry = dbContext.Entry(affectedEntity);
+                    if (affectedEntry.State == EntityState.Deleted)
+                        continue;
+
                     var propertyEntry = affectedEntry.Property(property);
                     var newValue = currentValueGetter.DynamicInvoke(input, affectedEntity);
                     var valueComparer = property.GetValueComparer();

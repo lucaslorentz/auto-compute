@@ -22,7 +22,7 @@ public class ComputedOptionsBuilder
         return this;
     }
 
-    public ComputedOptionsBuilder ConfigureAnalyzer(Action<IModel, ComputedExpressionAnalyzer<IEFCoreComputedInput>> configuration)
+    public ComputedOptionsBuilder ConfigureAnalyzer(Action<IServiceProvider, IModel, ComputedExpressionAnalyzer<IEFCoreComputedInput>> configuration)
     {
         _extension.AnalyzerConfigurations.Add(configuration);
         return this;

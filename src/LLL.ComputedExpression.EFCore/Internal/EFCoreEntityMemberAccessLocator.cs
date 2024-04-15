@@ -3,7 +3,7 @@ using Microsoft.EntityFrameworkCore.Metadata;
 
 namespace LLL.ComputedExpression.EFCore.Internal;
 
-public class EFCoreMemberAccessLocator(IModel model) :
+public class EFCoreEntityMemberAccessLocator(IModel model) :
     IEntityNavigationAccessLocator<IEFCoreComputedInput>,
     IEntityPropertyAccessLocator<IEFCoreComputedInput>
 {
