@@ -1,5 +1,6 @@
 ﻿using System.Collections.Immutable;
 using System.Linq.Expressions;
+using System.Runtime.CompilerServices;
 using LLL.ComputedExpression.Caching;
 using LLL.ComputedExpression.EFCore.Internal;
 using LLL.ComputedExpression.Incremental;
@@ -27,7 +28,7 @@ public static class DbContextExtensions
         if (affectedEntitiesProvider is null)
             return [];
 
-        return await affectedEntitiesProvider.GetAffectedEntitiesAsync(new EFCoreComputedInput(dbContext));
+        return await affectedEntitiesProvider.GetAffectedEntitiesAsync(dbContext.GetComputedInput());
     }
 
     public static async Task<IReadOnlyDictionary<TEntity, IValueChange<TValue>>> GetChangesAsync<TEntity, TValue>(
@@ -38,7 +39,7 @@ public static class DbContextExtensions
         if (changesProvider is null)
             return ImmutableDictionary<TEntity, IValueChange<TValue>>.Empty;
 
-        return await changesProvider.GetChangesAsync(new EFCoreComputedInput(dbContext));
+        return await changesProvider.GetChangesAsync(dbContext.GetComputedInput());
     }
 
     public static async Task<IReadOnlyDictionary<TEntity, IValueChange<TValue>>> GetDeltaChangesAsync<TEntity, TValue>(
@@ -49,7 +50,7 @@ public static class DbContextExtensions
         if (changesProvider is null)
             return ImmutableDictionary<TEntity, IValueChange<TValue>>.Empty;
 
-        return await changesProvider.GetChangesAsync(new EFCoreComputedInput(dbContext));
+        return await changesProvider.GetChangesAsync(dbContext.GetComputedInput());
     }
 
     public static async Task<IReadOnlyDictionary<TEntity, TValue>> GetIncrementalChanges<TEntity, TValue>(
@@ -72,7 +73,7 @@ public static class DbContextExtensions
             static (k) => (IIncrementalChangesProvider<IEFCoreComputedInput, TEntity, TValue>)k.analyzer.CreateIncrementalChangesProvider(
                 k.incrementalComputed));
 
-        var input = new EFCoreComputedInput(dbContext);
+        var input = dbContext.GetComputedInput();
 
         return await incrementalChangeProvider.GetIncrementalChangesAsync(input);
     }
@@ -85,16 +86,35 @@ public static class DbContextExtensions
         var totalChanges = 0;
         for (var i = 0; i < 10; i++)
         {
-            var changes = 0;
+            var autoDetectChanges = dbContext.ChangeTracker.AutoDetectChangesEnabled;
+            try
+            {
+                dbContext.ChangeTracker.AutoDetectChangesEnabled = false;
+                dbContext.ChangeTracker.DetectChanges();
 
-            foreach (var update in updaters)
-                changes += await update(dbContext);
+                var changes = 0;
 
-            if (changes > 0)
-                totalChanges += changes;
-            else
-                break;
+                foreach (var update in updaters)
+                    changes += await update(dbContext);
+
+                if (changes > 0)
+                    totalChanges += changes;
+                else
+                    break;
+
+                dbContext.GetComputedInput().Reset();
+            }
+            finally
+            {
+                dbContext.ChangeTracker.AutoDetectChangesEnabled = autoDetectChanges;
+            }
         }
         return totalChanges;
+    }
+
+    private static readonly ConditionalWeakTable<DbContext, IEFCoreComputedInput> _inputs = [];
+    public static IEFCoreComputedInput GetComputedInput(this DbContext dbContext)
+    {
+        return _inputs.GetValue(dbContext, static k => new EFCoreComputedInput(k));
     }
 }

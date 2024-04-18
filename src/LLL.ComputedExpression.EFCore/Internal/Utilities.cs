@@ -1,4 +1,6 @@
 using System.Collections;
+using System.Runtime.CompilerServices;
+using LLL.ComputedExpression.EFCore.Internal;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.ChangeTracking;
 using Microsoft.EntityFrameworkCore.Metadata;
@@ -45,18 +47,14 @@ public static class Utilities
                 }
             }
 
-            foreach (var itemEntry in dbContext.ChangeTracker.Entries())
+            foreach (var itemEntry in dbContext.GetComputedInput().ModifiedEntityEntries[navigation.TargetEntityType])
             {
-                if (itemEntry.Metadata == navigation.TargetEntityType
-                    && itemEntry.State == EntityState.Modified)
+                var inverseReferenceEntry = itemEntry.Reference(inverseNavigation);
+                if (inverseReferenceEntry.IsModified)
                 {
-                    var inverseReferenceEntry = itemEntry.Reference(inverseNavigation);
-                    if (inverseReferenceEntry.IsModified)
-                    {
-                        var oldInverseValue = inverseReferenceEntry.GetOriginalValue();
-                        if (ReferenceEquals(entityEntry.Entity, oldInverseValue))
-                            collectionAccessor.AddStandalone(originalValue, itemEntry.Entity);
-                    }
+                    var oldInverseValue = inverseReferenceEntry.GetOriginalValue();
+                    if (ReferenceEquals(entityEntry.Entity, oldInverseValue))
+                        collectionAccessor.AddStandalone(originalValue, itemEntry.Entity);
                 }
             }
 
@@ -103,6 +101,50 @@ public static class Utilities
         else if (currentValue is not null)
         {
             yield return currentValue;
+        }
+    }
+
+    private readonly static ConditionalWeakTable<IProperty, IEntityProperty> _entityProperties = [];
+    public static IEntityProperty GetEntityProperty(this IProperty property)
+    {
+        return _entityProperties.GetValue(property, static (property) =>
+        {
+            var closedType = typeof(EFCoreEntityProperty<>).MakeGenericType(property.DeclaringEntityType.ClrType);
+            return (IEntityProperty)Activator.CreateInstance(closedType, property)!;
+        });
+    }
+
+    private readonly static ConditionalWeakTable<INavigation, IEntityNavigation> _entityNavigations = [];
+    public static IEntityNavigation GetEntityNavigation(this INavigation navigation)
+    {
+        return _entityNavigations.GetValue(navigation, static (navigation) =>
+        {
+            var closedType = typeof(EFCoreEntityNavigation<,>).MakeGenericType(navigation.DeclaringEntityType.ClrType, navigation.TargetEntityType.ClrType);
+            return (IEntityNavigation)Activator.CreateInstance(closedType, navigation)!;
+        });
+    }
+
+    public static async Task BulkLoadAsync<TEntity>(this DbContext dbContext, IEnumerable<TEntity> entities, INavigation navigation)
+        where TEntity : class
+    {
+        var entitiesToLoad = entities.Where(e =>
+        {
+            var entityEntry = dbContext.Entry(e);
+            if (entityEntry.State == EntityState.Detached)
+                return false;
+
+            var navigationEntry = entityEntry.Navigation(navigation);
+            return !navigationEntry.IsLoaded;
+        }).ToArray();
+
+        if (entitiesToLoad.Any())
+        {
+            await dbContext.Set<TEntity>()
+                .Where(e => entitiesToLoad.Contains(e))
+                .IgnoreAutoIncludes()
+                .Include(e => EF.Property<object>(e, navigation.Name))
+                .AsSingleQuery()
+                .LoadAsync();
         }
     }
 }

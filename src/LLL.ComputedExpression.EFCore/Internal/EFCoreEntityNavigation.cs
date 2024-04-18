@@ -7,6 +7,8 @@ namespace LLL.ComputedExpression.EFCore.Internal;
 public class EFCoreEntityNavigation<TSourceEntity, TTargetEntity>(
     INavigation navigation
 ) : IEntityNavigation<IEFCoreComputedInput, TSourceEntity, TTargetEntity>
+    where TSourceEntity : class
+    where TTargetEntity : class
 {
     public virtual string Name => navigation.Name;
     public Type TargetEntityType => navigation.TargetEntityType.ClrType;
@@ -24,17 +26,16 @@ public class EFCoreEntityNavigation<TSourceEntity, TTargetEntity>(
         IEFCoreComputedInput input,
         IReadOnlyCollection<TSourceEntity> sourceEntities)
     {
+        await input.DbContext.BulkLoadAsync(sourceEntities, navigation);
+
         var targetEntities = new HashSet<TTargetEntity>();
         foreach (var sourceEntity in sourceEntities)
         {
-            var targetEntry = input.DbContext.Entry(sourceEntity!);
-            if (targetEntry.State == EntityState.Added)
+            var entityEntry = input.DbContext.Entry(sourceEntity!);
+            if (entityEntry.State == EntityState.Added)
                 throw new Exception($"Cannot access navigation '{navigation.DeclaringType.ShortName()}.{navigation.Name}' original value for an added entity");
 
-            var navigationEntry = targetEntry.Navigation(navigation);
-
-            if (!navigationEntry.IsLoaded && targetEntry.State != EntityState.Detached)
-                await navigationEntry.LoadAsync();
+            var navigationEntry = entityEntry.Navigation(navigation);
 
             foreach (var originalEntity in navigationEntry.GetOriginalEntities())
                 targetEntities.Add((TTargetEntity)originalEntity);
@@ -46,14 +47,13 @@ public class EFCoreEntityNavigation<TSourceEntity, TTargetEntity>(
         IEFCoreComputedInput input,
         IReadOnlyCollection<TSourceEntity> sourceEntities)
     {
+        await input.DbContext.BulkLoadAsync(sourceEntities, navigation);
+
         var targetEntities = new HashSet<TTargetEntity>();
         foreach (var sourceEntitiy in sourceEntities)
         {
             var entityEntry = input.DbContext.Entry(sourceEntitiy!);
             var navigationEntry = entityEntry.Navigation(navigation);
-
-            if (!navigationEntry.IsLoaded && entityEntry.State != EntityState.Detached)
-                await navigationEntry.LoadAsync();
 
             foreach (var entity in navigationEntry.GetEntities())
                 targetEntities.Add((TTargetEntity)entity);

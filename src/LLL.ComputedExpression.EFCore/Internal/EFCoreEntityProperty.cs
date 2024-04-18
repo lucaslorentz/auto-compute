@@ -7,6 +7,7 @@ namespace LLL.ComputedExpression.EFCore.Internal;
 public class EFCoreEntityProperty<TEntity>(
     IProperty property
 ) : IEntityProperty<IEFCoreComputedInput, TEntity>
+    where TEntity : class
 {
     public virtual string Name => property.Name;
 

@@ -1,18 +1,12 @@
 ﻿using System.Collections.Concurrent;
-using Microsoft.Extensions.Caching.Memory;
 
 namespace LLL.ComputedExpression.Caching;
 
-public class ConcurrentCreationMemoryCache : IConcurrentCreationCache
+public class ConcurrentCreationDictionary : IConcurrentCreationCache
 {
     private static readonly ConcurrentDictionary<object, SemaphoreSlim> _semaphores = new();
 
-    private readonly IMemoryCache _memoryCache;
-
-    public ConcurrentCreationMemoryCache(IMemoryCache memoryCache)
-    {
-        _memoryCache = memoryCache;
-    }
+    private readonly ConcurrentDictionary<object, object?> _cache = [];
 
     public T GetOrCreate<K, T>(K key, Func<K, T> create)
         where K : notnull
@@ -23,9 +17,9 @@ public class ConcurrentCreationMemoryCache : IConcurrentCreationCache
     public async Task<T> GetOrCreateAsync<K, T>(K key, Func<K, Task<T>> create)
         where K : notnull
     {
-        if (_memoryCache.TryGetValue(key, out T value))
+        if (_cache.TryGetValue(key, out var value))
         {
-            return value;
+            return (T)value!;
         }
 
         var creationLock = _semaphores.GetOrAdd(key!, _ => new SemaphoreSlim(1, 1));
@@ -33,13 +27,13 @@ public class ConcurrentCreationMemoryCache : IConcurrentCreationCache
         {
             await creationLock.WaitAsync();
 
-            if (!_memoryCache.TryGetValue(key, out value))
+            if (!_cache.TryGetValue(key, out value))
             {
                 value = await create(key);
-                _memoryCache.Set(key, value, new MemoryCacheEntryOptions { Size = 10 });
+                _cache.TryAdd(key, value);
             }
 
-            return value!;
+            return (T)value!;
         }
         finally
         {

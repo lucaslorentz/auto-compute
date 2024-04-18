@@ -39,13 +39,11 @@ public class EFCoreEntityMemberAccessLocator(IModel model) :
 
     protected virtual IEntityNavigation GetNavigation(INavigation navigation)
     {
-        var closedType = typeof(EFCoreEntityNavigation<,>).MakeGenericType(navigation.DeclaringEntityType.ClrType, navigation.TargetEntityType.ClrType);
-        return (IEntityNavigation)Activator.CreateInstance(closedType, navigation)!;
+        return navigation.GetEntityNavigation();
     }
 
     protected virtual IEntityProperty GetProperty(IProperty property)
     {
-        var closedType = typeof(EFCoreEntityProperty<>).MakeGenericType(property.DeclaringEntityType.ClrType);
-        return (IEntityProperty)Activator.CreateInstance(closedType, property)!;
+        return property.GetEntityProperty();
     }
 }

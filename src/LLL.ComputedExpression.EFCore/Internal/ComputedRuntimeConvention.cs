@@ -1,5 +1,6 @@
 ﻿using System.Linq.Expressions;
 using LLL.ComputedExpression;
+using LLL.ComputedExpression.EFCore;
 using LLL.ComputedExpression.EFCore.Internal;
 using LLL.ComputedExpression.Incremental;
 using Microsoft.EntityFrameworkCore;
@@ -64,7 +65,7 @@ class ComputedRuntimeConvention(Func<IModel, IComputedExpressionAnalyzer> comput
             computedUpdaters.Add(async (dbContext) =>
             {
                 var changes = 0;
-                var input = new EFCoreComputedInput(dbContext);
+                var input = dbContext.GetComputedInput();
                 foreach (var affectedEntity in await affectedEntitiesProvider.GetAffectedEntitiesAsync(input))
                 {
                     var affectedEntry = dbContext.Entry(affectedEntity);
@@ -103,7 +104,7 @@ class ComputedRuntimeConvention(Func<IModel, IComputedExpressionAnalyzer> comput
             computedUpdaters.Add(async (dbContext) =>
             {
                 var changes = 0;
-                var input = new EFCoreComputedInput(dbContext);
+                var input = dbContext.GetComputedInput();
                 var incrementalChanges = await incrementalChangeProvider.GetIncrementalChangesAsync(input);
                 foreach (var (entity, value) in incrementalChanges)
                 {
