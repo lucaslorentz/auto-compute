@@ -62,11 +62,37 @@ public static class Utilities
         }
         else
         {
-            var oldKeyValues = navigation.ForeignKey.Properties
-                .Select(p => entityEntry.OriginalValues[p])
-                .ToArray();
+            if (navigation.ForeignKey.PrincipalEntityType == entityEntry.Metadata)
+            {
+                var inverseNavigation = navigation.Inverse
+                    ?? throw new Exception($"No inverse to compute original value for navigation '{navigation}'");
 
-            return entityEntry.Context.Find(navigation.TargetEntityType.ClrType, oldKeyValues);
+                var originalValue = navigationEntry.CurrentValue;
+
+                if (entityEntry.State != EntityState.Added)
+                {
+                    foreach (var itemEntry in dbContext.GetComputedInput().ModifiedEntityEntries[navigation.TargetEntityType])
+                    {
+                        var inverseReferenceEntry = itemEntry.Reference(inverseNavigation);
+                        if (inverseReferenceEntry.IsModified)
+                        {
+                            var oldInverseValue = inverseReferenceEntry.GetOriginalValue();
+                            if (ReferenceEquals(entityEntry.Entity, oldInverseValue))
+                                originalValue = itemEntry.Entity;
+                        }
+                    }
+                }
+
+                return originalValue;
+            }
+            else
+            {
+                var oldKeyValues = navigation.ForeignKey.Properties
+                    .Select(p => entityEntry.OriginalValues[p])
+                    .ToArray();
+
+                return entityEntry.Context.Find(navigation.TargetEntityType.ClrType, oldKeyValues);
+            }
         }
     }
 
