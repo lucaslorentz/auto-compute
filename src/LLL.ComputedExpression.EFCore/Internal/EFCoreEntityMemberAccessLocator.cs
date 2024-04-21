@@ -14,7 +14,8 @@ public class EFCoreEntityMemberAccessLocator(IModel model) :
         {
             var type = memberExpression.Expression.Type;
             var entityType = model.FindEntityType(type);
-            var navigation = entityType?.FindNavigation(memberExpression.Member);
+            var navigation = (INavigationBase?)entityType?.FindNavigation(memberExpression.Member)
+                ?? entityType?.FindSkipNavigation(memberExpression.Member);
             if (navigation != null)
                 return EntityMemberAccess.Create(memberExpression.Expression, GetNavigation(navigation));
         }
@@ -37,7 +38,7 @@ public class EFCoreEntityMemberAccessLocator(IModel model) :
         return null;
     }
 
-    protected virtual IEntityNavigation GetNavigation(INavigation navigation)
+    protected virtual IEntityNavigation GetNavigation(INavigationBase navigation)
     {
         return navigation.GetEntityNavigation();
     }

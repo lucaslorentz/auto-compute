@@ -1,4 +1,5 @@
 using System.Collections;
+using System.Diagnostics;
 using System.Runtime.CompilerServices;
 using LLL.ComputedExpression.EFCore.Internal;
 using Microsoft.EntityFrameworkCore;
@@ -15,84 +16,121 @@ public static class Utilities
 
         var dbContext = navigationEntry.EntityEntry.Context;
 
-        var navigation = (navigationEntry.Metadata as INavigation)!;
+        var baseNavigation = navigationEntry.Metadata;
 
-        if (navigation.IsCollection)
+        var input = dbContext.GetComputedInput();
+
+        if (baseNavigation.IsCollection)
         {
-            var collectionAccessor = navigation.GetCollectionAccessor()!;
+            var collectionAccessor = baseNavigation.GetCollectionAccessor()!;
             var originalValue = collectionAccessor.Create();
 
             if (!navigationEntry.IsLoaded && entityEntry.State != EntityState.Detached)
                 navigationEntry.Load();
 
-            var inverseNavigation = navigation.Inverse
-                ?? throw new Exception($"No inverse to compute original value for navigation '{navigation}'");
-
-            var currentValue = navigationEntry.CurrentValue as IEnumerable;
-            if (currentValue is not null)
+            if (baseNavigation is ISkipNavigation skipNavigation)
             {
-                foreach (var item in currentValue)
+                if (navigationEntry.CurrentValue is IEnumerable currentValue)
                 {
-                    var itemEntry = dbContext.Entry(item);
-                    if (itemEntry.State == EntityState.Added)
-                        continue; // Wasn't in the old list
+                    foreach (var item in currentValue)
+                    {
+                        var itemEntry = dbContext.Entry(item);
 
-                    var reference = itemEntry.Reference(inverseNavigation);
-                    if (reference.IsModified)
-                        // Was added to the list
-                        // TODO: Improve to check the foreign keys
-                        continue;
+                        if (skipNavigation.IsSkipRelationNew(input, entityEntry, itemEntry))
+                            continue;
 
-                    collectionAccessor.AddStandalone(originalValue, item);
+                        collectionAccessor.AddStandalone(originalValue, item);
+                    }
+                }
+
+                var joinReferenceToOther = skipNavigation.Inverse.ForeignKey.DependentToPrincipal;
+                foreach (var joinEntry in input.ModifiedEntityEntries[skipNavigation.JoinEntityType])
+                {
+                    var selfReferenceEntry = joinEntry.Reference(skipNavigation.ForeignKey.DependentToPrincipal!);
+                    var otherReferenceEntry = joinEntry.Reference(joinReferenceToOther!);
+                    if ((joinEntry.State == EntityState.Deleted || selfReferenceEntry.IsModified || otherReferenceEntry.IsModified)
+                        && joinEntry.State != EntityState.Added
+                        && skipNavigation.ForeignKey.IsConnected(entityEntry.CurrentValues, joinEntry.OriginalValues))
+                    {
+                        collectionAccessor.AddStandalone(originalValue, otherReferenceEntry.CurrentValue!);
+                    }
                 }
             }
-
-            foreach (var itemEntry in dbContext.GetComputedInput().ModifiedEntityEntries[navigation.TargetEntityType])
+            else if (baseNavigation is INavigation navigation)
             {
-                var inverseReferenceEntry = itemEntry.Reference(inverseNavigation);
-                if (inverseReferenceEntry.IsModified)
+                if (navigationEntry.CurrentValue is IEnumerable currentValue)
                 {
-                    var oldInverseValue = inverseReferenceEntry.GetOriginalValue();
-                    if (ReferenceEquals(entityEntry.Entity, oldInverseValue))
-                        collectionAccessor.AddStandalone(originalValue, itemEntry.Entity);
+                    foreach (var item in currentValue)
+                    {
+                        var itemEntry = dbContext.Entry(item);
+
+                        if (navigation.IsDirectRelationNew(entityEntry, itemEntry))
+                            continue;
+
+                        collectionAccessor.AddStandalone(originalValue, item);
+                    }
+                }
+
+                foreach (var itemEntry in input.ModifiedEntityEntries[baseNavigation.TargetEntityType])
+                {
+                    if (!navigation.WasDirectlyRelated(entityEntry, itemEntry))
+                        continue;
+
+                    collectionAccessor.AddStandalone(originalValue, itemEntry.Entity);
                 }
             }
 
             return originalValue;
         }
-        else
+        else if (baseNavigation is INavigation navigation)
         {
-            if (navigation.ForeignKey.PrincipalEntityType == entityEntry.Metadata)
+            var foreignKey = navigation.ForeignKey;
+            if (foreignKey.PrincipalEntityType == entityEntry.Metadata)
             {
-                var inverseNavigation = navigation.Inverse
-                    ?? throw new Exception($"No inverse to compute original value for navigation '{navigation}'");
-
-                var originalValue = navigationEntry.CurrentValue;
+                var inverseNavigation = baseNavigation.Inverse
+                    ?? throw new Exception($"No inverse to compute original value for navigation '{baseNavigation}'");
 
                 if (entityEntry.State != EntityState.Added)
                 {
-                    foreach (var itemEntry in dbContext.GetComputedInput().ModifiedEntityEntries[navigation.TargetEntityType])
+                    var entityOriginalValues = entityEntry.OriginalValues;
+
+                    // Original value is the current value
+                    if (navigationEntry is ReferenceEntry referenceEntry
+                        && referenceEntry.TargetEntry is not null
+                        && referenceEntry.TargetEntry.State != EntityState.Added
+                        && foreignKey.IsConnected(entityOriginalValues, referenceEntry.TargetEntry.OriginalValues))
+                    {
+                        return navigationEntry.CurrentValue;
+                    }
+
+                    // Original value was another value
+                    foreach (var itemEntry in input.ModifiedEntityEntries[baseNavigation.TargetEntityType])
                     {
                         var inverseReferenceEntry = itemEntry.Reference(inverseNavigation);
-                        if (inverseReferenceEntry.IsModified)
+                        if (inverseReferenceEntry.IsModified
+                            && foreignKey.IsConnected(entityOriginalValues, itemEntry.OriginalValues))
                         {
-                            var oldInverseValue = inverseReferenceEntry.GetOriginalValue();
-                            if (ReferenceEquals(entityEntry.Entity, oldInverseValue))
-                                originalValue = itemEntry.Entity;
+                            return itemEntry.Entity;
                         }
                     }
                 }
 
-                return originalValue;
+                return null;
             }
             else
             {
-                var oldKeyValues = navigation.ForeignKey.Properties
+                var oldKeyValues = foreignKey.Properties
                     .Select(p => entityEntry.OriginalValues[p])
                     .ToArray();
 
-                return entityEntry.Context.Find(navigation.TargetEntityType.ClrType, oldKeyValues);
+                return entityEntry.Context.Find(
+                    baseNavigation.TargetEntityType.ClrType,
+                    oldKeyValues);
             }
+        }
+        else
+        {
+            throw new NotSupportedException($"Can't get original value of navigation {baseNavigation}");
         }
     }
 
@@ -140,8 +178,8 @@ public static class Utilities
         });
     }
 
-    private readonly static ConditionalWeakTable<INavigation, IEntityNavigation> _entityNavigations = [];
-    public static IEntityNavigation GetEntityNavigation(this INavigation navigation)
+    private readonly static ConditionalWeakTable<INavigationBase, IEntityNavigation> _entityNavigations = [];
+    public static IEntityNavigation GetEntityNavigation(this INavigationBase navigation)
     {
         return _entityNavigations.GetValue(navigation, static (navigation) =>
         {
@@ -150,7 +188,7 @@ public static class Utilities
         });
     }
 
-    public static async Task BulkLoadAsync<TEntity>(this DbContext dbContext, IEnumerable<TEntity> entities, INavigation navigation)
+    public static async Task BulkLoadAsync<TEntity>(this DbContext dbContext, IEnumerable<TEntity> entities, INavigationBase navigation)
         where TEntity : class
     {
         var entitiesToLoad = entities.Where(e =>
@@ -172,5 +210,80 @@ public static class Utilities
                 .AsSingleQuery()
                 .LoadAsync();
         }
+    }
+
+    private static bool WasDirectlyRelated(
+        this INavigation navigation,
+        EntityEntry principalEntry,
+        EntityEntry dependentEntry)
+    {
+        return dependentEntry.State != EntityState.Added
+            && navigation.ForeignKey.IsConnected(principalEntry.OriginalValues, dependentEntry.OriginalValues);
+    }
+
+    private static bool IsDirectlyRelated(
+        this INavigation navigation,
+        EntityEntry principalEntry,
+        EntityEntry dependentEntry)
+    {
+        return dependentEntry.State != EntityState.Deleted
+            && navigation.ForeignKey.IsConnected(principalEntry.CurrentValues, dependentEntry.CurrentValues);
+    }
+
+    private static bool IsDirectRelationNew(
+        this INavigation navigation,
+        EntityEntry principalEntry,
+        EntityEntry dependentEntry
+    )
+    {
+        return !navigation.WasDirectlyRelated(principalEntry, dependentEntry)
+            && navigation.IsDirectlyRelated(principalEntry, dependentEntry);
+    }
+
+    private static bool IsSkipRelationNew(
+        this ISkipNavigation skipNavigation,
+        IEFCoreComputedInput input,
+        EntityEntry entry,
+        EntityEntry relatedEntry)
+    {
+        var entityValues = entry.CurrentValues;
+        var relatedEntityValues = relatedEntry.CurrentValues;
+        var foreignKey = skipNavigation.ForeignKey;
+        var relatedForeignKey = skipNavigation.Inverse!.ForeignKey;
+        foreach (var joinEntry in input.ModifiedEntityEntries[skipNavigation.JoinEntityType])
+        {
+            var wasRelated = joinEntry.State != EntityState.Added
+                && foreignKey.IsConnected(entityValues, joinEntry.OriginalValues)
+                && relatedForeignKey.IsConnected(relatedEntityValues, joinEntry.OriginalValues);
+
+            var isRelated = joinEntry.State != EntityState.Deleted
+                && foreignKey.IsConnected(entityValues, joinEntry.CurrentValues)
+                && relatedForeignKey.IsConnected(relatedEntityValues, joinEntry.CurrentValues);
+
+            if (!wasRelated && isRelated)
+                return true;
+        }
+
+        return false;
+    }
+
+    private static bool IsConnected(
+        this IForeignKey foreignKey,
+        PropertyValues principalValues,
+        PropertyValues dependentValues)
+    {
+        for (var i = 0; i < foreignKey.PrincipalKey.Properties.Count; i++)
+        {
+            var principalProperty = foreignKey.PrincipalKey.Properties[i];
+            var dependentProperty = foreignKey.Properties[i];
+
+            var principalValue = principalValues[principalProperty];
+            var dependentValue = dependentValues[dependentProperty];
+
+            if (!principalProperty.GetKeyValueComparer().Equals(principalValue, dependentValue))
+                return false;
+        }
+
+        return true;
     }
 }

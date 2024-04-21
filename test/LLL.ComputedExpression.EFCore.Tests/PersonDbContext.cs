@@ -1,5 +1,4 @@
 ﻿using Microsoft.EntityFrameworkCore;
-using Microsoft.EntityFrameworkCore.Metadata.Internal;
 
 namespace LLL.ComputedExpression.EFCore.Tests;
 
@@ -13,6 +12,9 @@ public class Person
     public virtual bool HasCats { get; protected set; }
     public virtual string? Description { get; protected set; }
     public virtual int Total { get; protected set; }
+    public virtual Pet? FavoritePet { get; set; }
+    public virtual IList<Person> Friends { get; protected set; } = [];
+    public virtual IList<Person> FriendsInverse { get; protected set; } = [];
 }
 
 public class Pet
@@ -21,6 +23,7 @@ public class Pet
     public virtual string? Color { get; set; }
     public virtual string? Type { get; set; }
     public virtual Person? Owner { get; set; }
+    public virtual Person? FavoritePetInverse { get; set; }
 }
 
 class PersonDbContext(
@@ -33,14 +36,28 @@ class PersonDbContext(
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         base.OnModelCreating(modelBuilder);
-        modelBuilder.Entity<Person>();
+
+        var personBuilder = modelBuilder.Entity<Person>();
+
+        personBuilder.HasOne(e => e.FavoritePet)
+            .WithOne(e => e.FavoritePetInverse)
+            .HasForeignKey<Person>("FavoritePetId");
+
+        personBuilder.HasMany(e => e.Friends)
+            .WithMany(e => e.FriendsInverse)
+            .UsingEntity<Dictionary<string, object>>(
+                l => l.HasOne<Person>("FromPerson").WithMany(),
+                r => r.HasOne<Person>("ToPerson").WithMany()
+            );
+
         modelBuilder.Entity<Pet>();
+
         customizeModel?.Invoke(modelBuilder);
     }
 
     public static async void SeedData(PersonDbContext dbContext)
     {
-        dbContext.Add(new Person
+        var person1 = new Person
         {
             Id = 1,
             FirstName = "John",
@@ -48,6 +65,17 @@ class PersonDbContext(
             Pets = {
                 new Pet { Id = 1, Type = "Cat" }
             },
+        };
+        dbContext.Add(person1);
+
+        dbContext.Add(new Person
+        {
+            Id = 2,
+            FirstName = "Jane",
+            LastName = "Doe",
+            Friends = {
+                person1
+            }
         });
     }
 

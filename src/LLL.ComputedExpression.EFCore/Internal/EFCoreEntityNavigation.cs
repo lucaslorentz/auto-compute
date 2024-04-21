@@ -5,7 +5,7 @@ using Microsoft.EntityFrameworkCore.Metadata;
 namespace LLL.ComputedExpression.EFCore.Internal;
 
 public class EFCoreEntityNavigation<TSourceEntity, TTargetEntity>(
-    INavigation navigation
+    INavigationBase navigation
 ) : IEntityNavigation<IEFCoreComputedInput, TSourceEntity, TTargetEntity>
     where TSourceEntity : class
     where TTargetEntity : class
@@ -75,7 +75,7 @@ public class EFCoreEntityNavigation<TSourceEntity, TTargetEntity>(
         IEntityMemberAccess<IEntityNavigation> memberAccess,
         Expression inputExpression)
     {
-        var valueGetter = static (INavigation navigation, IEFCoreComputedInput input, TSourceEntity ent) =>
+        var valueGetter = static (INavigationBase navigation, IEFCoreComputedInput input, TSourceEntity ent) =>
         {
             var dbContext = input.DbContext;
 
@@ -104,7 +104,7 @@ public class EFCoreEntityNavigation<TSourceEntity, TTargetEntity>(
         IEntityMemberAccess<IEntityNavigation> memberAccess,
         Expression inputExpression)
     {
-        var valueGetter = static (INavigation navigation, IEFCoreComputedInput input, TSourceEntity ent) =>
+        var valueGetter = static (INavigationBase navigation, IEFCoreComputedInput input, TSourceEntity ent) =>
         {
             var dbContext = input.DbContext;
 

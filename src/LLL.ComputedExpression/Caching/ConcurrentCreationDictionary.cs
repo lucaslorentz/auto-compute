@@ -11,7 +11,7 @@ public class ConcurrentCreationDictionary : IConcurrentCreationCache
     public T GetOrCreate<K, T>(K key, Func<K, T> create)
         where K : notnull
     {
-        return GetOrCreateAsync(key, (k) => Task.FromResult(create(k))).Result;
+        return GetOrCreateAsync(key, (k) => Task.FromResult(create(k))).GetAwaiter().GetResult();
     }
 
     public async Task<T> GetOrCreateAsync<K, T>(K key, Func<K, Task<T>> create)
