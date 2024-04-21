@@ -9,6 +9,5 @@ public class NumberIncrementalComputed<T, V> : IIncrementalComputed<T, V>
     public bool IsZero(V value) => V.IsZero(value);
     public V Add(V a, V b) => a + b;
     public V Remove(V a, V b) => a - b;
-    public V Negate(V v) => -v;
     public List<IncrementalComputedPart> Parts { get; } = [];
 }

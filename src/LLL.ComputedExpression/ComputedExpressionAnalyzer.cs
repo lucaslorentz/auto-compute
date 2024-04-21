@@ -92,7 +92,7 @@ public class ComputedExpressionAnalyzer<TInput> : IComputedExpressionAnalyzer
     public IChangesProvider CreateChangesProvider(LambdaExpression computed, object? valueEqualityComparer = null)
     {
         return CreateChangesProvider(PrepareLambda(computed), valueEqualityComparer
-            ?? computed.Body.Type.GetDefaultEqualityComparer());
+            ?? computed.ReturnType.GetDefaultEqualityComparer());
     }
 
     private IChangesProvider CreateChangesProvider(PreparedLambda computed, object valueEqualityComparer)
@@ -103,7 +103,7 @@ public class ComputedExpressionAnalyzer<TInput> : IComputedExpressionAnalyzer
         var entityActionProvider = RequireEntityActionProvider();
 
         var entityType = computed.Lambda.Parameters[0].Type;
-        var valueType = computed.Lambda.Body.Type;
+        var valueType = computed.Lambda.ReturnType;
 
         var closedType = typeof(LambdaValueChangesProvider<,,>)
             .MakeGenericType(typeof(TInput), entityType, valueType);
