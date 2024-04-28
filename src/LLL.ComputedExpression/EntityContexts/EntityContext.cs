@@ -30,7 +30,26 @@ public abstract class EntityContext
         var providers = new List<IAffectedEntitiesProvider?>();
 
         foreach (var member in _accessedMembers)
-            providers.Add(member.GetAffectedEntitiesProvider());
+        {
+            if (member is IEntityNavigation entityNavigation)
+            {
+                var closedType = typeof(NavigationAffectedEntitiesProvider<,,>)
+                    .MakeGenericType(entityNavigation.InputType, entityNavigation.SourceEntityType, entityNavigation.TargetEntityType);
+
+                var provider = (IAffectedEntitiesProvider)Activator.CreateInstance(closedType, entityNavigation)!;
+
+                providers.Add(provider);
+            }
+            else if (member is IEntityProperty entityProperty)
+            {
+                var closedType = typeof(PropertyAffectedEntitiesProvider<,>)
+                    .MakeGenericType(entityProperty.InputType, entityProperty.EntityType);
+
+                var provider = (IAffectedEntitiesProvider)Activator.CreateInstance(closedType, entityProperty)!;
+
+                providers.Add(provider);
+            }
+        }
 
         foreach (var childContext in _childContexts)
         {
@@ -44,9 +63,22 @@ public abstract class EntityContext
 
     public abstract IAffectedEntitiesProvider? GetParentAffectedEntitiesProvider();
 
-    public abstract IAffectedEntitiesProvider? GetAffectedEntitiesProviderInverse();
 
-    public abstract IRootEntitiesProvider GetOriginalRootEntitiesProvider();
+    public abstract IReadOnlyCollection<object> GetCascadedAffectedEntities(object input, IReadOnlyCollection<object> entities, IncrementalContext incrementalContext);
 
-    public abstract IRootEntitiesProvider GetCurrentRootEntitiesProvider();
+    public virtual IReadOnlyCollection<object> GetRequiredIncrementalEntities(object input, IReadOnlyCollection<object> entities, IncrementalContext incrementalContext)
+    {
+        var result = new HashSet<object>();
+        foreach (var childContext in _childContexts)
+        {
+            foreach (var entity in childContext.GetParentRequiredIncrementalEntities(input, entities, incrementalContext))
+                result.Add(entity);
+        }
+        return result;
+    }
+
+    public virtual IReadOnlyCollection<object> GetParentRequiredIncrementalEntities(object input, IReadOnlyCollection<object> entities, IncrementalContext incrementalContext)
+    {
+        return GetRequiredIncrementalEntities(input, entities, incrementalContext);
+    }
 }

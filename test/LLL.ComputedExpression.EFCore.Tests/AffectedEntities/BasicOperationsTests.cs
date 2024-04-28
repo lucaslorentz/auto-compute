@@ -1,6 +1,5 @@
 ﻿using System.Linq.Expressions;
 using FluentAssertions;
-using LLL.ComputedExpression.EFCore.Internal;
 
 namespace LLL.ComputedExpression.EFCore.Tests.AffectedEntities;
 
@@ -13,9 +12,9 @@ public class BasicOperationsTests
     {
         using var context = await TestDbContext.Create<PersonDbContext>();
 
-        var affectedEntitiesProvider = context.GetAffectedEntitiesProvider(_computedExpression);
-        affectedEntitiesProvider!.ToDebugString()
-            .Should().Be("Concat(EntitiesWithPropertyChange(Person, FirstName), EntitiesWithPropertyChange(Person, LastName))");
+        var changesProvider = context.GetChangesProvider(_computedExpression, static c => c.VoidChange());
+        changesProvider!.ToDebugString()
+            .Should().Be("Concat(EntitiesWithPropertyChange(Person.FirstName), EntitiesWithPropertyChange(Person.LastName))");
     }
 
     [Fact]
@@ -26,8 +25,8 @@ public class BasicOperationsTests
         var person = new Person { FirstName = "Jane" };
         context!.Add(person);
 
-        var affectedEntities = await context.GetAffectedEntitiesAsync(_computedExpression);
-        affectedEntities.Should().BeEquivalentTo([person]);
+        var changes = await context.GetChangesAsync(_computedExpression, static c => c.VoidChange());
+        changes.Keys.Should().BeEquivalentTo([person]);
     }
 
     [Fact]
@@ -38,8 +37,8 @@ public class BasicOperationsTests
         var person = context!.Set<Person>().Find(1)!;
         person.FirstName = "Modified";
 
-        var affectedEntities = await context.GetAffectedEntitiesAsync(_computedExpression);
-        affectedEntities.Should().BeEquivalentTo([person]);
+        var changes = await context.GetChangesAsync(_computedExpression, static c => c.VoidChange());
+        changes.Keys.Should().BeEquivalentTo([person]);
     }
 
     [Fact]
@@ -50,7 +49,7 @@ public class BasicOperationsTests
         var person = context!.Set<Person>().Find(1)!;
         context.Remove(person);
 
-        var affectedEntities = await context.GetAffectedEntitiesAsync(_computedExpression);
-        affectedEntities.Should().BeEquivalentTo([person]);
+        var changes = await context.GetChangesAsync(_computedExpression, static c => c.VoidChange());
+        changes.Keys.Should().BeEquivalentTo([person]);
     }
 }

@@ -1,5 +1,4 @@
 using FluentAssertions;
-using LLL.ComputedExpression.Incremental;
 
 namespace LLL.ComputedExpression.EFCore.Tests.Computeds;
 
@@ -113,12 +112,12 @@ public class IncrementalFilteredCollectionTests
         {
             var personBuilder = modelBuilder.Entity<Person>();
 
-            personBuilder.IncrementalComputedProperty(
+            personBuilder.IncrementalNumberComputedProperty(
                 p => p.Total,
-                c => c.AddCollection(p =>
+                p =>
                     p.Pets.Where(x => x.Type == "Cat")
                     .Concat(p.Pets.Where(x => x.Type == "Dog"))
-                , p => 1)
+                    .Count()
             );
         });
     }

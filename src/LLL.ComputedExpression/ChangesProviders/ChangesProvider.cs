@@ -1,22 +1,19 @@
 namespace LLL.ComputedExpression.ChangesProviders;
 
-public abstract class ChangesProvider<TInput, TEntity, TValue>(
-    IEqualityComparer<TValue> valueEqualityComparer
-) : IChangesProvider<TInput, TEntity, TValue>
+public class ChangesProvider<TInput, TEntity, TResult>(
+    IUnboundChangesProvider<TInput, TEntity, TResult> unboundChangesProvider,
+    TInput input,
+    ChangeMemory<TEntity, TResult> memory
+) : IChangesProvider<TEntity, TResult>
     where TEntity : class
 {
-    public IEqualityComparer<TValue> ValueEqualityComparer => valueEqualityComparer;
-
-    public async Task<IReadOnlyDictionary<TEntity, IValueChange<TValue>>> GetChangesAsync(TInput input)
+    public async Task<IReadOnlyDictionary<TEntity, TResult>> GetChangesAsync()
     {
-        var changes = await GetUnfilteredChangesAsync(input);
-
-        var filteredChanges = changes
-            .Where(kv => !valueEqualityComparer.Equals(kv.Value.Original, kv.Value.Current));
-
-        return new Dictionary<TEntity, IValueChange<TValue>>(filteredChanges);
+        return await unboundChangesProvider.GetChangesAsync(input, memory);
     }
-    public abstract Task<IValueChange<TValue>> GetChangeAsync(TInput input, TEntity entity);
 
-    protected abstract Task<IReadOnlyDictionary<TEntity, IValueChange<TValue>>> GetUnfilteredChangesAsync(TInput input);
+    public string? ToDebugString()
+    {
+        return unboundChangesProvider?.ToDebugString();
+    }
 }

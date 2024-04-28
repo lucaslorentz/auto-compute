@@ -7,7 +7,8 @@ namespace LLL.ComputedExpression.EFCore.Tests;
 public static class TestDbContext
 {
     public static async Task<TDbContext> Create<TDbContext>(
-        Action<ModelBuilder>? customizeModel = null
+        Action<ModelBuilder>? customizeModel = null,
+        Func<DbContext, Task>? seedData = null
     ) where TDbContext : DbContext, ITestDbContext<TDbContext>
     {
         var connection = new SqliteConnection("Filename=:memory:");
@@ -23,6 +24,8 @@ public static class TestDbContext
         {
             await context.Database.EnsureCreatedAsync();
             TDbContext.SeedData(context);
+            if (seedData is not null)
+                await seedData(context);
             await context.SaveChangesAsync();
         }
 

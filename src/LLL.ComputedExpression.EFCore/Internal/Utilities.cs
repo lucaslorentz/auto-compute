@@ -1,5 +1,4 @@
 using System.Collections;
-using System.Diagnostics;
 using System.Runtime.CompilerServices;
 using LLL.ComputedExpression.EFCore.Internal;
 using Microsoft.EntityFrameworkCore;
@@ -25,9 +24,6 @@ public static class Utilities
             var collectionAccessor = baseNavigation.GetCollectionAccessor()!;
             var originalValue = collectionAccessor.Create();
 
-            if (!navigationEntry.IsLoaded && entityEntry.State != EntityState.Detached)
-                navigationEntry.Load();
-
             if (baseNavigation is ISkipNavigation skipNavigation)
             {
                 if (navigationEntry.CurrentValue is IEnumerable currentValue)
@@ -44,7 +40,7 @@ public static class Utilities
                 }
 
                 var joinReferenceToOther = skipNavigation.Inverse.ForeignKey.DependentToPrincipal;
-                foreach (var joinEntry in input.ModifiedEntityEntries[skipNavigation.JoinEntityType])
+                foreach (var joinEntry in input.EntityEntriesOfType(skipNavigation.JoinEntityType))
                 {
                     var selfReferenceEntry = joinEntry.Reference(skipNavigation.ForeignKey.DependentToPrincipal!);
                     var otherReferenceEntry = joinEntry.Reference(joinReferenceToOther!);
@@ -71,7 +67,7 @@ public static class Utilities
                     }
                 }
 
-                foreach (var itemEntry in input.ModifiedEntityEntries[baseNavigation.TargetEntityType])
+                foreach (var itemEntry in input.EntityEntriesOfType(baseNavigation.TargetEntityType))
                 {
                     if (!navigation.WasDirectlyRelated(entityEntry, itemEntry))
                         continue;
@@ -104,7 +100,7 @@ public static class Utilities
                     }
 
                     // Original value was another value
-                    foreach (var itemEntry in input.ModifiedEntityEntries[baseNavigation.TargetEntityType])
+                    foreach (var itemEntry in input.EntityEntriesOfType(baseNavigation.TargetEntityType))
                     {
                         var inverseReferenceEntry = itemEntry.Reference(inverseNavigation);
                         if (inverseReferenceEntry.IsModified
@@ -212,25 +208,39 @@ public static class Utilities
         }
     }
 
-    private static bool WasDirectlyRelated(
+    public static bool WasDirectlyRelated(
         this INavigation navigation,
-        EntityEntry principalEntry,
-        EntityEntry dependentEntry)
+        EntityEntry entry,
+        EntityEntry relatedEntry)
     {
-        return dependentEntry.State != EntityState.Added
-            && navigation.ForeignKey.IsConnected(principalEntry.OriginalValues, dependentEntry.OriginalValues);
+        if (entry.State == EntityState.Added
+            || relatedEntry.State == EntityState.Added)
+            return false;
+
+        var (principalEntry, dependantEntry) = navigation.IsOnDependent
+            ? (relatedEntry, entry)
+            : (entry, relatedEntry);
+
+        return navigation.ForeignKey.IsConnected(principalEntry.OriginalValues, dependantEntry.OriginalValues);
     }
 
-    private static bool IsDirectlyRelated(
+    public static bool IsDirectlyRelated(
         this INavigation navigation,
-        EntityEntry principalEntry,
-        EntityEntry dependentEntry)
+        EntityEntry entry,
+        EntityEntry relatedEntry)
     {
-        return dependentEntry.State != EntityState.Deleted
-            && navigation.ForeignKey.IsConnected(principalEntry.CurrentValues, dependentEntry.CurrentValues);
+        if (entry.State == EntityState.Deleted
+            || relatedEntry.State == EntityState.Deleted)
+            return false;
+
+        var (principalEntry, dependantEntry) = navigation.IsOnDependent
+            ? (relatedEntry, entry)
+            : (entry, relatedEntry);
+
+        return navigation.ForeignKey.IsConnected(principalEntry.CurrentValues, dependantEntry.CurrentValues);
     }
 
-    private static bool IsDirectRelationNew(
+    public static bool IsDirectRelationNew(
         this INavigation navigation,
         EntityEntry principalEntry,
         EntityEntry dependentEntry
@@ -240,7 +250,7 @@ public static class Utilities
             && navigation.IsDirectlyRelated(principalEntry, dependentEntry);
     }
 
-    private static bool IsSkipRelationNew(
+    public static bool WasSkipRelated(
         this ISkipNavigation skipNavigation,
         IEFCoreComputedInput input,
         EntityEntry entry,
@@ -250,21 +260,106 @@ public static class Utilities
         var relatedEntityValues = relatedEntry.CurrentValues;
         var foreignKey = skipNavigation.ForeignKey;
         var relatedForeignKey = skipNavigation.Inverse!.ForeignKey;
-        foreach (var joinEntry in input.ModifiedEntityEntries[skipNavigation.JoinEntityType])
+        foreach (var joinEntry in input.EntityEntriesOfType(skipNavigation.JoinEntityType))
         {
-            var wasRelated = joinEntry.State != EntityState.Added
-                && foreignKey.IsConnected(entityValues, joinEntry.OriginalValues)
+            if (joinEntry.State == EntityState.Added)
+                continue;
+
+            var wasRelated = foreignKey.IsConnected(entityValues, joinEntry.OriginalValues)
                 && relatedForeignKey.IsConnected(relatedEntityValues, joinEntry.OriginalValues);
 
-            var isRelated = joinEntry.State != EntityState.Deleted
-                && foreignKey.IsConnected(entityValues, joinEntry.CurrentValues)
-                && relatedForeignKey.IsConnected(relatedEntityValues, joinEntry.CurrentValues);
-
-            if (!wasRelated && isRelated)
+            if (wasRelated)
                 return true;
         }
 
         return false;
+    }
+
+    public static bool IsSkipRelated(
+        this ISkipNavigation skipNavigation,
+        IEFCoreComputedInput input,
+        EntityEntry entry,
+        EntityEntry relatedEntry)
+    {
+        var entityValues = entry.CurrentValues;
+        var relatedEntityValues = relatedEntry.CurrentValues;
+        var foreignKey = skipNavigation.ForeignKey;
+        var relatedForeignKey = skipNavigation.Inverse!.ForeignKey;
+        foreach (var joinEntry in input.EntityEntriesOfType(skipNavigation.JoinEntityType))
+        {
+            if (joinEntry.State == EntityState.Deleted)
+                continue;
+
+            var isRelated = foreignKey.IsConnected(entityValues, joinEntry.CurrentValues)
+                && relatedForeignKey.IsConnected(relatedEntityValues, joinEntry.CurrentValues);
+
+            if (isRelated)
+                return true;
+        }
+
+        return false;
+    }
+
+    public static bool IsSkipRelationNew(
+        this ISkipNavigation skipNavigation,
+        IEFCoreComputedInput input,
+        EntityEntry entry,
+        EntityEntry relatedEntry)
+    {
+        return !skipNavigation.WasSkipRelated(input, entry, relatedEntry)
+            && skipNavigation.IsSkipRelated(input, entry, relatedEntry);
+    }
+
+    public static void LoadJoinEntity(
+        this ISkipNavigation skipNavigation,
+        IEFCoreComputedInput input,
+        EntityEntry entry,
+        EntityEntry relatedEntry)
+    {
+        var inverse = skipNavigation.Inverse;
+
+        if (entry.Navigation(skipNavigation).IsLoaded || relatedEntry.Navigation(inverse).IsLoaded)
+            return;
+
+        var foreignKey = skipNavigation.ForeignKey;
+        var relatedForeignKey = skipNavigation.Inverse.ForeignKey;
+
+        var entityValues = entry.CurrentValues;
+        var relatedEntityValues = relatedEntry.CurrentValues;
+
+        foreach (var joinEntry in input.EntityEntriesOfType(skipNavigation.JoinEntityType))
+        {
+            if (foreignKey.IsConnected(entityValues, joinEntry.OriginalValues)
+                && relatedForeignKey.IsConnected(relatedEntityValues, joinEntry.OriginalValues))
+                return;
+        }
+
+        if (input.LoadedJoinEntities.Add((entry, skipNavigation, relatedEntry)))
+        {
+            var foreignKeyPrincipalAndDependantProperties = foreignKey.PrincipalKey.Properties
+                .Zip(foreignKey.Properties, (p, d) => (Principal: p, Dependant: d));
+
+            var relatedForeignKeyPrincipalAndDependantProperties = relatedForeignKey.PrincipalKey.Properties
+                .Zip(relatedForeignKey.Properties, (p, d) => (Principal: p, Dependant: d));
+
+            var query = input.DbContext.QueryEntityType(skipNavigation.JoinEntityType);
+
+            query = foreignKeyPrincipalAndDependantProperties.Aggregate(
+                query,
+                (c, p) => query.Where(e =>
+                    EF.Property<object>(e, p.Dependant.Name).Equals(entry.CurrentValues[p.Principal])
+                )
+            );
+
+            query = relatedForeignKeyPrincipalAndDependantProperties.Aggregate(
+                query,
+                (c, p) => query.Where(e =>
+                    EF.Property<object>(e, p.Dependant.Name).Equals(relatedEntry.CurrentValues[p.Principal])
+                )
+            );
+
+            query.Load();
+        }
     }
 
     private static bool IsConnected(
@@ -285,5 +380,14 @@ public static class Utilities
         }
 
         return true;
+    }
+
+    public static IQueryable<object> QueryEntityType(this DbContext dbContext, IEntityType entityType)
+    {
+        var genericSetMethod = typeof(DbContext).GetMethod("Set", 1, [typeof(string)])
+            ?? throw new Exception("DbContext generic Set method not found");
+
+        return (IQueryable<object>)genericSetMethod.MakeGenericMethod(entityType.ClrType)
+            .Invoke(dbContext, [entityType.Name])!;
     }
 }

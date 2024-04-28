@@ -1,5 +1,6 @@
 ﻿using System.Linq.Expressions;
 using FluentAssertions;
+using LLL.ComputedExpression.ChangeCalculations;
 
 namespace LLL.ComputedExpression.EFCore.Tests.Changes;
 
@@ -16,9 +17,9 @@ public class OneToOneInverseTests
         var pet = context!.Set<Pet>().Find(1)!;
         person.FavoritePet = pet;
 
-        var changes = await context.GetChangesAsync(_computedExpression);
-        changes.Should().BeEquivalentTo(new Dictionary<Pet, ConstValueChange<string?>>{
-            { pet, new ConstValueChange<string?>(null, "John")}
+        var changes = await context.GetChangesAsync(_computedExpression, static c => c.ValueChange());
+        changes.Should().BeEquivalentTo(new Dictionary<Pet, ValueChange<string?>>{
+            { pet, new ValueChange<string?>(null, "John")}
         });
     }
 
@@ -31,9 +32,9 @@ public class OneToOneInverseTests
         var pet = context!.Set<Pet>().Find(1)!;
         pet.FavoritePetInverse = person;
 
-        var changes = await context.GetChangesAsync(_computedExpression);
-        changes.Should().BeEquivalentTo(new Dictionary<Pet, ConstValueChange<string?>>{
-            { pet, new ConstValueChange<string?>(null, "John")}
+        var changes = await context.GetChangesAsync(_computedExpression, static c => c.ValueChange());
+        changes.Should().BeEquivalentTo(new Dictionary<Pet, ValueChange<string?>>{
+            { pet, new ValueChange<string?>(null, "John")}
         });
     }
 
@@ -49,9 +50,9 @@ public class OneToOneInverseTests
 
         person.FirstName = "Modified";
 
-        var changes = await context.GetChangesAsync(_computedExpression);
-        changes.Should().BeEquivalentTo(new Dictionary<Pet, ConstValueChange<string?>>{
-            { pet, new ConstValueChange<string?>("John", "Modified")}
+        var changes = await context.GetChangesAsync(_computedExpression, static c => c.ValueChange());
+        changes.Should().BeEquivalentTo(new Dictionary<Pet, ValueChange<string?>>{
+            { pet, new ValueChange<string?>("John", "Modified")}
         });
     }
 
@@ -67,9 +68,9 @@ public class OneToOneInverseTests
 
         person.FavoritePet = null;
 
-        var changes = await context.GetChangesAsync(_computedExpression);
-        changes.Should().BeEquivalentTo(new Dictionary<Pet, ConstValueChange<string?>>{
-            { pet, new ConstValueChange<string?>("John", null)}
+        var changes = await context.GetChangesAsync(_computedExpression, static c => c.ValueChange());
+        changes.Should().BeEquivalentTo(new Dictionary<Pet, ValueChange<string?>>{
+            { pet, new ValueChange<string?>("John", null)}
         });
     }
 
@@ -85,9 +86,9 @@ public class OneToOneInverseTests
 
         pet.FavoritePetInverse = null;
 
-        var changes = await context.GetChangesAsync(_computedExpression);
-        changes.Should().BeEquivalentTo(new Dictionary<Pet, ConstValueChange<string?>>{
-            { pet, new ConstValueChange<string?>("John", null)}
+        var changes = await context.GetChangesAsync(_computedExpression, static c => c.ValueChange());
+        changes.Should().BeEquivalentTo(new Dictionary<Pet, ValueChange<string?>>{
+            { pet, new ValueChange<string?>("John", null)}
         });
     }
 }

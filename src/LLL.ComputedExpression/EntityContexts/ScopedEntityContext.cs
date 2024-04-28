@@ -26,18 +26,8 @@ public class ScopedEntityContext : EntityContext
         return GetAffectedEntitiesProvider();
     }
 
-    public override IAffectedEntitiesProvider? GetAffectedEntitiesProviderInverse()
+    public override IReadOnlyCollection<object> GetCascadedAffectedEntities(object input, IReadOnlyCollection<object> entities, IncrementalContext incrementalContext)
     {
-        return _parent.GetAffectedEntitiesProviderInverse();
-    }
-
-    public override IRootEntitiesProvider GetOriginalRootEntitiesProvider()
-    {
-        return _parent.GetOriginalRootEntitiesProvider();
-    }
-
-    public override IRootEntitiesProvider GetCurrentRootEntitiesProvider()
-    {
-        return _parent.GetCurrentRootEntitiesProvider();
+        return _parent.GetCascadedAffectedEntities(input, entities, incrementalContext);
     }
 }

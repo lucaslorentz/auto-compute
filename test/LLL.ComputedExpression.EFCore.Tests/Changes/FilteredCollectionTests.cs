@@ -1,5 +1,7 @@
 ﻿using System.Linq.Expressions;
 using FluentAssertions;
+using LLL.ComputedExpression.EFCore.Internal;
+using LLL.ComputedExpression.ChangeCalculations;
 
 namespace LLL.ComputedExpression.EFCore.Tests.Changes;
 
@@ -16,9 +18,9 @@ public class FilteredCollectionTests
         var pet = new Pet { Type = "Cat" };
         person.Pets.Add(pet);
 
-        var changes = await context.GetChangesAsync(_computedExpression);
-        changes.Should().BeEquivalentTo(new Dictionary<Person, ConstValueChange<int>>{
-            { person, new ConstValueChange<int>(1, 2)}
+        var changes = await context.GetChangesAsync(_computedExpression, static c => c.ValueChange());
+        changes.Should().BeEquivalentTo(new Dictionary<Person, ValueChange<int>>{
+            { person, new ValueChange<int>(1, 2)}
         });
     }
 
@@ -31,9 +33,9 @@ public class FilteredCollectionTests
         var pet = new Pet { Type = "Cat", Owner = person };
         context.Add(pet);
 
-        var changes = await context.GetChangesAsync(_computedExpression);
-        changes.Should().BeEquivalentTo(new Dictionary<Person, ConstValueChange<int>>{
-            { person, new ConstValueChange<int>(1, 2)}
+        var changes = await context.GetChangesAsync(_computedExpression, static c => c.ValueChange());
+        changes.Should().BeEquivalentTo(new Dictionary<Person, ValueChange<int>>{
+            { person, new ValueChange<int>(1, 2)}
         });
     }
 
@@ -45,9 +47,9 @@ public class FilteredCollectionTests
         var pet = context!.Set<Pet>().Find(1)!;
         pet.Type = "Modified";
 
-        var changes = await context.GetChangesAsync(_computedExpression);
-        changes.Should().BeEquivalentTo(new Dictionary<Person, ConstValueChange<int>>{
-            { pet.Owner!, new ConstValueChange<int>(1, 0)}
+        var changes = await context.GetChangesAsync(_computedExpression, static c => c.ValueChange());
+        changes.Should().BeEquivalentTo(new Dictionary<Person, ValueChange<int>>{
+            { pet.Owner!, new ValueChange<int>(1, 0)}
         });
     }
 
@@ -60,9 +62,9 @@ public class FilteredCollectionTests
         var pet = context!.Set<Pet>().Find(1)!;
         person.Pets.Remove(pet);
 
-        var changes = await context.GetChangesAsync(_computedExpression);
-        changes.Should().BeEquivalentTo(new Dictionary<Person, ConstValueChange<int>>{
-            { person, new ConstValueChange<int>(1, 0)}
+        var changes = await context.GetChangesAsync(_computedExpression, static c => c.ValueChange());
+        changes.Should().BeEquivalentTo(new Dictionary<Person, ValueChange<int>>{
+            { person, new ValueChange<int>(1, 0)}
         });
     }
 
@@ -75,9 +77,9 @@ public class FilteredCollectionTests
         var pet = context!.Set<Pet>().Find(1)!;
         pet.Owner = null;
 
-        var changes = await context.GetChangesAsync(_computedExpression);
-        changes.Should().BeEquivalentTo(new Dictionary<Person, ConstValueChange<int>>{
-            { person, new ConstValueChange<int>(1, 0)}
+        var changes = await context.GetChangesAsync(_computedExpression, static c => c.ValueChange());
+        changes.Should().BeEquivalentTo(new Dictionary<Person, ValueChange<int>>{
+            { person, new ValueChange<int>(1, 0)}
         });
     }
 
@@ -88,22 +90,24 @@ public class FilteredCollectionTests
 
         var person = context!.Set<Person>().Find(1)!;
 
+        var changesProvider = context.GetChangesProvider(_computedExpression, static c => c.ValueChange())!;
+
         // Add a cat
         person.Pets.Add(new Pet { Type = "Cat" });
-        var changes = await context.GetDeltaChangesAsync(_computedExpression);
-        changes.Should().BeEquivalentTo(new Dictionary<Person, ConstValueChange<int>>{
-            { person, new ConstValueChange<int>(1, 2)}
+        var changes = await changesProvider.GetChangesAsync();
+        changes.Should().BeEquivalentTo(new Dictionary<Person, ValueChange<int>>{
+            { person, new ValueChange<int>(1, 2)}
         });
 
         // No other change
-        changes = await context.GetDeltaChangesAsync(_computedExpression);
+        changes = await changesProvider.GetChangesAsync();
         changes.Should().BeEmpty();
 
         // Remove a cat
         person.Pets.RemoveAt(0);
-        changes = await context.GetDeltaChangesAsync(_computedExpression);
-        changes.Should().BeEquivalentTo(new Dictionary<Person, ConstValueChange<int>>{
-            { person, new ConstValueChange<int>(2, 1)}
+        changes = await changesProvider.GetChangesAsync();
+        changes.Should().BeEquivalentTo(new Dictionary<Person, ValueChange<int>>{
+            { person, new ValueChange<int>(2, 1)}
         });
     }
 }

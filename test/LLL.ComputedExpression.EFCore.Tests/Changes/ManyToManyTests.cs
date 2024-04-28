@@ -1,5 +1,6 @@
 ﻿using System.Linq.Expressions;
 using FluentAssertions;
+using LLL.ComputedExpression.ChangeCalculations;
 
 namespace LLL.ComputedExpression.EFCore.Tests.Changes;
 
@@ -17,9 +18,9 @@ public class ManyToManyTests
 
         person2.Friends.Add(new Person());
 
-        var changes = await context.GetChangesAsync(_computedExpression);
-        changes.Should().BeEquivalentTo(new Dictionary<Person, ConstValueChange<int>>{
-            { person2, new ConstValueChange<int>(1, 2)}
+        var changes = await context.GetChangesAsync(_computedExpression, static c => c.ValueChange());
+        changes.Should().BeEquivalentTo(new Dictionary<Person, ValueChange<int>>{
+            { person2, new ValueChange<int>(1, 2)}
         });
     }
 
@@ -32,9 +33,9 @@ public class ManyToManyTests
         var newPerson = new Person { FriendsInverse = { person2 } };
         context.Add(newPerson);
 
-        var changes = await context.GetChangesAsync(_computedExpression);
-        changes.Should().BeEquivalentTo(new Dictionary<Person, ConstValueChange<int>>{
-            { person2, new ConstValueChange<int>(1, 2)}
+        var changes = await context.GetChangesAsync(_computedExpression, static c => c.ValueChange());
+        changes.Should().BeEquivalentTo(new Dictionary<Person, ValueChange<int>>{
+            { person2, new ValueChange<int>(1, 2)}
         });
     }
 
@@ -46,7 +47,7 @@ public class ManyToManyTests
         var person1 = context!.Set<Person>().Find(1)!;
         person1.FirstName = "Modified";
 
-        var changes = await context.GetChangesAsync(_computedExpression);
+        var changes = await context.GetChangesAsync(_computedExpression, static c => c.ValueChange());
         changes.Should().BeEmpty();
     }
 
@@ -60,9 +61,9 @@ public class ManyToManyTests
         await context.Entry(person2).Navigation(nameof(Person.Friends)).LoadAsync();
         person2.Friends.RemoveAt(0);
 
-        var changes = await context.GetChangesAsync(_computedExpression);
-        changes.Should().BeEquivalentTo(new Dictionary<Person, ConstValueChange<int>>{
-            { person2, new ConstValueChange<int>(1, 0)}
+        var changes = await context.GetChangesAsync(_computedExpression, static c => c.ValueChange());
+        changes.Should().BeEquivalentTo(new Dictionary<Person, ValueChange<int>>{
+            { person2, new ValueChange<int>(1, 0)}
         });
     }
 
@@ -77,9 +78,9 @@ public class ManyToManyTests
 
         person1.FriendsInverse.RemoveAt(0);
 
-        var changes = await context.GetChangesAsync(_computedExpression);
-        changes.Should().BeEquivalentTo(new Dictionary<Person, ConstValueChange<int>>{
-            { person2, new ConstValueChange<int>(1, 0)}
+        var changes = await context.GetChangesAsync(_computedExpression, static c => c.ValueChange());
+        changes.Should().BeEquivalentTo(new Dictionary<Person, ValueChange<int>>{
+            { person2, new ValueChange<int>(1, 0)}
         });
     }
 }

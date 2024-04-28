@@ -1,5 +1,4 @@
 ﻿using LLL.ComputedExpression.AffectedEntitiesProviders;
-using LLL.ComputedExpression.RootEntitiesProviders;
 
 namespace LLL.ComputedExpression.EntityContexts;
 
@@ -33,34 +32,25 @@ public class NavigationEntityContext : EntityContext
         return affectedEntitiesProvider.LoadNavigation(_navigation.GetInverse());
     }
 
-    public override IAffectedEntitiesProvider? GetAffectedEntitiesProviderInverse()
+    public override IReadOnlyCollection<object> GetParentRequiredIncrementalEntities(object input, IReadOnlyCollection<object> entities, IncrementalContext incrementalContext)
     {
-        var navigationAffectedEntitiesProvider = _navigation.GetInverse().GetAffectedEntitiesProvider();
-        var parentAffectedEntitiesProvider = _parent.GetAffectedEntitiesProviderInverse();
+        var requiredEntities = GetRequiredIncrementalEntities(input, entities, incrementalContext).ToArray();
 
-        var loadedFromParentAffectedEntitiesProvider = parentAffectedEntitiesProvider is null
-            ? null
-            : parentAffectedEntitiesProvider.LoadNavigation(_navigation);
+        var inverse = _navigation.GetInverse() ?? throw new Exception("Inverse not found");
 
-        return AffectedEntitiesProviderExtensions.ComposeAndCleanup([
-            navigationAffectedEntitiesProvider,
-            loadedFromParentAffectedEntitiesProvider
-        ]);
+        var originalEntities = inverse.LoadOriginalAsync(input, requiredEntities, incrementalContext).GetAwaiter().GetResult();
+        var currentEntities = inverse.LoadCurrentAsync(input, requiredEntities, incrementalContext).GetAwaiter().GetResult();
+
+        return originalEntities.Concat(currentEntities).ToArray();
     }
 
-    public override IRootEntitiesProvider GetOriginalRootEntitiesProvider()
+    public override IReadOnlyCollection<object> GetCascadedAffectedEntities(object input, IReadOnlyCollection<object> entities, IncrementalContext incrementalContext)
     {
-        var closedType = typeof(LoadOriginalNavigationRootEntitiesProvider<,,,>)
-            .MakeGenericType(InputType, RootEntityType, EntityType, _parent.EntityType);
+        var parentCascaded = _parent.GetCascadedAffectedEntities(input, entities, incrementalContext).ToArray();
 
-        return (IRootEntitiesProvider)Activator.CreateInstance(closedType, _parent.GetOriginalRootEntitiesProvider(), _navigation.GetInverse())!;
-    }
-
-    public override IRootEntitiesProvider GetCurrentRootEntitiesProvider()
-    {
-        var closedType = typeof(LoadCurrentNavigationRootEntitiesProvider<,,,>)
-            .MakeGenericType(InputType, RootEntityType, EntityType, _parent.EntityType);
-
-        return (IRootEntitiesProvider)Activator.CreateInstance(closedType, _parent.GetCurrentRootEntitiesProvider(), _navigation.GetInverse())!;
+        return _navigation.LoadOriginalAsync(input, parentCascaded, incrementalContext).GetAwaiter().GetResult()
+            .Concat(_navigation.LoadCurrentAsync(input, parentCascaded, incrementalContext).GetAwaiter().GetResult())
+            .Concat(_navigation.GetIncrementalEntities(input, entities, incrementalContext))
+            .ToArray();
     }
 }

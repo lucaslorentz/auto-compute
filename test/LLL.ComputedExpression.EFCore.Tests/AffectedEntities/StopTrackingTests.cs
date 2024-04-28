@@ -1,5 +1,4 @@
 ﻿using FluentAssertions;
-using LLL.ComputedExpression.EFCore.Internal;
 
 namespace LLL.ComputedExpression.EFCore.Tests.AffectedEntities;
 
@@ -10,11 +9,12 @@ public class StopTrackingTests
     {
         using var context = await TestDbContext.Create<PersonDbContext>();
 
-        var affectedEntitiesProvider = context.GetAffectedEntitiesProvider(
-            (Person p) => p.AsComputedUntracked().FirstName + " " + p.LastName);
+        var changesProvider = context.GetChangesProvider(
+            (Person p) => p.AsComputedUntracked().FirstName + " " + p.LastName,
+            c => c.VoidChange());
 
-        affectedEntitiesProvider!.ToDebugString()
-            .Should().Be("EntitiesWithPropertyChange(Person, LastName)");
+        changesProvider!.ToDebugString()
+            .Should().Be("EntitiesWithPropertyChange(Person.LastName)");
     }
 
     [Fact]
@@ -22,10 +22,11 @@ public class StopTrackingTests
     {
         using var context = await TestDbContext.Create<PersonDbContext>();
 
-        var affectedEntitiesProvider = context.GetAffectedEntitiesProvider(
-            (Person p) => p.AsComputedUntracked().Pets.Count(p => p.Type == "Cat"));
+        var changesProvider = context.GetChangesProvider(
+            (Person p) => p.AsComputedUntracked().Pets.Count(p => p.Type == "Cat"),
+            c => c.VoidChange());
 
-        affectedEntitiesProvider.Should().BeNull();
+        changesProvider.Should().BeNull();
     }
 
     [Fact]
@@ -33,10 +34,11 @@ public class StopTrackingTests
     {
         using var context = await TestDbContext.Create<PersonDbContext>();
 
-        var affectedEntitiesProvider = context.GetAffectedEntitiesProvider(
-            (Person p) => p.Pets.Count(p => p.AsComputedUntracked().Type == "Cat" && p.Color == "Black"));
+        var changesProvider = context.GetChangesProvider(
+            (Person p) => p.Pets.Count(p => p.AsComputedUntracked().Type == "Cat" && p.Color == "Black"),
+            c => c.VoidChange());
 
-        affectedEntitiesProvider!.ToDebugString()
-            .Should().Be("Concat(EntitiesWithNavigationChange(Person, Pets), Load(EntitiesWithPropertyChange(Pet, Color), Owner))");
+        changesProvider!.ToDebugString()
+            .Should().Be("Concat(EntitiesWithNavigationChange(Person.Pets), Load(EntitiesWithPropertyChange(Pet.Color), Owner))");
     }
 }

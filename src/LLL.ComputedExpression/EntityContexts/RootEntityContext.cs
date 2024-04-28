@@ -1,6 +1,4 @@
-﻿using LLL.ComputedExpression.RootEntitiesProviders;
-
-namespace LLL.ComputedExpression.EntityContexts;
+﻿namespace LLL.ComputedExpression.EntityContexts;
 
 public class RootEntityContext(Type inputType, Type entityType) : EntityContext
 {
@@ -14,24 +12,8 @@ public class RootEntityContext(Type inputType, Type entityType) : EntityContext
         return GetAffectedEntitiesProvider();
     }
 
-    public override IAffectedEntitiesProvider? GetAffectedEntitiesProviderInverse()
+    public override IReadOnlyCollection<object> GetCascadedAffectedEntities(object input, IReadOnlyCollection<object> entities, IncrementalContext? incrementalContext)
     {
-        return null;
-    }
-
-    public override IRootEntitiesProvider GetOriginalRootEntitiesProvider()
-    {
-        var closedType = typeof(NoOpRootEntitiesProvider<,>)
-            .MakeGenericType(InputType, EntityType);
-
-        return (IRootEntitiesProvider)Activator.CreateInstance(closedType)!;
-    }
-
-    public override IRootEntitiesProvider GetCurrentRootEntitiesProvider()
-    {
-        var closedType = typeof(NoOpRootEntitiesProvider<,>)
-            .MakeGenericType(InputType, EntityType);
-
-        return (IRootEntitiesProvider)Activator.CreateInstance(closedType)!;
+        return [];
     }
 }

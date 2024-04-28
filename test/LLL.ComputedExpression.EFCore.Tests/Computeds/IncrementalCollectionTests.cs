@@ -1,6 +1,5 @@
 using FluentAssertions;
 using Microsoft.EntityFrameworkCore;
-using LLL.ComputedExpression.Incremental;
 
 namespace LLL.ComputedExpression.EFCore.Tests.Computeds;
 
@@ -21,6 +20,7 @@ public class IncrementalCollectionTests
         await context.SaveChangesAsync();
 
         person.Total.Should().Be(2);
+        context.Entry(person).Navigation(nameof(Person.Pets)).IsLoaded.Should().BeFalse();
     }
 
     [Fact]
@@ -38,6 +38,7 @@ public class IncrementalCollectionTests
         await context.SaveChangesAsync();
 
         person.Total.Should().Be(2);
+        context.Entry(person).Navigation(nameof(Person.Pets)).IsLoaded.Should().BeFalse();
     }
 
     [Fact]
@@ -54,7 +55,8 @@ public class IncrementalCollectionTests
 
         await context.SaveChangesAsync();
 
-        person.Total.Should().Be(0);
+        person.Total.Should().Be(1);
+        context.Entry(person).Navigation(nameof(Person.Pets)).IsLoaded.Should().BeFalse();
     }
 
     [Fact]
@@ -72,6 +74,7 @@ public class IncrementalCollectionTests
         await context.SaveChangesAsync();
 
         person.Total.Should().Be(0);
+        context.Entry(person).Navigation(nameof(Person.Pets)).IsLoaded.Should().BeFalse();
     }
 
     [Fact]
@@ -89,6 +92,7 @@ public class IncrementalCollectionTests
         await context.SaveChangesAsync();
 
         person.Total.Should().Be(0);
+        context.Entry(person).Navigation(nameof(Person.Pets)).IsLoaded.Should().BeFalse();
     }
 
     private static async Task<DbContext> GetDbContextAsync()
@@ -96,9 +100,9 @@ public class IncrementalCollectionTests
         return await TestDbContext.Create<PersonDbContext>(modelBuilder =>
         {
             var personBuilder = modelBuilder.Entity<Person>();
-            personBuilder.IncrementalComputedProperty(
+            personBuilder.IncrementalNumberComputedProperty(
                 p => p.Total,
-                c => c.AddCollection(p => p.Pets, p => p.Type == "Cat" ? 1 : 0)
+                p => p.Pets.Count
             );
         });
     }

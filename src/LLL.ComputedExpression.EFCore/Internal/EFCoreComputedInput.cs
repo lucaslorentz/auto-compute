@@ -1,6 +1,3 @@
-﻿using System.Diagnostics.CodeAnalysis;
-using LLL.ComputedExpression.Caching;
-using LLL.ComputedExpression.ChangesProviders;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.ChangeTracking;
 using Microsoft.EntityFrameworkCore.Metadata;
@@ -14,25 +11,14 @@ public class EFCoreComputedInput : IEFCoreComputedInput
     public EFCoreComputedInput(DbContext dbContext)
     {
         _dbContext = dbContext;
-        Reset();
-    }
-
-    [MemberNotNull(nameof(ModifiedEntityEntries), nameof(Cache))]
-    public void Reset()
-    {
-        ModifiedEntityEntries = _dbContext.ChangeTracker.Entries()
-            .Where(e => e.State == EntityState.Added
-                || e.State == EntityState.Modified
-                || e.State == EntityState.Deleted)
-            .ToLookup(e => e.Metadata as ITypeBase);
-        Cache = new ConcurrentCreationDictionary();
     }
 
     public DbContext DbContext => _dbContext;
 
-    public ILookup<ITypeBase, EntityEntry> ModifiedEntityEntries { get; private set; }
+    public HashSet<(object Entry, ISkipNavigation SkipNavigation, object RelatedEntry)> LoadedJoinEntities { get; } = [];
 
-    public IConcurrentCreationCache Cache { get; private set; }
-
-    public DeltaChangesScope DeltaChangesScope { get; set; } = new DeltaChangesScope();
+    public IEnumerable<EntityEntry> EntityEntriesOfType(ITypeBase entityType)
+    {
+        return _dbContext.ChangeTracker.Entries().Where(e => e.Metadata == entityType);
+    }
 }

@@ -1,42 +1,27 @@
-﻿using System.Linq.Expressions;
-using LLL.ComputedExpression;
-using LLL.ComputedExpression.EFCore;
+﻿using LLL.ComputedExpression;
 using LLL.ComputedExpression.EFCore.Internal;
-using LLL.ComputedExpression.Incremental;
-using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata;
 using Microsoft.EntityFrameworkCore.Metadata.Conventions;
 
-class ComputedRuntimeConvention(Func<IModel, IComputedExpressionAnalyzer> computedExpressionAnalyzerFactory) : IModelFinalizedConvention
+class ComputedRuntimeConvention(Func<IModel, IComputedExpressionAnalyzer<IEFCoreComputedInput>> analyzerFactory) : IModelFinalizedConvention
 {
     public IModel ProcessModelFinalized(IModel model)
     {
-        var computedExpressionAnalyzer = computedExpressionAnalyzerFactory(model);
+        var analyzer = analyzerFactory(model);
 
-        model.AddRuntimeAnnotation(ComputedAnnotationNames.ExpressionAnalyzer, computedExpressionAnalyzer);
+        model.AddRuntimeAnnotation(ComputedAnnotationNames.ExpressionAnalyzer, analyzer);
 
-        var computedUpdaters = new List<Func<DbContext, Task<int>>>();
+        var computedUpdaters = new List<ComputedUpdater>();
 
         foreach (var entityType in model.GetEntityTypes())
         {
             foreach (var property in entityType.GetProperties())
             {
-                var computedDefinition = property.FindAnnotation(ComputedAnnotationNames.Expression)?.Value;
-                if (computedDefinition is LambdaExpression computedExpression)
+                if (property.FindAnnotation(ComputedAnnotationNames.UpdaterFactory)?.Value is ComputedUpdaterFactory computedUpdaterFactory)
                 {
-                    CreatedComputedExpressionUpdaters(
-                        computedExpressionAnalyzer,
-                        computedUpdaters,
-                        property,
-                        computedExpression);
-                }
-                else if (computedDefinition is IIncrementalComputed incrementalComputed)
-                {
-                    CreatedIncrementalComputedUpdaters(
-                        computedExpressionAnalyzer,
-                        computedUpdaters,
-                        property,
-                        incrementalComputed);
+                    computedUpdaters.Add(
+                        computedUpdaterFactory(analyzer, property)
+                    );
                 }
             }
         }
@@ -44,93 +29,5 @@ class ComputedRuntimeConvention(Func<IModel, IComputedExpressionAnalyzer> comput
         model.AddRuntimeAnnotation(ComputedAnnotationNames.Updaters, computedUpdaters);
 
         return model;
-    }
-
-    private static void CreatedComputedExpressionUpdaters(
-        IComputedExpressionAnalyzer computedExpressionAnalyzer,
-        List<Func<DbContext, Task<int>>> computedUpdaters,
-        IProperty property,
-        LambdaExpression computedExpression)
-    {
-        try
-        {
-            var affectedEntitiesProvider = computedExpressionAnalyzer.CreateAffectedEntitiesProvider(computedExpression);
-
-            if (affectedEntitiesProvider is null)
-                return;
-
-            var currentValueGetter = computedExpressionAnalyzer.GetCurrentValueExpression(computedExpression)
-                .Compile();
-
-            computedUpdaters.Add(async (dbContext) =>
-            {
-                var changes = 0;
-                var input = dbContext.GetComputedInput();
-                foreach (var affectedEntity in await affectedEntitiesProvider.GetAffectedEntitiesAsync(input))
-                {
-                    var affectedEntry = dbContext.Entry(affectedEntity);
-                    if (affectedEntry.State == EntityState.Deleted)
-                        continue;
-
-                    var propertyEntry = affectedEntry.Property(property);
-                    var newValue = currentValueGetter.DynamicInvoke(input, affectedEntity);
-                    var valueComparer = property.GetValueComparer();
-                    if (!valueComparer.Equals(propertyEntry.CurrentValue, newValue))
-                    {
-                        propertyEntry.CurrentValue = newValue;
-                        changes++;
-                    }
-                }
-                return changes;
-            });
-        }
-        catch (Exception ex)
-        {
-            throw new InvalidOperationException($"Invalid computed expression for '{property.DeclaringType.ShortName()}.{property.Name}': {ex.Message}");
-        }
-    }
-
-    private static void CreatedIncrementalComputedUpdaters(
-        IComputedExpressionAnalyzer computedExpressionAnalyzer,
-        List<Func<DbContext, Task<int>>> computedUpdaters,
-        IProperty property,
-        IIncrementalComputed incrementalComputed)
-    {
-        try
-        {
-            var incrementalChangeProvider = computedExpressionAnalyzer.CreateIncrementalChangesProvider(
-                incrementalComputed);
-
-            computedUpdaters.Add(async (dbContext) =>
-            {
-                var changes = 0;
-                var input = dbContext.GetComputedInput();
-                var incrementalChanges = await incrementalChangeProvider.GetIncrementalChangesAsync(input);
-                foreach (var (entity, value) in incrementalChanges)
-                {
-                    var entityEntry = dbContext.Entry(entity);
-                    var propertyEntry = entityEntry.Property(property);
-
-                    var currentValue = propertyEntry.CurrentValue;
-
-                    var newValue = incrementalComputed.Add(
-                        currentValue,
-                        value
-                    );
-
-                    var valueComparer = property.GetValueComparer();
-                    if (!valueComparer.Equals(propertyEntry.CurrentValue, newValue))
-                    {
-                        propertyEntry.CurrentValue = newValue;
-                        changes++;
-                    }
-                }
-                return changes;
-            });
-        }
-        catch (Exception ex)
-        {
-            throw new InvalidOperationException($"Invalid computed expression for '{property.DeclaringType.ShortName()}.{property.Name}': {ex.Message}", ex);
-        }
     }
 }
