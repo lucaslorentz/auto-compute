@@ -37,6 +37,7 @@ public static class ChangesProviderExtensions
     public static IChangesProvider<TInput, TEntity, TValue> CreateDeltaChangesProvider<TInput, TEntity, TValue>(
         this IChangesProvider<TInput, TEntity, TValue> changesProvider)
         where TEntity : class
+        where TInput : IDeltaChangesInput
     {
         return new DeltaChangesProvider<TInput, TEntity, TValue>(
             changesProvider,

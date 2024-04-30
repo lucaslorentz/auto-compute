@@ -1,5 +1,6 @@
 ﻿using System.Diagnostics.CodeAnalysis;
 using LLL.ComputedExpression.Caching;
+using LLL.ComputedExpression.ChangesProviders;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.ChangeTracking;
 using Microsoft.EntityFrameworkCore.Metadata;
@@ -32,4 +33,6 @@ public class EFCoreComputedInput : IEFCoreComputedInput
     public ILookup<ITypeBase, EntityEntry> ModifiedEntityEntries { get; private set; }
 
     public IConcurrentCreationCache Cache { get; private set; }
+
+    public DeltaChangesScope DeltaChangesScope { get; set; } = new DeltaChangesScope();
 }

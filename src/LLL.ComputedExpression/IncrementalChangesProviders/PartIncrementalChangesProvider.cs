@@ -1,5 +1,6 @@
 
 using System.Collections.Concurrent;
+using LLL.ComputedExpression.ChangesProviders;
 using LLL.ComputedExpression.Incremental;
 
 namespace LLL.ComputedExpression.IncrementalChangesProviders;
@@ -11,6 +12,7 @@ public class PartIncrementalChangesProvider<TInput, TRootEntity, TValue, TPartEn
 ) : IIncrementalChangesProvider<TInput, TRootEntity, TValue>
     where TRootEntity : notnull
     where TPartEntity : class
+    where TInput : IDeltaChangesInput
 {
     readonly IChangesProvider<TInput, TPartEntity, PartChange<TValue, TRootEntity>> _changesProvider = valueChangesProvider
         .Combine(rootsChangesProvider, (value, rootEntities) => new PartChange<TValue, TRootEntity>(value, rootEntities), EqualityComparer<PartChange<TValue, TRootEntity>>.Default)
