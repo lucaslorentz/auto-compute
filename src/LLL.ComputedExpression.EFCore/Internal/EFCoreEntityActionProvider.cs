@@ -8,6 +8,7 @@ public class EFCoreEntityActionProvider : IEntityActionProvider<IEFCoreComputedI
         {
             Microsoft.EntityFrameworkCore.EntityState.Added => EntityAction.Create,
             Microsoft.EntityFrameworkCore.EntityState.Deleted => EntityAction.Delete,
+            Microsoft.EntityFrameworkCore.EntityState.Detached => EntityAction.Delete,
             _ => EntityAction.None
         };
     }
