@@ -17,29 +17,27 @@ public class DeltaChangesProvider<TInput, TEntity, TValue>(
         var result = new Dictionary<TEntity, IValueChange<TValue>>();
         foreach (var (entity, valueChange) in changes)
         {
-            var originalValue = _entitiesLastValueChange.TryGetValue(entity, out var lastValueChange);
-            _entitiesLastValueChange.AddOrUpdate(entity, valueChange);
-            result[entity] = new LazyValueChange<TValue>(
-                () => lastValueChange is not null ? lastValueChange.Current : valueChange.Original,
-                () => valueChange.Current);
+            result[entity] = DeltafyChange(entity, valueChange);
         }
-        foreach (var (entity, lastValueChange) in _entitiesLastValueChange)
+        foreach (var (entity, _) in _entitiesLastValueChange)
         {
             if (result.ContainsKey(entity))
                 continue;
 
-            var valueChange = await GetChangeAsync(input, entity);
-            _entitiesLastValueChange.AddOrUpdate(entity, valueChange);
-            result[entity] = new LazyValueChange<TValue>(
-                () => lastValueChange is not null ? lastValueChange.Current : valueChange.Original,
-                () => valueChange.Current);
+            result[entity] = await GetChangeAsync(input, entity);
         }
         return result;
     }
+
     public override async Task<IValueChange<TValue>> GetChangeAsync(TInput input, TEntity entity)
     {
-        _entitiesLastValueChange.TryGetValue(entity, out var previousValueChange);
         var valueChange = await changesProvider.GetChangeAsync(input, entity);
+        return DeltafyChange(entity, valueChange);
+    }
+
+    private IValueChange<TValue> DeltafyChange(TEntity entity, IValueChange<TValue> valueChange)
+    {
+        _entitiesLastValueChange.TryGetValue(entity, out var previousValueChange);
         _entitiesLastValueChange.AddOrUpdate(entity, valueChange);
         return new LazyValueChange<TValue>(
             () => previousValueChange is not null ? previousValueChange.Current : valueChange.Original,
