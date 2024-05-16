@@ -10,9 +10,14 @@ public class LoadNavigationAffectedEntitiesProvider<TInput, TSourceEntity, TTarg
         return $"Load({affectedEntitiesProvider.ToDebugString()}, {navigation.Name})";
     }
 
-    public async Task<IReadOnlyCollection<TTargetEntity>> GetAffectedEntitiesAsync(TInput input)
+    public async Task<IReadOnlyCollection<TTargetEntity>> GetAffectedEntitiesAsync(TInput input, IncrementalContext? incrementalContext)
     {
-        var affectedEntities = await affectedEntitiesProvider.GetAffectedEntitiesAsync(input);
-        return await navigation.LoadCurrentAsync(input, affectedEntities);
+        var affectedEntities = await affectedEntitiesProvider.GetAffectedEntitiesAsync(input, incrementalContext);
+        var entities = new HashSet<TTargetEntity>();
+        foreach (var ent in await navigation.LoadOriginalAsync(input, affectedEntities, incrementalContext))
+            entities.Add(ent);
+        foreach (var ent in await navigation.LoadCurrentAsync(input, affectedEntities, incrementalContext))
+            entities.Add(ent);
+        return entities;
     }
 }

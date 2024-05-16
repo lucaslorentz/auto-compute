@@ -12,6 +12,7 @@ public class ComputedExpressionAnalysis(
     private readonly ConcurrentDictionary<Expression, ConcurrentBag<Func<string, EntityContext?>>> _entityContextProviders = new();
     private readonly ConcurrentDictionary<(Expression, string), EntityContext> _entityContextCache = new();
     private readonly ConcurrentDictionary<Expression, IEntityMemberAccess<IEntityMember>> _entityMemberAccesses = new();
+    private readonly ConcurrentDictionary<(Expression, string), bool> _forcedCreations = [];
 
     public IComputedExpressionAnalyzer Analyzer => analyzer;
     public Type RootEntityType => rootEntityType;
@@ -34,16 +35,23 @@ public class ComputedExpressionAnalysis(
         });
     }
 
-    public void PropagateEntityContext(Expression fromNode, string fromKey, Expression toNode, string toKey, Func<EntityContext, EntityContext>? mapper = null)
+    public void PropagateEntityContext(
+        Expression fromNode,
+        string fromKey,
+        Expression toNode,
+        string toKey,
+        Func<EntityContext, EntityContext>? mapper = null,
+        bool forceCreation = false)
     {
-        PropagateEntityContext([(fromNode, fromKey)], toNode, toKey, mapper);
+        PropagateEntityContext([(fromNode, fromKey)], toNode, toKey, mapper, forceCreation);
     }
 
     public void PropagateEntityContext(
         (Expression fromNode, string fromKey)[] fromNodesKeys,
         Expression toNode,
         string toKey,
-        Func<EntityContext, EntityContext>? mapper = null)
+        Func<EntityContext, EntityContext>? mapper = null,
+        bool forceCreation = false)
     {
         AddEntityContextProvider(
             toNode,
@@ -70,6 +78,9 @@ public class ComputedExpressionAnalysis(
 
                 return entityContexts.FirstOrDefault();
             });
+
+        if (forceCreation)
+            _forcedCreations.TryAdd((toNode, toKey), true);
     }
 
     public void AddEntityContextProvider(
@@ -117,5 +128,13 @@ public class ComputedExpressionAnalysis(
     public void AddMemberAccess(Expression node, IEntityMemberAccess<IEntityMember> entityMemberAccess)
     {
         _entityMemberAccesses.TryAdd(node, entityMemberAccess);
+    }
+
+    public void CreateForcedItems()
+    {
+        foreach (var ((node, key), _) in _forcedCreations)
+        {
+            ResolveEntityContext(node, key);
+        }
     }
 }

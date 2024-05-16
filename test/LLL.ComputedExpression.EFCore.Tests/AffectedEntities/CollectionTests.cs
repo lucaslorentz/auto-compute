@@ -1,6 +1,5 @@
 ﻿using System.Linq.Expressions;
 using FluentAssertions;
-using LLL.ComputedExpression.EFCore.Internal;
 
 namespace LLL.ComputedExpression.EFCore.Tests.AffectedEntities;
 
@@ -13,9 +12,9 @@ public class CollectionTests
     {
         using var context = await TestDbContext.Create<PersonDbContext>();
 
-        var affectedEntitiesProvider = context.GetAffectedEntitiesProvider(_computedExpression);
-        affectedEntitiesProvider!.ToDebugString()
-            .Should().Be("EntitiesWithNavigationChange(Person, Pets)");
+        var changesProvider = context.GetChangesProvider(_computedExpression, static c => c.VoidChange());
+        changesProvider!.ToDebugString()
+            .Should().Be("EntitiesWithNavigationChange(Person.Pets)");
     }
 
     [Fact]
@@ -27,8 +26,8 @@ public class CollectionTests
         var pet = new Pet { Type = "Cat" };
         person.Pets.Add(pet);
 
-        var affectedEntities = await context.GetAffectedEntitiesAsync(_computedExpression);
-        affectedEntities.Should().BeEquivalentTo([person]);
+        var changes = await context.GetChangesAsync(_computedExpression, static c => c.VoidChange());
+        changes.Keys.Should().BeEquivalentTo([person]);
     }
 
     [Fact]
@@ -40,8 +39,22 @@ public class CollectionTests
         var pet = new Pet { Type = "Cat", Owner = person };
         context.Add(pet);
 
-        var affectedEntities = await context.GetAffectedEntitiesAsync(_computedExpression);
-        affectedEntities.Should().BeEquivalentTo([person]);
+        var changes = await context.GetChangesAsync(_computedExpression, static c => c.VoidChange());
+        changes.Keys.Should().BeEquivalentTo([person]);
+    }
+
+    [Fact]
+    public async void TestCollectionElementMoved()
+    {
+        using var context = await TestDbContext.Create<PersonDbContext>();
+
+        var person1 = context!.Set<Person>().Find(1)!;
+        var person2 = context!.Set<Person>().Find(2)!;
+        var pet = context!.Set<Pet>().Find(1)!;
+        pet.Owner = person2;
+
+        var changes = await context.GetChangesAsync(_computedExpression, static c => c.VoidChange());
+        changes.Keys.Should().BeEquivalentTo([person1, person2]);
     }
 
     [Fact]
@@ -52,8 +65,8 @@ public class CollectionTests
         var pet = context!.Set<Pet>().Find(1)!;
         pet.Type = "Modified";
 
-        var affectedEntities = await context.GetAffectedEntitiesAsync(_computedExpression);
-        affectedEntities.Should().BeEmpty();
+        var changes = await context.GetChangesAsync(_computedExpression, static c => c.VoidChange());
+        changes.Keys.Should().BeEmpty();
     }
 
     [Fact]
@@ -65,8 +78,8 @@ public class CollectionTests
         var pet = context!.Set<Pet>().Find(1)!;
         person.Pets.Remove(pet);
 
-        var affectedEntities = await context.GetAffectedEntitiesAsync(_computedExpression);
-        affectedEntities.Should().BeEquivalentTo([person]);
+        var changes = await context.GetChangesAsync(_computedExpression, static c => c.VoidChange());
+        changes.Keys.Should().BeEquivalentTo([person]);
     }
 
     [Fact]
@@ -78,7 +91,7 @@ public class CollectionTests
         var pet = context!.Set<Pet>().Find(1)!;
         pet.Owner = null;
 
-        var affectedEntities = await context.GetAffectedEntitiesAsync(_computedExpression);
-        affectedEntities.Should().BeEquivalentTo([person]);
+        var changes = await context.GetChangesAsync(_computedExpression, static c => c.VoidChange());
+        changes.Keys.Should().BeEquivalentTo([person]);
     }
 }

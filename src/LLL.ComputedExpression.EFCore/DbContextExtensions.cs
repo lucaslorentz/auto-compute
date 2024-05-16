@@ -1,9 +1,8 @@
 ﻿using System.Collections.Immutable;
 using System.Linq.Expressions;
 using System.Runtime.CompilerServices;
-using LLL.ComputedExpression.Caching;
+using LLL.ComputedExpression.ChangesProviders;
 using LLL.ComputedExpression.EFCore.Internal;
-using LLL.ComputedExpression.Incremental;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 
@@ -21,66 +20,47 @@ public static class DbContextExtensions
         return optionsBuilder;
     }
 
-    public static async Task<IReadOnlyCollection<TEntity>> GetAffectedEntitiesAsync<TEntity, TValue>(
-        this DbContext dbContext, Expression<Func<TEntity, TValue>> computedExpression)
-    {
-        var affectedEntitiesProvider = dbContext.GetAffectedEntitiesProvider(computedExpression);
-        if (affectedEntitiesProvider is null)
-            return [];
-
-        return await affectedEntitiesProvider.GetAffectedEntitiesAsync(dbContext.GetComputedInput());
-    }
-
-    public static async Task<IReadOnlyDictionary<TEntity, IValueChange<TValue>>> GetChangesAsync<TEntity, TValue>(
-        this DbContext dbContext, Expression<Func<TEntity, TValue>> computedExpression)
+    public static async Task<IReadOnlyDictionary<TEntity, TResult>> GetChangesAsync<TEntity, TValue, TResult>(
+        this DbContext dbContext,
+        Expression<Func<TEntity, TValue>> computedExpression,
+        Expression<ChangeCalculationSelector<TValue, TResult>> calculationSelector)
         where TEntity : class
     {
-        var changesProvider = dbContext.GetChangesProvider(computedExpression);
-        if (changesProvider is null)
-            return ImmutableDictionary<TEntity, IValueChange<TValue>>.Empty;
+        var changesProvider = dbContext.GetChangesProvider(
+            computedExpression,
+            calculationSelector);
 
-        return await changesProvider.GetChangesAsync(dbContext.GetComputedInput());
+        if (changesProvider is null)
+            return ImmutableDictionary<TEntity, TResult>.Empty;
+
+        return await changesProvider.GetChangesAsync();
     }
 
-    public static async Task<IReadOnlyDictionary<TEntity, IValueChange<TValue>>> GetDeltaChangesAsync<TEntity, TValue>(
-        this DbContext dbContext, Expression<Func<TEntity, TValue>> computedExpression)
+    public static IChangesProvider<TEntity, TResult>? GetChangesProvider<TEntity, TValue, TResult>(
+        this DbContext dbContext,
+        Expression<Func<TEntity, TValue>> computedExpression,
+        Expression<ChangeCalculationSelector<TValue, TResult>> calculationSelector)
         where TEntity : class
     {
-        var changesProvider = dbContext.GetDeltaChangesProvider(computedExpression);
-        if (changesProvider is null)
-            return ImmutableDictionary<TEntity, IValueChange<TValue>>.Empty;
+        var analyzer = GetComputedExpressionAnalyzer(dbContext);
 
-        return await changesProvider.GetChangesAsync(dbContext.GetComputedInput());
-    }
+        var unboundChangesProvider = analyzer.GetChangesProvider(
+                computedExpression,
+                calculationSelector);
 
-    public static async Task<IReadOnlyDictionary<TEntity, TValue>> GetIncrementalChanges<TEntity, TValue>(
-        this DbContext dbContext, IIncrementalComputed<TEntity, TValue> incrementalComputed)
-        where TEntity : notnull
-        where TValue : notnull
-    {
-        var analyzer = dbContext.GetComputedExpressionAnalyzer();
+        if (unboundChangesProvider is null)
+            return null;
 
-        var cache = dbContext.GetService<IConcurrentCreationCache>();
-
-        var cacheKey = (
-            "IncrementalChangesProvider",
-            incrementalComputed,
-            analyzer
+        return new ChangesProvider<IEFCoreComputedInput, TEntity, TResult>(
+            unboundChangesProvider,
+            dbContext.GetComputedInput(),
+            new ChangeMemory<TEntity, TResult>()
         );
-
-        var incrementalChangeProvider = cache.GetOrCreate(
-            cacheKey,
-            static (k) => (IIncrementalChangesProvider<IEFCoreComputedInput, TEntity, TValue>)k.analyzer.CreateIncrementalChangesProvider(
-                k.incrementalComputed));
-
-        var input = dbContext.GetComputedInput();
-
-        return await incrementalChangeProvider.GetIncrementalChangesAsync(input);
     }
 
     public static async Task<int> UpdateComputedsAsync(this DbContext dbContext)
     {
-        if (dbContext.Model.FindRuntimeAnnotationValue(ComputedAnnotationNames.Updaters) is not List<Func<DbContext, Task<int>>> updaters)
+        if (dbContext.Model.FindRuntimeAnnotationValue(ComputedAnnotationNames.Updaters) is not IEnumerable<ComputedUpdater> updaters)
             throw new Exception($"Cannot find runtime annotation {ComputedAnnotationNames.Updaters} for model");
 
         var totalChanges = 0;
@@ -101,8 +81,6 @@ public static class DbContextExtensions
                     totalChanges += changes;
                 else
                     break;
-
-                dbContext.GetComputedInput().Reset();
             }
             finally
             {
@@ -113,8 +91,18 @@ public static class DbContextExtensions
     }
 
     private static readonly ConditionalWeakTable<DbContext, IEFCoreComputedInput> _inputs = [];
-    public static IEFCoreComputedInput GetComputedInput(this DbContext dbContext)
+    internal static IEFCoreComputedInput GetComputedInput(this DbContext dbContext)
     {
         return _inputs.GetValue(dbContext, static k => new EFCoreComputedInput(k));
+    }
+
+    public static IComputedExpressionAnalyzer<IEFCoreComputedInput> GetComputedExpressionAnalyzer(this DbContext dbContext)
+    {
+        var annotationValue = dbContext.Model.FindRuntimeAnnotation(ComputedAnnotationNames.ExpressionAnalyzer)?.Value;
+
+        if (annotationValue is not IComputedExpressionAnalyzer<IEFCoreComputedInput> analyzer)
+            throw new Exception($"Cannot find {ComputedAnnotationNames.ExpressionAnalyzer} for model");
+
+        return analyzer;
     }
 }

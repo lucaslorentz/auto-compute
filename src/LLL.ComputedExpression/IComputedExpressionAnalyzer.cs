@@ -1,13 +1,15 @@
 ﻿using System.Linq.Expressions;
-using LLL.ComputedExpression.Incremental;
 
 namespace LLL.ComputedExpression;
 
 public interface IComputedExpressionAnalyzer
 {
-    IAffectedEntitiesProvider? CreateAffectedEntitiesProvider(LambdaExpression computed);
-    IChangesProvider? CreateChangesProvider(LambdaExpression computed, object? valueEqualityComparer = null);
-    IIncrementalChangesProvider CreateIncrementalChangesProvider(IIncrementalComputed incrementalComputed);
-    LambdaExpression GetOriginalValueExpression(LambdaExpression computed);
-    LambdaExpression GetCurrentValueExpression(LambdaExpression computed);
+}
+
+public interface IComputedExpressionAnalyzer<TInput> : IComputedExpressionAnalyzer
+{
+    IUnboundChangesProvider<TInput, TEntity, TResult>? GetChangesProvider<TEntity, TValue, TResult>(
+        Expression<Func<TEntity, TValue>> computedExpression,
+        Expression<ChangeCalculationSelector<TValue, TResult>> changeCalculationSelector)
+        where TEntity : class;
 }

@@ -5,12 +5,12 @@ using Microsoft.EntityFrameworkCore.Metadata.Conventions.Infrastructure;
 namespace LLL.ComputedExpression.EFCore.Internal;
 
 public class ComputedConventionSetPlugin(
-        Func<IModel, IComputedExpressionAnalyzer> computedExpressionAnalyzerFactory)
+        Func<IModel, IComputedExpressionAnalyzer<IEFCoreComputedInput>> analyzerFactory)
     : IConventionSetPlugin
 {
     public ConventionSet ModifyConventions(ConventionSet conventionSet)
     {
-        conventionSet.Add(new ComputedRuntimeConvention(computedExpressionAnalyzerFactory));
+        conventionSet.Add(new ComputedRuntimeConvention(analyzerFactory));
 
         return conventionSet;
     }

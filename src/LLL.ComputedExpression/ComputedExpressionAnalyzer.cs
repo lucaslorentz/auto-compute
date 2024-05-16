@@ -1,50 +1,40 @@
-﻿using System.Linq.Expressions;
+﻿using System.Collections;
+using System.Linq.Expressions;
+using System.Reflection;
+using LLL.ComputedExpression.Caching;
 using LLL.ComputedExpression.ChangesProviders;
 using LLL.ComputedExpression.EntityContextPropagators;
 using LLL.ComputedExpression.EntityContexts;
 using LLL.ComputedExpression.ExpressionVisitors;
-using LLL.ComputedExpression.Incremental;
-using LLL.ComputedExpression.IncrementalChangesProviders;
 using LLL.ComputedExpression.Internal;
 
 namespace LLL.ComputedExpression;
 
-public class ComputedExpressionAnalyzer<TInput> : IComputedExpressionAnalyzer
+public class ComputedExpressionAnalyzer<TInput> : IComputedExpressionAnalyzer<TInput>
 {
+    private readonly IConcurrentCreationCache _concurrentCreationCache;
+    private readonly IEqualityComparer<Expression> _expressionEqualityComparer;
     private readonly IList<IEntityContextPropagator> _entityContextPropagators = [];
     private readonly HashSet<IEntityNavigationAccessLocator> _navigationAccessLocators = [];
     private readonly HashSet<IEntityMemberAccessLocator> _memberAccessLocators = [];
     private readonly IList<Func<LambdaExpression, LambdaExpression>> _expressionModifiers = [];
     private IEntityActionProvider<TInput>? _entityActionProvider;
 
-    private ComputedExpressionAnalyzer() { }
-
-    public static ComputedExpressionAnalyzer<TInput> Create()
+    public ComputedExpressionAnalyzer(
+        IConcurrentCreationCache concurrentCreationCache,
+        IEqualityComparer<Expression> expressionEqualityComparer)
     {
-        return new ComputedExpressionAnalyzer<TInput>();
-    }
-
-    public static ComputedExpressionAnalyzer<TInput> CreateWithDefaults()
-    {
-        return Create().AddDefaults();
+        _expressionEqualityComparer = expressionEqualityComparer;
+        _concurrentCreationCache = concurrentCreationCache;
     }
 
     public ComputedExpressionAnalyzer<TInput> AddDefaults()
     {
-        return AddEntityContextPropagator(new LinqMethodsEntityContextPropagator())
+        return AddEntityContextPropagator(new UntrackedEntityContextPropagator<TInput>())
+            .AddEntityContextPropagator(new LinqMethodsEntityContextPropagator())
             .AddEntityContextPropagator(new KeyValuePairEntityContextPropagator())
             .AddEntityContextPropagator(new GroupingEntityContextPropagator())
-            .AddEntityContextPropagator(new NavigationEntityContextPropagator(_navigationAccessLocators))
-            .AddStopTrackingDecision(new StopTrackingDecision());
-    }
-
-    public ComputedExpressionAnalyzer<TInput> AddStopTrackingDecision(
-        IStopTrackingDecision stopTrackingDecision)
-    {
-        _entityContextPropagators.Insert(0, new UntrackedEntityContextPropagator<TInput>(
-            stopTrackingDecision
-        ));
-        return this;
+            .AddEntityContextPropagator(new NavigationEntityContextPropagator(_navigationAccessLocators));
     }
 
     public ComputedExpressionAnalyzer<TInput> AddEntityMemberAccessLocator(
@@ -78,159 +68,173 @@ public class ComputedExpressionAnalyzer<TInput> : IComputedExpressionAnalyzer
         return this;
     }
 
-    public IAffectedEntitiesProvider? CreateAffectedEntitiesProvider(LambdaExpression computed)
+    public IUnboundChangesProvider<TInput, TEntity, TResult>? GetChangesProvider<TEntity, TValue, TResult>(
+        Expression<Func<TEntity, TValue>> computedExpression,
+        Expression<ChangeCalculationSelector<TValue, TResult>> changeCalculationSelector)
+        where TEntity : class
     {
-        return CreateAffectedEntitiesProvider(PrepareLambda(computed));
+        var key = (
+            ComputedExpression: new ExpressionCacheKey(computedExpression, _expressionEqualityComparer),
+            ChangeCalculationSelector: new ExpressionCacheKey(changeCalculationSelector, _expressionEqualityComparer)
+        );
+
+        return _concurrentCreationCache.GetOrCreate(
+            key,
+            k => CreateChangesProvider(computedExpression, changeCalculationSelector)
+        );
     }
 
-    private IAffectedEntitiesProvider? CreateAffectedEntitiesProvider(PreparedLambda computed)
+    private IUnboundChangesProvider<TInput, TEntity, TResult>? CreateChangesProvider<TEntity, TValue, TResult>(
+        Expression<Func<TEntity, TValue>> computedExpression,
+        Expression<ChangeCalculationSelector<TValue, TResult>> changeCalculationSelector)
+        where TEntity : class
     {
+        var computed = PrepareLambda(computedExpression);
+
         var entityContext = GetEntityContext(computed, computed.Lambda.Parameters[0], EntityContextKeys.None);
-        return entityContext.GetAffectedEntitiesProvider();
-    }
 
-    public IChangesProvider CreateChangesProvider(LambdaExpression computed, object? valueEqualityComparer = null)
-    {
-        return CreateChangesProvider(PrepareLambda(computed), valueEqualityComparer
-            ?? computed.ReturnType.GetDefaultEqualityComparer());
-    }
+        var affectedEntitiesProvider = entityContext.GetAffectedEntitiesProvider()!;
 
-    private IChangesProvider CreateChangesProvider(PreparedLambda computed, object valueEqualityComparer)
-    {
-        var affectedEntitiesProvider = CreateAffectedEntitiesProvider(computed);
-        var originalValueGetter = GetOriginalValueExpression(computed).Compile();
-        var currentValueGetter = GetCurrentValueExpression(computed).Compile();
-        var entityActionProvider = RequireEntityActionProvider();
+        if (affectedEntitiesProvider is null)
+            return null;
 
-        var entityType = computed.Lambda.Parameters[0].Type;
+        var changeCalculation = changeCalculationSelector.Compile()(new ChangeCalculations<TValue>());
+
         var valueType = computed.Lambda.ReturnType;
+        var resultType = changeCalculation.ResultType;
 
-        var closedType = typeof(LambdaValueChangesProvider<,,>)
-            .MakeGenericType(typeof(TInput), entityType, valueType);
+        var closedType = typeof(UnboundChangesProvider<,,,>)
+            .MakeGenericType(typeof(TInput), affectedEntitiesProvider.EntityType, valueType, resultType);
 
-        return (IChangesProvider)Activator.CreateInstance(
-            closedType,
+        var constructor = closedType.GetConstructors().First();
+
+        return (IUnboundChangesProvider<TInput, TEntity, TResult>)constructor.Invoke([
             affectedEntitiesProvider,
-            originalValueGetter,
-            currentValueGetter,
-            entityActionProvider,
-            valueEqualityComparer)!;
-    }
-
-    public LambdaExpression GetOriginalValueExpression(LambdaExpression computed)
-    {
-        return GetOriginalValueExpression(PrepareLambda(computed));
+            changeCalculation,
+            GetOriginalValueExpression(computed).Compile(),
+            GetCurrentValueExpression(computed).Compile(),
+            GetIncrementalOriginalValueExpression(computed).Compile(),
+            GetIncrementalCurrentValueExpression(computed).Compile()
+        ])!;
     }
 
     private LambdaExpression GetOriginalValueExpression(PreparedLambda computed)
     {
         var inputParameter = Expression.Parameter(typeof(TInput), "input");
+        var incrementalContextParameter = Expression.Parameter(typeof(IncrementalContext), "incrementalContext");
 
-        var newBody = new ChangeToOriginalValueVisitor(
-            inputParameter,
-            _memberAccessLocators
+        var newBody = new ReplaceMemberAccessVisitor(
+            _memberAccessLocators,
+            memberAccess => memberAccess.CreateOriginalValueExpression(inputParameter)
         ).Visit(computed.Lambda.Body)!;
 
-        return Expression.Lambda(newBody, [inputParameter, .. computed.Lambda.Parameters]);
-    }
+        newBody = PrepareComputedOutputExpression(computed.Lambda.ReturnType, newBody);
 
-    public LambdaExpression GetCurrentValueExpression(LambdaExpression computed)
-    {
-        return GetCurrentValueExpression(PrepareLambda(computed));
+        newBody = ReturnDefaultIfEntityActionExpression(
+            inputParameter,
+            computed.Lambda.Parameters.First(),
+            newBody,
+            EntityAction.Create);
+
+        return Expression.Lambda(newBody, [
+            inputParameter,
+            incrementalContextParameter,
+            .. computed.Lambda.Parameters
+        ]);
     }
 
     private LambdaExpression GetCurrentValueExpression(PreparedLambda computed)
     {
         var inputParameter = Expression.Parameter(typeof(TInput), "input");
+        var incrementalContextParameter = Expression.Parameter(typeof(IncrementalContext), "incrementalContext");
 
-        var newBody = new ChangeToCurrentValueVisitor(
-            inputParameter,
-            _memberAccessLocators
+        var newBody = new ReplaceMemberAccessVisitor(
+            _memberAccessLocators,
+            memberAccess => memberAccess.CreateCurrentValueExpression(inputParameter)
         ).Visit(computed.Lambda.Body)!;
 
-        return Expression.Lambda(newBody, [inputParameter, .. computed.Lambda.Parameters]);
+        newBody = PrepareComputedOutputExpression(computed.Lambda.ReturnType, newBody);
+
+        newBody = ReturnDefaultIfEntityActionExpression(
+            inputParameter,
+            computed.Lambda.Parameters.First(),
+            newBody,
+            EntityAction.Delete);
+
+        return Expression.Lambda(newBody, [
+            inputParameter,
+            incrementalContextParameter,
+            .. computed.Lambda.Parameters
+        ]);
     }
 
-    public IIncrementalChangesProvider CreateIncrementalChangesProvider(
-        IIncrementalComputed incrementalComputed)
+    private LambdaExpression GetIncrementalOriginalValueExpression(PreparedLambda computed)
     {
-        var providers = new List<IIncrementalChangesProvider>();
+        var inputParameter = Expression.Parameter(typeof(TInput), "input");
+        var incrementalContextParameter = Expression.Parameter(typeof(IncrementalContext), "incrementalContext");
 
-        foreach (var incrementalPart in incrementalComputed.Parts)
-        {
-            var provider = CreatePartIncrementalChangesProvider(incrementalPart);
-            if (provider is not null)
-                providers.Add(provider);
-        }
+        var analysis = CreateAnalysis(computed);
 
-        var providerType = typeof(IIncrementalChangesProvider<,,>)
-            .MakeGenericType(typeof(TInput), incrementalComputed.EntityType, incrementalComputed.ValueType);
+        analysis.CreateForcedItems();
 
-        var convertedCleanupUpProviders = providers.ToArray(providerType);
+        var newBody = new ReplaceMemberAccessVisitor(
+            _memberAccessLocators,
+            memberAccess => memberAccess.CreateIncrementalOriginalValueExpression(analysis, inputParameter, incrementalContextParameter)
+        ).Visit(computed.Lambda.Body)!;
 
-        var closedType = typeof(CompositeIncrementalChangesProvider<,,>)
-            .MakeGenericType(typeof(TInput), incrementalComputed.EntityType, incrementalComputed.ValueType);
+        newBody = PrepareComputedOutputExpression(computed.Lambda.ReturnType, newBody);
 
-        return (IIncrementalChangesProvider)Activator.CreateInstance(closedType, incrementalComputed, convertedCleanupUpProviders)!;
+        newBody = ReturnDefaultIfEntityActionExpression(
+            inputParameter,
+            computed.Lambda.Parameters.First(),
+            newBody,
+            EntityAction.Create);
 
-        IIncrementalChangesProvider? CreatePartIncrementalChangesProvider(
-            IncrementalComputedPart incrementalComputedPart)
-        {
-            var entityActionProvider = RequireEntityActionProvider();
-
-            var valueChangesProvider = CreateChangesProvider(
-                PrepareLambda(incrementalComputedPart.ValueSelector),
-                incrementalComputed.GetValueEqualityComparer());
-
-            var rootsChangesProvider = CreateRootEntitiesChangesProvider(
-                PrepareLambda(incrementalComputedPart.Navigation),
-                incrementalComputedPart.IsMany ? EntityContextKeys.Element : EntityContextKeys.None);
-
-            var partEntityType = incrementalComputedPart.ValueSelector.Parameters[0].Type;
-
-            var closedType = typeof(PartIncrementalChangesProvider<,,,>)
-                .MakeGenericType(typeof(TInput), incrementalComputed.EntityType, incrementalComputed.ValueType, partEntityType);
-
-            return (IIncrementalChangesProvider)Activator.CreateInstance(
-                closedType,
-                incrementalComputed,
-                valueChangesProvider,
-                rootsChangesProvider
-            )!;
-        }
+        return Expression.Lambda(newBody, [inputParameter, incrementalContextParameter, .. computed.Lambda.Parameters]);
     }
 
-    private IChangesProvider? CreateRootEntitiesChangesProvider(
-        PreparedLambda computed,
-        string entityContextKey)
+    private LambdaExpression GetIncrementalCurrentValueExpression(PreparedLambda computed)
     {
-        var entityContext = GetEntityContext(
-            computed,
-            computed.Lambda.Body,
-            entityContextKey);
+        var inputParameter = Expression.Parameter(typeof(TInput), "input");
+        var incrementalContextParameter = Expression.Parameter(typeof(IncrementalContext), "incrementalContext");
 
-        var affectedEntitiesProvider = entityContext.GetAffectedEntitiesProviderInverse();
-        if (affectedEntitiesProvider is null)
-            return null;
+        var analysis = CreateAnalysis(computed);
 
-        var originalRootEntitiesProvider = entityContext.GetOriginalRootEntitiesProvider();
-        var currentRootEntitiesProvider = entityContext.GetCurrentRootEntitiesProvider();
+        analysis.CreateForcedItems();
 
-        var closedType = typeof(RootsChangesProvider<,,>)
-            .MakeGenericType(typeof(TInput), entityContext.EntityType, entityContext.RootEntityType);
+        var newBody = new ReplaceMemberAccessVisitor(
+            _memberAccessLocators,
+            memberAccess => memberAccess.CreateIncrementalCurrentValueExpression(analysis, inputParameter, incrementalContextParameter)
+        ).Visit(computed.Lambda.Body)!;
 
-        return (IChangesProvider)Activator.CreateInstance(
-            closedType,
-            affectedEntitiesProvider,
-            originalRootEntitiesProvider,
-            currentRootEntitiesProvider,
-            _entityActionProvider)!;
+        newBody = PrepareComputedOutputExpression(computed.Lambda.ReturnType, newBody);
+
+        newBody = ReturnDefaultIfEntityActionExpression(
+            inputParameter,
+            computed.Lambda.Parameters.First(),
+            newBody,
+            EntityAction.Delete);
+
+        return Expression.Lambda(newBody, [inputParameter, incrementalContextParameter, .. computed.Lambda.Parameters]);
     }
 
     private EntityContext GetEntityContext(
         PreparedLambda computed,
         Expression node,
         string entityContextKey)
+    {
+        var analysis = CreateAnalysis(computed);
+
+        return analysis.ResolveEntityContext(node, entityContextKey);
+    }
+
+    private IEntityActionProvider<TInput> RequireEntityActionProvider()
+    {
+        return _entityActionProvider
+            ?? throw new Exception("Entity Action Provider not configured");
+    }
+
+    private ComputedExpressionAnalysis CreateAnalysis(PreparedLambda computed)
     {
         var rootEntityType = computed.Lambda.Parameters[0].Type;
 
@@ -250,13 +254,7 @@ public class ComputedExpressionAnalyzer<TInput> : IComputedExpressionAnalyzer
             _memberAccessLocators
         ).Visit(computed.Lambda);
 
-        return analysis.ResolveEntityContext(node, entityContextKey);
-    }
-
-    private IEntityActionProvider<TInput> RequireEntityActionProvider()
-    {
-        return _entityActionProvider
-            ?? throw new Exception("Entity Action Provider not configured");
+        return analysis;
     }
 
     private PreparedLambda PrepareLambda(LambdaExpression lambdaExpression)
@@ -265,6 +263,55 @@ public class ComputedExpressionAnalyzer<TInput> : IComputedExpressionAnalyzer
             lambdaExpression = modifier(lambdaExpression);
 
         return new PreparedLambda(lambdaExpression);
+    }
+
+    private Expression PrepareComputedOutputExpression(Type returnType, Expression body)
+    {
+        var prepareOutputMethod = GetType().GetMethod(
+            nameof(PrepareComputedOutput),
+            BindingFlags.NonPublic | BindingFlags.Static)!
+            .MakeGenericMethod(returnType);
+
+        return Expression.Call(
+            prepareOutputMethod,
+            body);
+    }
+
+    private Expression ReturnDefaultIfEntityActionExpression(
+        ParameterExpression inputParameter,
+        ParameterExpression entityParameter,
+        Expression expression,
+        EntityAction entityAction)
+    {
+        var entityActionProvider = RequireEntityActionProvider();
+
+        return Expression.Condition(
+            Expression.Equal(
+                Expression.Call(
+                    Expression.Constant(entityActionProvider),
+                    "GetEntityAction",
+                    [],
+                    inputParameter,
+                    entityParameter
+                ),
+                Expression.Constant(entityAction)
+            ),
+            Expression.Default(expression.Type),
+            expression
+        );
+    }
+
+    private static T PrepareComputedOutput<T>(T value)
+    {
+        var type = typeof(T);
+        if (type.IsConstructedGenericType
+            && type.GetGenericTypeDefinition() == typeof(IEnumerable<>)
+            && value is IEnumerable enumerable)
+        {
+            return (T)(object)enumerable.ToArray(type.GetGenericArguments()[0]);
+        }
+
+        return value;
     }
 
     record PreparedLambda(LambdaExpression Lambda);

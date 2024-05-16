@@ -37,8 +37,6 @@ public class LinqMethodsEntityContextPropagator
                     case nameof(Enumerable.AsEnumerable):
                     case nameof(Enumerable.Cast):
                     case nameof(Enumerable.DefaultIfEmpty):
-                    case nameof(Enumerable.Distinct):
-                    case nameof(Enumerable.DistinctBy):
                     case nameof(Enumerable.OfType):
                     case /*nameof(Enumerable.Order)*/ "Order":
                     case nameof(Enumerable.OrderBy):
@@ -63,6 +61,18 @@ public class LinqMethodsEntityContextPropagator
                         );
                         break;
 
+                    case nameof(Enumerable.Distinct):
+                    case nameof(Enumerable.DistinctBy):
+                        analysis.PropagateEntityContext(
+                            methodCallExpression.Arguments[0],
+                            EntityContextKeys.Element,
+                            node,
+                            EntityContextKeys.Element,
+                            e => new DistinctEntityContext(e),
+                            true
+                        );
+                        break;
+
                     case nameof(Enumerable.Where):
                         {
                             var filterLambda = GetLambda(methodCallExpression.Arguments[1])
@@ -72,12 +82,7 @@ public class LinqMethodsEntityContextPropagator
                                 methodCallExpression.Arguments[0],
                                 EntityContextKeys.Element,
                                 node,
-                                EntityContextKeys.Element,
-                                e =>
-                                {
-                                    var parameterEntityContext = analysis.ResolveEntityContext(filterLambda.Parameters[0], EntityContextKeys.None);
-                                    return new FilteredEntityContext(e, parameterEntityContext, filterLambda, analysis.Analyzer);
-                                }
+                                EntityContextKeys.Element
                             );
                         }
                         break;

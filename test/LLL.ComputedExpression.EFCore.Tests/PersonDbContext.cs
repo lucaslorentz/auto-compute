@@ -14,7 +14,13 @@ public class Person
     public virtual int Total { get; protected set; }
     public virtual Pet? FavoritePet { get; set; }
     public virtual IList<Person> Friends { get; protected set; } = [];
+    public virtual IList<Person> Relatives { get; protected set; } = [];
     public virtual IList<Person> FriendsInverse { get; protected set; } = [];
+    public virtual IList<Person> RelativesInverse { get; protected set; } = [];
+    public virtual IList<RelativesJoin> RelativesJoin { get; protected set; } = [];
+    public virtual IList<RelativesJoin> RelativesInverseJoin { get; protected set; } = [];
+    public virtual IList<FriendsJoin> FriendsJoin { get; protected set; } = [];
+    public virtual IList<FriendsJoin> FriendsInverseJoin { get; protected set; } = [];
 }
 
 public class Pet
@@ -24,6 +30,18 @@ public class Pet
     public virtual string? Type { get; set; }
     public virtual Person? Owner { get; set; }
     public virtual Person? FavoritePetInverse { get; set; }
+}
+
+public class RelativesJoin
+{
+    public required Person FromPerson { get; init; }
+    public required Person ToPerson { get; init; }
+}
+
+public class FriendsJoin
+{
+    public required Person FromPerson { get; init; }
+    public required Person ToPerson { get; init; }
 }
 
 class PersonDbContext(
@@ -45,9 +63,16 @@ class PersonDbContext(
 
         personBuilder.HasMany(e => e.Friends)
             .WithMany(e => e.FriendsInverse)
-            .UsingEntity<Dictionary<string, object>>(
-                l => l.HasOne<Person>("FromPerson").WithMany(),
-                r => r.HasOne<Person>("ToPerson").WithMany()
+            .UsingEntity<FriendsJoin>(
+                l => l.HasOne<Person>(x => x.ToPerson).WithMany(x => x.FriendsInverseJoin),
+                r => r.HasOne<Person>(x => x.FromPerson).WithMany(x => x.FriendsJoin)
+            );
+
+        personBuilder.HasMany(e => e.Relatives)
+            .WithMany(e => e.RelativesInverse)
+            .UsingEntity<RelativesJoin>(
+                l => l.HasOne<Person>(x => x.ToPerson).WithMany(x => x.RelativesInverseJoin),
+                r => r.HasOne<Person>(x => x.FromPerson).WithMany(x => x.RelativesJoin)
             );
 
         modelBuilder.Entity<Pet>();

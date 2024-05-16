@@ -4,7 +4,7 @@ public static class ComputedAnnotationNames
 {
     public const string Prefix = "Computed:";
 
-    public const string Expression = Prefix + "Expression";
+    public const string UpdaterFactory = Prefix + "UpdaterFactory";
 
     public const string ExpressionAnalyzer = Prefix + "ExpressionAnalyzer";
 

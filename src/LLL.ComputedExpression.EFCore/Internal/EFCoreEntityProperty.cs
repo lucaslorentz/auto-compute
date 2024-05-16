@@ -13,12 +13,7 @@ public class EFCoreEntityProperty<TEntity>(
 
     public virtual string ToDebugString()
     {
-        return $"{property.Name}";
-    }
-
-    public virtual IAffectedEntitiesProvider? GetAffectedEntitiesProvider()
-    {
-        return new EFCorePropertyAffectedEntitiesProvider<TEntity>(property);
+        return $"{property.DeclaringType.ShortName()}.{property.Name}";
     }
 
     public virtual Expression CreateOriginalValueExpression(
@@ -73,5 +68,44 @@ public class EFCoreEntityProperty<TEntity>(
             ),
             property.ClrType
         );
+    }
+
+    public Expression CreateIncrementalOriginalValueExpression(
+        ComputedExpressionAnalysis analysis,
+        IEntityMemberAccess<IEntityProperty> memberAccess,
+        Expression inputExpression,
+        Expression incrementalContextExpression)
+    {
+        return CreateOriginalValueExpression(memberAccess, inputExpression);
+    }
+
+    public Expression CreateIncrementalCurrentValueExpression(
+        ComputedExpressionAnalysis analysis,
+        IEntityMemberAccess<IEntityProperty> memberAccess,
+        Expression inputExpression,
+        Expression incrementalContextExpression)
+    {
+        return CreateCurrentValueExpression(memberAccess, inputExpression);
+    }
+
+    public async Task<IReadOnlyCollection<TEntity>> GetAffectedEntitiesAsync(IEFCoreComputedInput input, IncrementalContext? incrementalContext)
+    {
+        var affectedEntities = new HashSet<TEntity>();
+        foreach (var entityEntry in input.EntityEntriesOfType(property.DeclaringType))
+        {
+            if (entityEntry.State == EntityState.Added
+                || entityEntry.State == EntityState.Deleted
+                || entityEntry.State == EntityState.Modified)
+            {
+                var propertyEntry = entityEntry.Property(property);
+                if (entityEntry.State == EntityState.Added
+                    || entityEntry.State == EntityState.Deleted
+                    || propertyEntry.IsModified)
+                {
+                    affectedEntities.Add((TEntity)entityEntry.Entity);
+                }
+            }
+        }
+        return affectedEntities;
     }
 }

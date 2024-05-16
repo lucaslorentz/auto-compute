@@ -1,8 +1,4 @@
-﻿using LLL.ComputedExpression.AffectedEntitiesProviders;
-using LLL.ComputedExpression.RootEntitiesProviders;
-using LLL.ComputedExpression.Internal;
-
-namespace LLL.ComputedExpression.EntityContexts;
+﻿namespace LLL.ComputedExpression.EntityContexts;
 
 public class CompositeEntityContext : EntityContext
 {
@@ -31,49 +27,14 @@ public class CompositeEntityContext : EntityContext
         return GetAffectedEntitiesProvider();
     }
 
-    public override IAffectedEntitiesProvider? GetAffectedEntitiesProviderInverse()
+    public override IReadOnlyCollection<object> GetCascadedAffectedEntities(object input, IReadOnlyCollection<object> entities, IncrementalContext incrementalContext)
     {
-        var providers = new List<IAffectedEntitiesProvider?>();
-
+        var result = new HashSet<object>();
         foreach (var parent in _parents)
-            providers.Add(parent.GetAffectedEntitiesProviderInverse());
-
-        return AffectedEntitiesProviderExtensions.ComposeAndCleanup(providers);
-    }
-
-    public override IRootEntitiesProvider GetOriginalRootEntitiesProvider()
-    {
-        var providers = new List<IRootEntitiesProvider>();
-
-        foreach (var parent in _parents)
-            providers.Add(parent.GetOriginalRootEntitiesProvider());
-
-        var providerType = typeof(IRootEntitiesProvider<,,>)
-            .MakeGenericType(InputType, RootEntityType, EntityType);
-
-        var convertedProviders = providers.ToArray(providerType);
-
-        var closedType = typeof(CompositeRootEntitiesProvider<,,>)
-            .MakeGenericType(InputType, RootEntityType, EntityType);
-
-        return (IRootEntitiesProvider)Activator.CreateInstance(closedType, [convertedProviders])!;
-    }
-
-    public override IRootEntitiesProvider GetCurrentRootEntitiesProvider()
-    {
-        var providers = new List<IRootEntitiesProvider>();
-
-        foreach (var parent in _parents)
-            providers.Add(parent.GetCurrentRootEntitiesProvider());
-
-        var providerType = typeof(IRootEntitiesProvider<,,>)
-            .MakeGenericType(InputType, RootEntityType, EntityType);
-
-        var convertedProviders = providers.ToArray(providerType);
-
-        var closedType = typeof(CompositeRootEntitiesProvider<,,>)
-            .MakeGenericType(InputType, RootEntityType, EntityType);
-
-        return (IRootEntitiesProvider)Activator.CreateInstance(closedType, [convertedProviders])!;
+        {
+            foreach (var ent in parent.GetCascadedAffectedEntities(input, entities, incrementalContext))
+                result.Add(ent);
+        }
+        return result;
     }
 }

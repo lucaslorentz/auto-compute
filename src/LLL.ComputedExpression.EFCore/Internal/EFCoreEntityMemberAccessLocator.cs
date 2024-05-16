@@ -17,7 +17,7 @@ public class EFCoreEntityMemberAccessLocator(IModel model) :
             var navigation = (INavigationBase?)entityType?.FindNavigation(memberExpression.Member)
                 ?? entityType?.FindSkipNavigation(memberExpression.Member);
             if (navigation != null)
-                return EntityMemberAccess.Create(memberExpression.Expression, GetNavigation(navigation));
+                return EntityMemberAccess.Create(node, memberExpression.Expression, GetNavigation(navigation));
         }
 
         return null;
@@ -32,7 +32,7 @@ public class EFCoreEntityMemberAccessLocator(IModel model) :
             var entityType = model.FindEntityType(type);
             var property = entityType?.FindProperty(memberExpression.Member);
             if (property is not null)
-                return EntityMemberAccess.Create(memberExpression.Expression, GetProperty(property));
+                return EntityMemberAccess.Create(node, memberExpression.Expression, GetProperty(property));
         }
 
         return null;

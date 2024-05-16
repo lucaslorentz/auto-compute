@@ -12,10 +12,11 @@ public class DictionaryTests
         var pet = context!.Set<Pet>().Find(1)!;
         pet.Type = "Modified";
 
-        var affectedEntities = await context.GetAffectedEntitiesAsync(
-            (Person person) => person.Pets.ToDictionary(p => p).Where(kv => kv.Key.Type != null).Count());
+        var changes = await context.GetChangesAsync(
+            (Person person) => person.Pets.ToDictionary(p => p).Where(kv => kv.Key.Type != null).Count(),
+            static c => c.VoidChange());
 
-        affectedEntities.Should().BeEquivalentTo([pet.Owner]);
+        changes.Keys.Should().BeEquivalentTo([pet.Owner]);
     }
 
     [Fact]
@@ -26,9 +27,10 @@ public class DictionaryTests
         var pet = context!.Set<Pet>().Find(1)!;
         pet.Type = "Modified";
 
-        var affectedEntities = await context.GetAffectedEntitiesAsync(
-            (Person person) => person.Pets.ToDictionary(p => p.Id).Where(kv => kv.Value.Type != null).Count());
+        var changes = await context.GetChangesAsync(
+            (Person person) => person.Pets.ToDictionary(p => p.Id).Where(kv => kv.Value.Type != null).Count(),
+            static c => c.VoidChange());
 
-        affectedEntities.Should().BeEquivalentTo([pet.Owner]);
+        changes.Keys.Should().BeEquivalentTo([pet.Owner]);
     }
 }

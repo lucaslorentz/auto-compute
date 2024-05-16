@@ -1,5 +1,6 @@
 ﻿using System.Linq.Expressions;
 using FluentAssertions;
+using LLL.ComputedExpression.ChangeCalculations;
 
 namespace LLL.ComputedExpression.EFCore.Tests.Changes;
 
@@ -15,9 +16,9 @@ public class BasicOperationsTests
         var person = new Person { FirstName = "Jane", LastName = "Doe" };
         context!.Add(person);
 
-        var changes = await context.GetChangesAsync(_computedExpression);
-        changes.Should().BeEquivalentTo(new Dictionary<Person, ConstValueChange<string?>>{
-            { person, new ConstValueChange<string?>(default, "Jane Doe")}
+        var changes = await context.GetChangesAsync(_computedExpression, static c => c.ValueChange());
+        changes.Should().BeEquivalentTo(new Dictionary<Person, ValueChange<string?>>{
+            { person, new ValueChange<string?>(default, "Jane Doe")}
         });
     }
 
@@ -29,9 +30,9 @@ public class BasicOperationsTests
         var person = context!.Set<Person>().Find(1)!;
         person.FirstName = "Modified";
 
-        var changes = await context.GetChangesAsync(_computedExpression);
-        changes.Should().BeEquivalentTo(new Dictionary<Person, ConstValueChange<string?>>{
-            { person, new ConstValueChange<string?>("John Doe", "Modified Doe")}
+        var changes = await context.GetChangesAsync(_computedExpression, static c => c.ValueChange());
+        changes.Should().BeEquivalentTo(new Dictionary<Person, ValueChange<string?>>{
+            { person, new ValueChange<string?>("John Doe", "Modified Doe")}
         });
     }
 
@@ -43,9 +44,9 @@ public class BasicOperationsTests
         var person = context!.Set<Person>().Find(1)!;
         context.Remove(person);
 
-        var changes = await context.GetChangesAsync(_computedExpression);
-        changes.Should().BeEquivalentTo(new Dictionary<Person, ConstValueChange<string?>>{
-            { person, new ConstValueChange<string?>("John Doe", default)}
+        var changes = await context.GetChangesAsync(_computedExpression, static c => c.ValueChange());
+        changes.Should().BeEquivalentTo(new Dictionary<Person, ValueChange<string?>>{
+            { person, new ValueChange<string?>("John Doe", default)}
 });
     }
 }
