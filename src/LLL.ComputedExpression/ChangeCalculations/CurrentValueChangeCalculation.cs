@@ -3,6 +3,8 @@ namespace LLL.ComputedExpression.ChangeCalculations;
 
 public class CurrentValueChangeCalculation<TValue> : IChangeCalculation<TValue, TValue>
 {
+    public bool IsIncremental => false;
+
     public async Task<TValue> GetChangeAsync(IComputedValues<TValue> computedValues)
     {
         return computedValues.GetCurrentValue();

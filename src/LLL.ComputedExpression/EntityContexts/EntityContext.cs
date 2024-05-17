@@ -64,21 +64,21 @@ public abstract class EntityContext
     public abstract IAffectedEntitiesProvider? GetParentAffectedEntitiesProvider();
 
 
-    public abstract IReadOnlyCollection<object> GetCascadedAffectedEntities(object input, IReadOnlyCollection<object> entities, IncrementalContext incrementalContext);
+    public abstract IReadOnlyCollection<object> GetCascadedIncrementalEntities(object input, IReadOnlyCollection<object> entities, IncrementalContext incrementalContext);
 
-    public virtual IReadOnlyCollection<object> GetRequiredIncrementalEntities(object input, IReadOnlyCollection<object> entities, IncrementalContext incrementalContext)
+    public virtual IReadOnlyCollection<object> EnrichIncrementalContext(object input, IReadOnlyCollection<object> entities, IncrementalContext incrementalContext)
     {
         var result = new HashSet<object>();
         foreach (var childContext in _childContexts)
         {
-            foreach (var entity in childContext.GetParentRequiredIncrementalEntities(input, entities, incrementalContext))
+            foreach (var entity in childContext.EnrichIncrementalContextAndReturnParents(input, entities, incrementalContext))
                 result.Add(entity);
         }
         return result;
     }
 
-    public virtual IReadOnlyCollection<object> GetParentRequiredIncrementalEntities(object input, IReadOnlyCollection<object> entities, IncrementalContext incrementalContext)
+    public virtual IReadOnlyCollection<object> EnrichIncrementalContextAndReturnParents(object input, IReadOnlyCollection<object> entities, IncrementalContext incrementalContext)
     {
-        return GetRequiredIncrementalEntities(input, entities, incrementalContext);
+        return EnrichIncrementalContext(input, entities, incrementalContext);
     }
 }

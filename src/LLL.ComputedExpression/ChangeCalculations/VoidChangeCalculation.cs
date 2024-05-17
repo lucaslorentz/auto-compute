@@ -3,6 +3,8 @@ namespace LLL.ComputedExpression.ChangeCalculations;
 
 public class VoidChangeCalculation<TValue> : IChangeCalculation<TValue, VoidChange>
 {
+    public bool IsIncremental => false;
+
     public async Task<VoidChange> GetChangeAsync(IComputedValues<TValue> computedValues)
     {
         return default;

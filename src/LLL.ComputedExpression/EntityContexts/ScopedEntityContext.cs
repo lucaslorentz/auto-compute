@@ -26,8 +26,8 @@ public class ScopedEntityContext : EntityContext
         return GetAffectedEntitiesProvider();
     }
 
-    public override IReadOnlyCollection<object> GetCascadedAffectedEntities(object input, IReadOnlyCollection<object> entities, IncrementalContext incrementalContext)
+    public override IReadOnlyCollection<object> GetCascadedIncrementalEntities(object input, IReadOnlyCollection<object> entities, IncrementalContext incrementalContext)
     {
-        return _parent.GetCascadedAffectedEntities(input, entities, incrementalContext);
+        return _parent.GetCascadedIncrementalEntities(input, entities, incrementalContext);
     }
 }

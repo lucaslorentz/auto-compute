@@ -1,13 +1,8 @@
 namespace LLL.ComputedExpression;
 
-public interface IChangeCalculation
+public interface IChangeCalculation<TResult>
 {
-    Type ResultType { get; }
-}
-
-public interface IChangeCalculation<TResult> : IChangeCalculation
-{
-    Type IChangeCalculation.ResultType => typeof(TResult);
+    bool IsIncremental { get; }
     bool IsNoChange(TResult result);
     TResult CalculateDelta(TResult previous, TResult current);
     TResult AddDelta(TResult original, TResult delta);

@@ -1,9 +1,11 @@
 using System.Collections.Immutable;
+using LLL.ComputedExpression.EntityContexts;
 
 namespace LLL.ComputedExpression.ChangesProviders;
 
 public class UnboundChangesProvider<TInput, TEntity, TValue, TResult>(
     IAffectedEntitiesProvider<TInput, TEntity>? affectedEntitiesProvider,
+    EntityContext entityContext,
     IChangeCalculation<TValue, TResult> changeCalculation,
     ComputedValueAccessors<TInput, TEntity, TValue> computedValueAccessors
 ) : IUnboundChangesProvider<TInput, TEntity, TResult>
@@ -21,6 +23,9 @@ public class UnboundChangesProvider<TInput, TEntity, TValue, TResult>(
         var incrementalContext = new IncrementalContext();
 
         var affectedEntities = await affectedEntitiesProvider.GetAffectedEntitiesAsync(input, incrementalContext);
+
+        if (changeCalculation.IsIncremental)
+            entityContext.EnrichIncrementalContextAndReturnParents(input!, affectedEntities, incrementalContext);
 
         var changes = new Dictionary<TEntity, TResult>();
 

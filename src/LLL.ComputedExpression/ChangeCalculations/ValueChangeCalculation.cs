@@ -5,6 +5,8 @@ public class ValueChangeCalculation<TValue>(
     IEqualityComparer<TValue> comparer
 ) : IChangeCalculation<TValue, ValueChange<TValue>>
 {
+    public bool IsIncremental => false;
+
     public async Task<ValueChange<TValue>> GetChangeAsync(IComputedValues<TValue> computedValues)
     {
         return new ValueChange<TValue>(

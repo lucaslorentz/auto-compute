@@ -12,7 +12,7 @@ public class RootEntityContext(Type inputType, Type entityType) : EntityContext
         return GetAffectedEntitiesProvider();
     }
 
-    public override IReadOnlyCollection<object> GetCascadedAffectedEntities(object input, IReadOnlyCollection<object> entities, IncrementalContext? incrementalContext)
+    public override IReadOnlyCollection<object> GetCascadedIncrementalEntities(object input, IReadOnlyCollection<object> entities, IncrementalContext? incrementalContext)
     {
         return [];
     }

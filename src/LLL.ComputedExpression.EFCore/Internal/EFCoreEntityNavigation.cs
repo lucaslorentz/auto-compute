@@ -213,11 +213,10 @@ public class EFCoreEntityNavigation<TSourceEntity, TTargetEntity>(
         }
 
         var incrementalEntities = incrementalContext!.GetIncrementalEntities(ent, navigation);
-        var requiredIncrementalEntities = entityContext.GetRequiredIncrementalEntities(input, [ent], incrementalContext);
 
         var principalEntry = input.DbContext.Entry(ent);
 
-        var entities = incrementalEntities.Concat(requiredIncrementalEntities)
+        var entities = incrementalEntities
             .Where(e =>
             {
                 if (navigation is ISkipNavigation skipNavigation)
@@ -277,11 +276,10 @@ public class EFCoreEntityNavigation<TSourceEntity, TTargetEntity>(
         }
 
         var incrementalEntities = incrementalContext!.GetIncrementalEntities(ent, navigation);
-        var requiredIncrementalEntities = entityContext.GetRequiredIncrementalEntities(input, [ent], incrementalContext);
 
         var principalEntry = input.DbContext.Entry(ent);
 
-        var entities = incrementalEntities.Concat(requiredIncrementalEntities)
+        var entities = incrementalEntities
             .Where(e =>
             {
                 if (navigation is ISkipNavigation skipNavigation)

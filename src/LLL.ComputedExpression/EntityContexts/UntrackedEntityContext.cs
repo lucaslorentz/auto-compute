@@ -16,7 +16,7 @@ public class UntrackedEntityContext(
         return null;
     }
 
-    public override IReadOnlyCollection<object> GetCascadedAffectedEntities(object input, IReadOnlyCollection<object> entities, IncrementalContext? incrementalContext)
+    public override IReadOnlyCollection<object> GetCascadedIncrementalEntities(object input, IReadOnlyCollection<object> entities, IncrementalContext? incrementalContext)
     {
         return [];
     }

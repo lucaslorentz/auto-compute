@@ -9,6 +9,4 @@ public class ComputedValues<TInput, TEntity, TValue>(
 {
     public TValue GetOriginalValue() => computedValues.GetOriginalValue(input, entity, incrementalContext);
     public TValue GetCurrentValue() => computedValues.GetCurrentValue(input, entity, incrementalContext);
-    public TValue GetIncrementalOriginalValue() => computedValues.GetIncrementalOriginalValue(input, entity, incrementalContext);
-    public TValue GetIncrementalCurrentValue() => computedValues.GetIncrementalCurrentValue(input, entity, incrementalContext);
 }

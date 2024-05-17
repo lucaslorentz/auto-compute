@@ -101,14 +101,17 @@ public class ComputedExpressionAnalyzer<TInput> : IComputedExpressionAnalyzer<TI
         var changeCalculation = changeCalculationSelector.Compile()(new ChangeCalculations<TValue>());
 
         var computedValueAccessors = new ComputedValueAccessors<TInput, TEntity, TValue>(
-            GetOriginalValueExpression(computed).Compile(),
-            GetCurrentValueExpression(computed).Compile(),
-            GetIncrementalOriginalValueExpression(computed).Compile(),
-            GetIncrementalCurrentValueExpression(computed).Compile()
+            changeCalculation.IsIncremental
+                ? GetIncrementalOriginalValueExpression(computed).Compile()
+                : GetOriginalValueExpression(computed).Compile(),
+            changeCalculation.IsIncremental
+                ? GetIncrementalCurrentValueExpression(computed).Compile()
+                : GetCurrentValueExpression(computed).Compile()
         );
 
         return new UnboundChangesProvider<TInput, TEntity, TValue, TResult>(
             affectedEntitiesProvider,
+            entityContext,
             changeCalculation,
             computedValueAccessors
         );

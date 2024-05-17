@@ -32,9 +32,9 @@ public class NavigationEntityContext : EntityContext
         return affectedEntitiesProvider.LoadNavigation(_navigation.GetInverse());
     }
 
-    public override IReadOnlyCollection<object> GetParentRequiredIncrementalEntities(object input, IReadOnlyCollection<object> entities, IncrementalContext incrementalContext)
+    public override IReadOnlyCollection<object> EnrichIncrementalContextAndReturnParents(object input, IReadOnlyCollection<object> entities, IncrementalContext incrementalContext)
     {
-        var requiredEntities = GetRequiredIncrementalEntities(input, entities, incrementalContext).ToArray();
+        var requiredEntities = EnrichIncrementalContext(input, entities, incrementalContext).ToArray();
 
         var inverse = _navigation.GetInverse() ?? throw new Exception("Inverse not found");
 
@@ -44,9 +44,9 @@ public class NavigationEntityContext : EntityContext
         return originalEntities.Concat(currentEntities).ToArray();
     }
 
-    public override IReadOnlyCollection<object> GetCascadedAffectedEntities(object input, IReadOnlyCollection<object> entities, IncrementalContext incrementalContext)
+    public override IReadOnlyCollection<object> GetCascadedIncrementalEntities(object input, IReadOnlyCollection<object> entities, IncrementalContext incrementalContext)
     {
-        var parentCascaded = _parent.GetCascadedAffectedEntities(input, entities, incrementalContext).ToArray();
+        var parentCascaded = _parent.GetCascadedIncrementalEntities(input, entities, incrementalContext).ToArray();
 
         return _navigation.LoadOriginalAsync(input, parentCascaded, incrementalContext).GetAwaiter().GetResult()
             .Concat(_navigation.LoadCurrentAsync(input, parentCascaded, incrementalContext).GetAwaiter().GetResult())
