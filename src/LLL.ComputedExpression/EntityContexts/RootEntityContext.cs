@@ -14,6 +14,6 @@ public class RootEntityContext(Type inputType, Type entityType) : EntityContext
 
     public override IReadOnlyCollection<object> GetCascadedIncrementalEntities(object input, IReadOnlyCollection<object> entities, IncrementalContext? incrementalContext)
     {
-        return [];
+        return entities;
     }
 }

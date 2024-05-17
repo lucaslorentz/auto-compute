@@ -25,7 +25,7 @@ public class UnboundChangesProvider<TInput, TEntity, TValue, TResult>(
         var affectedEntities = await affectedEntitiesProvider.GetAffectedEntitiesAsync(input, incrementalContext);
 
         if (changeCalculation.IsIncremental)
-            entityContext.EnrichIncrementalContextAndReturnParents(input!, affectedEntities, incrementalContext);
+            entityContext.EnrichIncrementalContext(input!, affectedEntities, incrementalContext);
 
         var changes = new Dictionary<TEntity, TResult>();
 

@@ -32,8 +32,10 @@ public class NavigationEntityContext : EntityContext
         return affectedEntitiesProvider.LoadNavigation(_navigation.GetInverse());
     }
 
-    public override IReadOnlyCollection<object> EnrichIncrementalContextAndReturnParents(object input, IReadOnlyCollection<object> entities, IncrementalContext incrementalContext)
+    public override IReadOnlyCollection<object> EnrichIncrementalContextFromParent(object input, IReadOnlyCollection<object> parentEntities, IncrementalContext incrementalContext)
     {
+        var entities = _navigation.GetIncrementalEntities(input, parentEntities, incrementalContext);
+
         var requiredEntities = EnrichIncrementalContext(input, entities, incrementalContext).ToArray();
 
         var inverse = _navigation.GetInverse() ?? throw new Exception("Inverse not found");
@@ -46,11 +48,14 @@ public class NavigationEntityContext : EntityContext
 
     public override IReadOnlyCollection<object> GetCascadedIncrementalEntities(object input, IReadOnlyCollection<object> entities, IncrementalContext incrementalContext)
     {
-        var parentCascaded = _parent.GetCascadedIncrementalEntities(input, entities, incrementalContext).ToArray();
+        var inverse = _navigation.GetInverse();
 
-        return _navigation.LoadOriginalAsync(input, parentCascaded, incrementalContext).GetAwaiter().GetResult()
-            .Concat(_navigation.LoadCurrentAsync(input, parentCascaded, incrementalContext).GetAwaiter().GetResult())
-            .Concat(_navigation.GetIncrementalEntities(input, entities, incrementalContext))
+        var parentEntities = inverse.LoadOriginalAsync(input, entities, incrementalContext).GetAwaiter().GetResult()
+            .Concat(inverse.LoadCurrentAsync(input, entities, incrementalContext).GetAwaiter().GetResult())
             .ToArray();
+
+        var parentCascaded = _parent.GetCascadedIncrementalEntities(input, parentEntities, incrementalContext).ToArray();
+
+        return _navigation.GetIncrementalEntities(input, parentCascaded, incrementalContext);
     }
 }

@@ -71,14 +71,14 @@ public abstract class EntityContext
         var result = new HashSet<object>();
         foreach (var childContext in _childContexts)
         {
-            foreach (var entity in childContext.EnrichIncrementalContextAndReturnParents(input, entities, incrementalContext))
+            foreach (var entity in childContext.EnrichIncrementalContextFromParent(input, entities, incrementalContext))
                 result.Add(entity);
         }
         return result;
     }
 
-    public virtual IReadOnlyCollection<object> EnrichIncrementalContextAndReturnParents(object input, IReadOnlyCollection<object> entities, IncrementalContext incrementalContext)
+    public virtual IReadOnlyCollection<object> EnrichIncrementalContextFromParent(object input, IReadOnlyCollection<object> parentEntities, IncrementalContext incrementalContext)
     {
-        return EnrichIncrementalContext(input, entities, incrementalContext);
+        return EnrichIncrementalContext(input, parentEntities, incrementalContext);
     }
 }
