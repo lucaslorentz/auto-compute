@@ -3,7 +3,7 @@ namespace LLL.ComputedExpression.ChangeCalculations;
 
 public class CurrentValueChangeCalculation<TValue> : IChangeCalculation<TValue, TValue>
 {
-    public async Task<TValue> GetChangeAsync(ComputedValues<TValue> computedValues)
+    public async Task<TValue> GetChangeAsync(IComputedValues<TValue> computedValues)
     {
         return computedValues.GetCurrentValue();
     }

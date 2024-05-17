@@ -4,7 +4,7 @@ namespace LLL.ComputedExpression.ChangeCalculations;
 public abstract class IncrementalChangeCalculation<TValue, TResult>
     : IChangeCalculation<TValue, TResult>
 {
-    public async Task<TResult> GetChangeAsync(ComputedValues<TValue> computedValues)
+    public async Task<TResult> GetChangeAsync(IComputedValues<TValue> computedValues)
     {
         return CalculateChange(computedValues.GetIncrementalOriginalValue(), computedValues.GetIncrementalCurrentValue());
     }

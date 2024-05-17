@@ -5,7 +5,7 @@ public class ValueChangeCalculation<TValue>(
     IEqualityComparer<TValue> comparer
 ) : IChangeCalculation<TValue, ValueChange<TValue>>
 {
-    public async Task<ValueChange<TValue>> GetChangeAsync(ComputedValues<TValue> computedValues)
+    public async Task<ValueChange<TValue>> GetChangeAsync(IComputedValues<TValue> computedValues)
     {
         return new ValueChange<TValue>(
             computedValues.GetOriginalValue(),

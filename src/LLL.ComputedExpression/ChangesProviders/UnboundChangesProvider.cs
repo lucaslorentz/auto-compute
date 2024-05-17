@@ -5,10 +5,7 @@ namespace LLL.ComputedExpression.ChangesProviders;
 public class UnboundChangesProvider<TInput, TEntity, TValue, TResult>(
     IAffectedEntitiesProvider<TInput, TEntity>? affectedEntitiesProvider,
     IChangeCalculation<TValue, TResult> changeCalculation,
-    Func<TInput, IncrementalContext, TEntity, TValue> originalValueGetter,
-    Func<TInput, IncrementalContext, TEntity, TValue> currentValueGetter,
-    Func<TInput, IncrementalContext, TEntity, TValue> originalIncrementalValueGetter,
-    Func<TInput, IncrementalContext, TEntity, TValue> currentIncrementalValueGetter
+    ComputedValueAccessors<TInput, TEntity, TValue> computedValueAccessors
 ) : IUnboundChangesProvider<TInput, TEntity, TResult>
     where TEntity : class
 {
@@ -73,13 +70,13 @@ public class UnboundChangesProvider<TInput, TEntity, TValue, TResult>(
         return delta;
     }
 
-    private ComputedValues<TValue> CreateComputedValues(TInput input, TEntity entity, IncrementalContext incrementalContext)
+    private ComputedValues<TInput, TEntity, TValue> CreateComputedValues(TInput input, TEntity entity, IncrementalContext incrementalContext)
     {
-        return new ComputedValues<TValue>(
-            () => originalValueGetter(input, incrementalContext, entity),
-            () => currentValueGetter(input, incrementalContext, entity),
-            () => originalIncrementalValueGetter(input, incrementalContext, entity),
-            () => currentIncrementalValueGetter(input, incrementalContext, entity));
+        return new ComputedValues<TInput, TEntity, TValue>(
+            input,
+            incrementalContext,
+            entity,
+            computedValueAccessors);
     }
 
     public record class ValueWrapper(TResult Value);

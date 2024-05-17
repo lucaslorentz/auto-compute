@@ -3,7 +3,7 @@ namespace LLL.ComputedExpression.ChangeCalculations;
 
 public class VoidChangeCalculation<TValue> : IChangeCalculation<TValue, VoidChange>
 {
-    public async Task<VoidChange> GetChangeAsync(ComputedValues<TValue> computedValues)
+    public async Task<VoidChange> GetChangeAsync(IComputedValues<TValue> computedValues)
     {
         return default;
     }

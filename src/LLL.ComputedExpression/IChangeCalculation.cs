@@ -14,5 +14,5 @@ public interface IChangeCalculation<TResult> : IChangeCalculation
 
 public interface IChangeCalculation<TValue, TResult> : IChangeCalculation<TResult>
 {
-    Task<TResult> GetChangeAsync(ComputedValues<TValue> affectedEntity);
+    Task<TResult> GetChangeAsync(IComputedValues<TValue> affectedEntity);
 }
