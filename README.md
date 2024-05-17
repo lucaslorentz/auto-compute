@@ -59,7 +59,9 @@ Check the rest of the readme to understand more all features.
 
 This library operates by meticulously analyzing computed expressions and tracking all referenced data within them. It then traverses inverse navigations to pinpoint all root entities that could be affected by changes to the referenced data.
 
-For this basic scenario:
+### Basic scenario
+
+For a basic scenario like this:
 ```csharp
 personBuilder.ComputedProperty(person => person.FullName, person => person.FirstName + " " + person.LastName);
 ```
@@ -67,13 +69,25 @@ The FullName property will be automatically updated whenever:
 - Person's FirstName property changes.
 - Person's LastName property changes.
 
-For this more complex scenario:
+### Complex scenario
+
+For a more complex scenario:
 ```csharp
 personBuilder.ComputedProperty(person => person.NumberOfCats, person => person.Pets.Count(pet => pet.Type == "Cat"));
 ```
 The NumberOfCats property will be automatically updated whenever:
 - Person's Pets collection change (add, remove, inverse add, inverse remove)
 - Pet's Type property changes
+
+### Incremental computation
+
+Incremental computations calculate the incremental change to a value **without fully loading accessed collections!**
+
+A scenario like:
+```
+personBuilder.ComputedProperty(person => person.NumberOfCats, person => person.Pets.Count(pet => pet.Type == "Cat"), static c => c.NumberIncremental());
+```
+Will return the incremental change to NumberOfCats for each Person without loading all Pets from that person. That's achieved by computing the original and current computed value using only the affected collection items and then calculating the delta.
 
 ## Mapping features
 
