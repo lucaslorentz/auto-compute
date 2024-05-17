@@ -97,12 +97,11 @@ personBuilder.ComputedProperty(p => p.NumberOfCats, b => b.AddCollection(person 
 ```
 In this example, NumberOfCats is incremented/decremented based on changes to Pets collection or to Pet's Type property, without loading all pets from affected persons.
 
-## DbContext features
+## DbContext extension methods
 
 The following DbContext methods are also available for unmapped scenarios:
-- **GetAffectedEntitiesAsync**: Given a computed expression, it returns the root entities affected by the unsaved DbContext changes.
-- **GetChangesAsync**: Given a computed expression, it returns the root entities affected by the unsaved DbContext changes with their respective computed original and current value.
-- **GetIncrementalChanges**: Given an incremental computed definition, it returns the root entities affected by the unsaved DbContext changes and their respective computed incremental change.
+- **GetChangesAsync**: Given a computed expression, it returns the root entities affected and their computed value changes. This also supports returning incremental computed changes. This method always returns the changes between unmodified DBContext and its current state.
+- **GetChangesProviderAsync**: RhangesAsync, but returns a change provider with **GetChangesAsync** method in it. Each time **GetChangesAsync** is called, it returns changes between the last time it was called and the current DBContext state.
 
 ## License
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
