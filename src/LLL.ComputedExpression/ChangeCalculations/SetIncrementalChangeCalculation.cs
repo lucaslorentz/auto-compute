@@ -31,6 +31,15 @@ public class SetChangeCalculation<TElement>(
                     .ToArray()
         };
     }
+
+    public override SetChange<TElement> AddDelta(SetChange<TElement> value, SetChange<TElement> delta)
+    {
+        return new SetChange<TElement>
+        {
+            Removed = value.Removed.Except(delta.Added).Concat(delta.Removed).ToArray(),
+            Added = value.Added.Except(delta.Removed).Concat(delta.Added).ToArray()
+        };
+    }
 }
 
 public record SetChange<TElement>

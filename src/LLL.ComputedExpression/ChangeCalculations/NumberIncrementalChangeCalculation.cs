@@ -19,4 +19,9 @@ public class NumberChangeCalculation<TValue> : IncrementalChangeCalculation<TVal
     {
         return current - previous;
     }
+
+    public override TValue AddDelta(TValue value, TValue delta)
+    {
+        return value + delta;
+    }
 }

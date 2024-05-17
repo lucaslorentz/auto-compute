@@ -100,9 +100,10 @@ public class IncrementalCollectionTests
         return await TestDbContext.Create<PersonDbContext>(modelBuilder =>
         {
             var personBuilder = modelBuilder.Entity<Person>();
-            personBuilder.IncrementalNumberComputedProperty(
+            personBuilder.ComputedProperty(
                 p => p.Total,
-                p => p.Pets.Count
+                p => p.Pets.Count,
+                static c => c.NumberIncremental()
             );
         });
     }

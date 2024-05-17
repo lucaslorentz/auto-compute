@@ -14,4 +14,6 @@ public abstract class IncrementalChangeCalculation<TValue, TResult>
     public abstract bool IsNoChange(TResult result);
 
     public abstract TResult CalculateDelta(TResult previous, TResult current);
+
+    public abstract TResult AddDelta(TResult value, TResult delta);
 }

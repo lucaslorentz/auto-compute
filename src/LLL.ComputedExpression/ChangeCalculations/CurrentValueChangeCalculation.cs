@@ -17,4 +17,9 @@ public class CurrentValueChangeCalculation<TValue> : IChangeCalculation<TValue, 
     {
         return current;
     }
+
+    public TValue AddDelta(TValue value, TValue delta)
+    {
+        return delta;
+    }
 }

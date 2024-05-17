@@ -112,12 +112,13 @@ public class IncrementalFilteredCollectionTests
         {
             var personBuilder = modelBuilder.Entity<Person>();
 
-            personBuilder.IncrementalNumberComputedProperty(
+            personBuilder.ComputedProperty(
                 p => p.Total,
                 p =>
                     p.Pets.Where(x => x.Type == "Cat")
                     .Concat(p.Pets.Where(x => x.Type == "Dog"))
-                    .Count()
+                    .Count(),
+                static c => c.NumberIncremental()
             );
         });
     }

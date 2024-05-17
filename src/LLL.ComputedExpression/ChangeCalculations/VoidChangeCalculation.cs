@@ -21,6 +21,11 @@ public class VoidChangeCalculation<TValue> : IChangeCalculation<TValue, VoidChan
     {
         return default;
     }
+
+    public VoidChange AddDelta(VoidChange value, VoidChange delta)
+    {
+        return default;
+    }
 }
 
 public record struct VoidChange();

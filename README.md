@@ -14,7 +14,7 @@ dotnet add package LLL.ComputedExpression.EFCore
 ```
 
 Enable by calling UseComputeds from DbContext OnConfiguring:
-```
+```csharp
 protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
     => optionsBuilder.UseComputeds();
 ```
@@ -34,7 +34,7 @@ protected override void OnModelCreating(ModelBuilder modelBuilder)
     personBuilder.ComputedProperty(person => person.FullName, person => person.FirstName + " " + person.LastName);
     personBuilder.ComputedProperty(person => person.HasCats, person => person.Pets.Any(pet => pet.Type == "Cat"));
     personBuilder.ComputedProperty(person => person.Description, person => person.FullName + " (" + person.Pets.Count() + " pets)");
-    personBuilder.IncrementalComputedProperty(p => p.NumberOfCats, b => b.AddCollection(person => person.Pets.Where(pet => pet.Type == "Cat"), pet => 1));
+    personBuilder.ComputedProperty(p => p.NumberOfCats, person => person.Pets.Count(pet => pet.Type == "Cat"), static c => c.NumberIncremental());
 }
 ```
 
@@ -82,18 +82,18 @@ The NumberOfCats property will be automatically updated whenever:
 Computed properties are updated by doing a **full evaluation** of the expression whenever any used data changes.
 
 Example:
-```
+```csharp
 personBuilder.ComputedProperty(person => person.NumberOfCats, person => person.Pets.Count(pet => pet.Type == "Cat"));
 ```
 In this example, all pets from all affected persons will be lazy-loaded during re-evaluation.
 
 ### Incremental computed properties
 
-Incremental computed properties are updated by **adding the change** of its parts to the previously computed value whenever any used data changes.
+Incremental computed properties are updated **without fully loading accessed collections!** The incremental change is computed loading only necessary items from collections, and then it is added to the previously computed value.
 
 Example:
-```
-personBuilder.IncrementalComputedProperty(p => p.NumberOfCats, b => b.AddCollection(person => person.Pets.Where(pet => pet.Type == "Cat"), pet => 1));
+```csharp
+personBuilder.ComputedProperty(p => p.NumberOfCats, b => b.AddCollection(person => person.Pets.Count(pet => pet.Type == "Cat"), static c => c.NumberIncremental());
 ```
 In this example, NumberOfCats is incremented/decremented based on changes to Pets collection or to Pet's Type property, without loading all pets from affected persons.
 

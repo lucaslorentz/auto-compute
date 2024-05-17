@@ -32,6 +32,14 @@ public class ValueChangeCalculation<TValue>(
             current.Current
         );
     }
+
+    public ValueChange<TValue> AddDelta(ValueChange<TValue> value, ValueChange<TValue> delta)
+    {
+        return new ValueChange<TValue>(
+            value.Original,
+            delta.Current
+        );
+    }
 }
 
 public record ValueChange<TValue>(
