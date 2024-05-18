@@ -4,18 +4,12 @@ using LLL.ComputedExpression.EntityContexts;
 
 namespace LLL.ComputedExpression;
 
-public class ComputedExpressionAnalysis(
-    IComputedExpressionAnalyzer analyzer,
-    Type rootEntityType)
-    : IComputedExpressionAnalysis
+public class ComputedExpressionAnalysis : IComputedExpressionAnalysis
 {
     private readonly ConcurrentDictionary<Expression, ConcurrentBag<Func<string, EntityContext?>>> _entityContextProviders = new();
     private readonly ConcurrentDictionary<(Expression, string), EntityContext> _entityContextCache = new();
     private readonly ConcurrentDictionary<Expression, IEntityMemberAccess<IEntityMember>> _entityMemberAccesses = new();
-    private readonly ConcurrentDictionary<(Expression, string), bool> _incrementalRequiredCreations = [];
-
-    public IComputedExpressionAnalyzer Analyzer => analyzer;
-    public Type RootEntityType => rootEntityType;
+    private readonly ConcurrentDictionary<(Expression, string), bool> _incrementalEntityContexts = [];
 
     public EntityContext ResolveEntityContext(Expression node, string key)
     {
@@ -80,7 +74,7 @@ public class ComputedExpressionAnalysis(
             });
 
         if (isRequiredForIncremental)
-            _incrementalRequiredCreations.TryAdd((toNode, toKey), true);
+            _incrementalEntityContexts.TryAdd((toNode, toKey), true);
     }
 
     public void AddEntityContextProvider(
@@ -132,7 +126,7 @@ public class ComputedExpressionAnalysis(
 
     public void ResolveIncrementalRequiredContexts()
     {
-        foreach (var ((node, key), _) in _incrementalRequiredCreations)
+        foreach (var ((node, key), _) in _incrementalEntityContexts)
         {
             ResolveEntityContext(node, key);
         }

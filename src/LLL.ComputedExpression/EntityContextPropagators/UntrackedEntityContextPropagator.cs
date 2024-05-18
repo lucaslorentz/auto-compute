@@ -10,6 +10,6 @@ public class UntrackedEntityContextPropagator<TInput> : IEntityContextPropagator
         if (node is MethodCallExpression methodCallExpression
             && methodCallExpression.Method.DeclaringType == typeof(UntrackedExtensions)
             && methodCallExpression.Method.Name == nameof(UntrackedExtensions.AsComputedUntracked))
-            analysis.AddEntityContextProvider(node, (key) => new UntrackedEntityContext(typeof(TInput), node.Type, analysis.RootEntityType));
+            analysis.AddEntityContextProvider(node, (key) => new UntrackedEntityContext(node.Type));
     }
 }

@@ -1,10 +1,8 @@
 ﻿namespace LLL.ComputedExpression.EntityContexts;
 
-public class RootEntityContext(Type inputType, Type entityType) : EntityContext
+public class RootEntityContext(Type entityType) : EntityContext
 {
-    public override Type InputType => inputType;
     public override Type EntityType => entityType;
-    public override Type RootEntityType => entityType;
     public override bool IsTrackingChanges => true;
 
     public override IAffectedEntitiesProvider? GetParentAffectedEntitiesProvider()

@@ -17,9 +17,7 @@ public class NavigationEntityContext : EntityContext
         parent.RegisterChildContext(this);
     }
 
-    public override Type InputType => _parent.InputType;
     public override Type EntityType => _navigation.TargetEntityType;
-    public override Type RootEntityType => _parent.RootEntityType;
     public override bool IsTrackingChanges { get; }
 
     public override IAffectedEntitiesProvider? GetParentAffectedEntitiesProvider()
