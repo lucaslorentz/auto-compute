@@ -7,13 +7,14 @@ public class ValueChangeCalculation<TValue>(
 {
     public bool IsIncremental => false;
 
-    public async Task<ValueChange<TValue>> GetChangeAsync(IComputedValues<TValue> computedValues)
+    public ValueChange<TValue> GetChange(IComputedValues<TValue> computedValues)
     {
         return new ValueChange<TValue>(
             computedValues.GetOriginalValue(),
             computedValues.GetCurrentValue()
         );
     }
+
     public ValueChange<TValue> CalculateChange(TValue original, TValue current)
     {
         return new ValueChange<TValue>(

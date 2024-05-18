@@ -60,7 +60,7 @@ public class UnboundChangesProvider<TInput, TEntity, TValue, TResult>(
         IncrementalContext incrementalContext,
         ChangeMemory<TEntity, TResult> changeMemory)
     {
-        var valueChange = await changeCalculation.GetChangeAsync(CreateComputedValues(input, entity, incrementalContext));
+        var valueChange = changeCalculation.GetChange(CreateComputedValues(input, entity, incrementalContext));
         return DeltaChange(changeMemory, entity, valueChange);
     }
 

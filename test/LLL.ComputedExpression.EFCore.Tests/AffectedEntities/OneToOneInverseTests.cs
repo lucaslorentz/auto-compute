@@ -12,7 +12,7 @@ public class OneToOneInverseTests
     {
         using var context = await TestDbContext.Create<PersonDbContext>();
 
-        var changesProvider = context.GetChangesProvider(_computedExpression, static c => c.VoidChange());
+        var changesProvider = context.GetChangesProvider(_computedExpression, static c => c.Void());
         changesProvider!.ToDebugString()
             .Should().Be("Concat(EntitiesWithNavigationChange(Pet.FavoritePetInverse), Load(EntitiesWithPropertyChange(Person.FirstName), FavoritePet))");
     }
@@ -26,7 +26,7 @@ public class OneToOneInverseTests
         var pet = context!.Set<Pet>().Find(1)!;
         person.FavoritePet = pet;
 
-        var changes = await context.GetChangesAsync(_computedExpression, static c => c.VoidChange());
+        var changes = await context.GetChangesAsync(_computedExpression, static c => c.Void());
         changes.Keys.Should().BeEquivalentTo([pet]);
     }
 
@@ -39,7 +39,7 @@ public class OneToOneInverseTests
         var pet = context!.Set<Pet>().Find(1)!;
         pet.FavoritePetInverse = person;
 
-        var changes = await context.GetChangesAsync(_computedExpression, static c => c.VoidChange());
+        var changes = await context.GetChangesAsync(_computedExpression, static c => c.Void());
         changes.Keys.Should().BeEquivalentTo([pet]);
     }
 
@@ -55,7 +55,7 @@ public class OneToOneInverseTests
 
         person.FirstName = "Modified";
 
-        var changes = await context.GetChangesAsync(_computedExpression, static c => c.VoidChange());
+        var changes = await context.GetChangesAsync(_computedExpression, static c => c.Void());
         changes.Keys.Should().BeEquivalentTo([pet]);
     }
 
@@ -71,7 +71,7 @@ public class OneToOneInverseTests
 
         person.FavoritePet = null;
 
-        var changes = await context.GetChangesAsync(_computedExpression, static c => c.VoidChange());
+        var changes = await context.GetChangesAsync(_computedExpression, static c => c.Void());
         changes.Keys.Should().BeEquivalentTo([pet]);
     }
 
@@ -87,7 +87,7 @@ public class OneToOneInverseTests
 
         pet.FavoritePetInverse = null;
 
-        var changes = await context.GetChangesAsync(_computedExpression, static c => c.VoidChange());
+        var changes = await context.GetChangesAsync(_computedExpression, static c => c.Void());
         changes.Keys.Should().BeEquivalentTo([pet]);
     }
 }

@@ -5,7 +5,7 @@ namespace LLL.ComputedExpression;
 
 public static class ChangeCalculationsExtensions
 {
-    public static VoidChangeCalculation<TValue> VoidChange<TValue>(
+    public static VoidChangeCalculation<TValue> Void<TValue>(
         this ChangeCalculations<TValue> _)
     {
         return new VoidChangeCalculation<TValue>();
@@ -35,7 +35,7 @@ public static class ChangeCalculationsExtensions
         this ChangeCalculations<TValue> _)
         where TValue : INumber<TValue>
     {
-        return new NumberChangeCalculation<TValue>();
+        return new NumberChangeCalculation<TValue>(true);
     }
 
     public static SetChangeCalculation<TElement> SetIncremental<TElement>(
@@ -49,6 +49,6 @@ public static class ChangeCalculationsExtensions
         IEqualityComparer<TElement>? comparer)
     {
         comparer ??= EqualityComparer<TElement>.Default;
-        return new SetChangeCalculation<TElement>(comparer);
+        return new SetChangeCalculation<TElement>(true, comparer);
     }
 }

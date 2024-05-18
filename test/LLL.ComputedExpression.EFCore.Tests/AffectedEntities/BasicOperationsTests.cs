@@ -12,7 +12,7 @@ public class BasicOperationsTests
     {
         using var context = await TestDbContext.Create<PersonDbContext>();
 
-        var changesProvider = context.GetChangesProvider(_computedExpression, static c => c.VoidChange());
+        var changesProvider = context.GetChangesProvider(_computedExpression, static c => c.Void());
         changesProvider!.ToDebugString()
             .Should().Be("Concat(EntitiesWithPropertyChange(Person.FirstName), EntitiesWithPropertyChange(Person.LastName))");
     }
@@ -25,7 +25,7 @@ public class BasicOperationsTests
         var person = new Person { FirstName = "Jane" };
         context!.Add(person);
 
-        var changes = await context.GetChangesAsync(_computedExpression, static c => c.VoidChange());
+        var changes = await context.GetChangesAsync(_computedExpression, static c => c.Void());
         changes.Keys.Should().BeEquivalentTo([person]);
     }
 
@@ -37,7 +37,7 @@ public class BasicOperationsTests
         var person = context!.Set<Person>().Find(1)!;
         person.FirstName = "Modified";
 
-        var changes = await context.GetChangesAsync(_computedExpression, static c => c.VoidChange());
+        var changes = await context.GetChangesAsync(_computedExpression, static c => c.Void());
         changes.Keys.Should().BeEquivalentTo([person]);
     }
 
@@ -49,7 +49,7 @@ public class BasicOperationsTests
         var person = context!.Set<Person>().Find(1)!;
         context.Remove(person);
 
-        var changes = await context.GetChangesAsync(_computedExpression, static c => c.VoidChange());
+        var changes = await context.GetChangesAsync(_computedExpression, static c => c.Void());
         changes.Keys.Should().BeEquivalentTo([person]);
     }
 }

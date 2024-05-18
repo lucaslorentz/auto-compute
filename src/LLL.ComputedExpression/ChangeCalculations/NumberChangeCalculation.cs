@@ -1,28 +1,30 @@
+using System.Numerics;
 
 namespace LLL.ComputedExpression.ChangeCalculations;
 
-public class CurrentValueChangeCalculation<TValue>
+public class NumberChangeCalculation<TValue>(bool incremental)
     : IChangeCalculation<TValue, TValue>
+    where TValue : INumber<TValue>
 {
-    public bool IsIncremental => false;
+    public bool IsIncremental => incremental;
 
     public TValue GetChange(IComputedValues<TValue> computedValues)
     {
-        return computedValues.GetCurrentValue();
+        return computedValues.GetCurrentValue() - computedValues.GetOriginalValue();
     }
 
     public bool IsNoChange(TValue result)
     {
-        return false;
+        return TValue.IsZero(result);
     }
 
     public TValue CalculateDelta(TValue previous, TValue current)
     {
-        return current;
+        return current - previous;
     }
 
     public TValue AddDelta(TValue value, TValue delta)
     {
-        return delta;
+        return value + delta;
     }
 }

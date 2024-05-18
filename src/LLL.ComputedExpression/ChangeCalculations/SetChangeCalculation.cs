@@ -2,11 +2,18 @@
 namespace LLL.ComputedExpression.ChangeCalculations;
 
 public class SetChangeCalculation<TElement>(
+    bool incremental,
     IEqualityComparer<TElement> comparer
-) : IncrementalChangeCalculation<IEnumerable<TElement>, SetChange<TElement>>
+) : IChangeCalculation<IEnumerable<TElement>, SetChange<TElement>>
 {
-    protected override SetChange<TElement> CalculateChange(IEnumerable<TElement> original, IEnumerable<TElement> current)
+    public bool IsIncremental => incremental;
+
+
+    public SetChange<TElement> GetChange(IComputedValues<IEnumerable<TElement>> computedValues)
     {
+        var original = computedValues.GetOriginalValue();
+        var current = computedValues.GetCurrentValue();
+
         return new SetChange<TElement>
         {
             Removed = original.Except(current, comparer).ToArray(),
@@ -14,12 +21,12 @@ public class SetChangeCalculation<TElement>(
         };
     }
 
-    public override bool IsNoChange(SetChange<TElement> result)
+    public bool IsNoChange(SetChange<TElement> result)
     {
         return result.Removed.Count == 0 && result.Added.Count == 0;
     }
 
-    public override SetChange<TElement> CalculateDelta(SetChange<TElement> previous, SetChange<TElement> current)
+    public SetChange<TElement> CalculateDelta(SetChange<TElement> previous, SetChange<TElement> current)
     {
         return new SetChange<TElement>
         {
@@ -32,7 +39,7 @@ public class SetChangeCalculation<TElement>(
         };
     }
 
-    public override SetChange<TElement> AddDelta(SetChange<TElement> value, SetChange<TElement> delta)
+    public SetChange<TElement> AddDelta(SetChange<TElement> value, SetChange<TElement> delta)
     {
         return new SetChange<TElement>
         {
