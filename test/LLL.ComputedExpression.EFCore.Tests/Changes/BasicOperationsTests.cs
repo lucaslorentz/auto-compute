@@ -45,8 +45,6 @@ public class BasicOperationsTests
         context.Remove(person);
 
         var changes = await context.GetChangesAsync(_computedExpression, static c => c.ValueChange());
-        changes.Should().BeEquivalentTo(new Dictionary<Person, ValueChange<string?>>{
-            { person, new ValueChange<string?>("John Doe", default)}
-});
+        changes.Should().BeEmpty();
     }
 }

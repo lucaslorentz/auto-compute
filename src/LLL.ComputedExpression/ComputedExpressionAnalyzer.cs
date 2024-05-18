@@ -124,6 +124,7 @@ public class ComputedExpressionAnalyzer<TInput>(
         return new UnboundChangesProvider<TInput, TEntity, TValue, TResult>(
             affectedEntitiesProvider,
             entityContext,
+            RequireEntityActionProvider(),
             changeCalculation,
             computedValueAccessors
         );

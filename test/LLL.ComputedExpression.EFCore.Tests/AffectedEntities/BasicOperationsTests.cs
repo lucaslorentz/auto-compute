@@ -50,6 +50,6 @@ public class BasicOperationsTests
         context.Remove(person);
 
         var changes = await context.GetChangesAsync(_computedExpression, static c => c.Void());
-        changes.Keys.Should().BeEquivalentTo([person]);
+        changes.Keys.Should().BeEmpty();
     }
 }

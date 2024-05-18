@@ -6,6 +6,7 @@ namespace LLL.ComputedExpression.ChangesProviders;
 public class UnboundChangesProvider<TInput, TEntity, TValue, TResult>(
     IAffectedEntitiesProvider<TInput, TEntity>? affectedEntitiesProvider,
     EntityContext entityContext,
+    IEntityActionProvider entityActionProvider,
     IChangeCalculation<TValue, TResult> changeCalculation,
     ComputedValueAccessors<TInput, TEntity, TValue> computedValueAccessors
 ) : IUnboundChangesProvider<TInput, TEntity, TResult>
@@ -23,6 +24,10 @@ public class UnboundChangesProvider<TInput, TEntity, TValue, TResult>(
         var incrementalContext = new IncrementalContext();
 
         var affectedEntities = await affectedEntitiesProvider.GetAffectedEntitiesAsync(input, incrementalContext);
+
+        affectedEntities = affectedEntities
+            .Where(e => entityActionProvider.GetEntityAction(input!, e) != EntityAction.Delete)
+            .ToArray();
 
         if (changeCalculation.IsIncremental)
             entityContext.EnrichIncrementalContext(input!, affectedEntities, incrementalContext);

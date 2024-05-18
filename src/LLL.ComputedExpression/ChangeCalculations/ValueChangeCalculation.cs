@@ -45,7 +45,8 @@ public class ValueChangeCalculation<TValue>(
     }
 }
 
-public record ValueChange<TValue>(
-    TValue Original,
-    TValue Current
-);
+public readonly struct ValueChange<TValue>(TValue? original, TValue current)
+{
+    public TValue? Original => original;
+    public TValue Current => current;
+}
