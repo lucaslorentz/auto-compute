@@ -8,7 +8,6 @@ public interface IEntityNavigation : IEntityMember<IEntityNavigation>
     IEntityNavigation GetInverse();
     Task<IReadOnlyCollection<object>> LoadCurrentAsync(object input, IReadOnlyCollection<object> fromEntities, IncrementalContext? incrementalContext);
     Task<IReadOnlyCollection<object>> LoadOriginalAsync(object input, IReadOnlyCollection<object> fromEntities, IncrementalContext? incrementalContext);
-    IReadOnlyCollection<object> GetIncrementalEntities(object input, IReadOnlyCollection<object> fromEntities, IncrementalContext incrementalContext);
 }
 
 public interface IEntityNavigation<in TInput, TSourceEntity, TTargetEntity> : IEntityNavigation
@@ -42,16 +41,6 @@ public interface IEntityNavigation<in TInput, TSourceEntity, TTargetEntity> : IE
             throw new ArgumentException($"Param {nameof(input)} should be of type {typeof(TInput)}");
 
         return (IReadOnlyCollection<object>)await LoadOriginalAsync(inputTyped, fromEntities.OfType<TSourceEntity>().ToArray(), incrementalContext);
-    }
-
-    IReadOnlyCollection<TTargetEntity> GetIncrementalEntities(TInput input, IReadOnlyCollection<TSourceEntity> fromEntities, IncrementalContext incrementalContext);
-
-    IReadOnlyCollection<object> IEntityNavigation.GetIncrementalEntities(object input, IReadOnlyCollection<object> fromEntities, IncrementalContext incrementalContext)
-    {
-        if (input is not TInput inputTyped)
-            throw new ArgumentException($"Param {nameof(input)} should be of type {typeof(TInput)}");
-
-        return (IReadOnlyCollection<object>)GetIncrementalEntities(inputTyped, fromEntities.OfType<TSourceEntity>().ToArray(), incrementalContext);
     }
 
     Task<IReadOnlyCollection<TSourceEntity>> GetAffectedEntitiesAsync(TInput input, IncrementalContext? incrementalContext);

@@ -91,7 +91,23 @@ public class ComputedExpressionAnalyzer<TInput> : IComputedExpressionAnalyzer<TI
     {
         var computed = PrepareLambda(computedExpression);
 
-        var entityContext = GetEntityContext(computed, computed.Lambda.Parameters[0], EntityContextKeys.None);
+        var rootEntityType = computed.Lambda.Parameters[0].Type;
+
+        var analysis = new ComputedExpressionAnalysis(this, rootEntityType);
+
+        var entityContext = new RootEntityContext(typeof(TInput), rootEntityType);
+
+        analysis.AddEntityContextProvider(computed.Lambda.Parameters[0], (key) => key == EntityContextKeys.None ? entityContext : null);
+
+        new PropagateEntityContextsVisitor(
+            _entityContextPropagators,
+            analysis
+        ).Visit(computed.Lambda);
+
+        new CollectEntityMemberAccessesVisitor(
+            analysis,
+            _memberAccessLocators
+        ).Visit(computed.Lambda);
 
         var affectedEntitiesProvider = (IAffectedEntitiesProvider<TInput, TEntity>)entityContext.GetAffectedEntitiesProvider()!;
 
@@ -99,6 +115,9 @@ public class ComputedExpressionAnalyzer<TInput> : IComputedExpressionAnalyzer<TI
             return null;
 
         var changeCalculation = changeCalculationSelector.Compile()(new ChangeCalculations<TValue>());
+
+        if (changeCalculation.IsIncremental)
+            analysis.ResolveIncrementalRequiredContexts();
 
         var computedValueAccessors = new ComputedValueAccessors<TInput, TEntity, TValue>(
             changeCalculation.IsIncremental
@@ -173,13 +192,9 @@ public class ComputedExpressionAnalyzer<TInput> : IComputedExpressionAnalyzer<TI
         var inputParameter = Expression.Parameter(typeof(TInput), "input");
         var incrementalContextParameter = Expression.Parameter(typeof(IncrementalContext), "incrementalContext");
 
-        var analysis = CreateAnalysis(computed);
-
-        analysis.CreateForcedItems();
-
         var newBody = new ReplaceMemberAccessVisitor(
             _memberAccessLocators,
-            memberAccess => memberAccess.CreateIncrementalOriginalValueExpression(analysis, inputParameter, incrementalContextParameter)
+            memberAccess => memberAccess.CreateIncrementalOriginalValueExpression(inputParameter, incrementalContextParameter)
         ).Visit(computed.Lambda.Body)!;
 
         newBody = PrepareComputedOutputExpression(computed.Lambda.ReturnType, newBody);
@@ -203,13 +218,9 @@ public class ComputedExpressionAnalyzer<TInput> : IComputedExpressionAnalyzer<TI
         var inputParameter = Expression.Parameter(typeof(TInput), "input");
         var incrementalContextParameter = Expression.Parameter(typeof(IncrementalContext), "incrementalContext");
 
-        var analysis = CreateAnalysis(computed);
-
-        analysis.CreateForcedItems();
-
         var newBody = new ReplaceMemberAccessVisitor(
             _memberAccessLocators,
-            memberAccess => memberAccess.CreateIncrementalCurrentValueExpression(analysis, inputParameter, incrementalContextParameter)
+            memberAccess => memberAccess.CreateIncrementalCurrentValueExpression(inputParameter, incrementalContextParameter)
         ).Visit(computed.Lambda.Body)!;
 
         newBody = PrepareComputedOutputExpression(computed.Lambda.ReturnType, newBody);
@@ -227,43 +238,10 @@ public class ComputedExpressionAnalyzer<TInput> : IComputedExpressionAnalyzer<TI
         ]);
     }
 
-    private EntityContext GetEntityContext<T>(
-        PreparedLambda<T> computed,
-        Expression node,
-        string entityContextKey)
-    {
-        var analysis = CreateAnalysis(computed);
-
-        return analysis.ResolveEntityContext(node, entityContextKey);
-    }
-
     private IEntityActionProvider<TInput> RequireEntityActionProvider()
     {
         return _entityActionProvider
             ?? throw new Exception("Entity Action Provider not configured");
-    }
-
-    private ComputedExpressionAnalysis CreateAnalysis<T>(PreparedLambda<T> computed)
-    {
-        var rootEntityType = computed.Lambda.Parameters[0].Type;
-
-        var analysis = new ComputedExpressionAnalysis(this, rootEntityType);
-
-        var entityContext = new RootEntityContext(typeof(TInput), rootEntityType);
-
-        analysis.AddEntityContextProvider(computed.Lambda.Parameters[0], (key) => key == EntityContextKeys.None ? entityContext : null);
-
-        new PropagateEntityContextsVisitor(
-            _entityContextPropagators,
-            analysis
-        ).Visit(computed.Lambda);
-
-        new CollectEntityMemberAccessesVisitor(
-            analysis,
-            _memberAccessLocators
-        ).Visit(computed.Lambda);
-
-        return analysis;
     }
 
     private PreparedLambda<T> PrepareLambda<T>(Expression<T> lambdaExpression)

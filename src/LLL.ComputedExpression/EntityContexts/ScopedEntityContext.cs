@@ -18,7 +18,7 @@ public class ScopedEntityContext : EntityContext
 
     public override Type InputType { get; }
     public override Type EntityType { get; }
-    public override Type RootEntityType {get;}
+    public override Type RootEntityType { get; }
     public override bool IsTrackingChanges { get; }
 
     public override IAffectedEntitiesProvider? GetParentAffectedEntitiesProvider()
@@ -26,8 +26,8 @@ public class ScopedEntityContext : EntityContext
         return GetAffectedEntitiesProvider();
     }
 
-    public override IReadOnlyCollection<object> GetCascadedIncrementalEntities(object input, IReadOnlyCollection<object> entities, IncrementalContext incrementalContext)
+    public override void EnrichIncrementalContextTowardsRoot(object input, IReadOnlyCollection<object> entities, IncrementalContext incrementalContext)
     {
-        return _parent.GetCascadedIncrementalEntities(input, entities, incrementalContext);
+        _parent.EnrichIncrementalContextTowardsRoot(input, entities, incrementalContext);
     }
 }

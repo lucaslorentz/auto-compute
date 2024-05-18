@@ -27,14 +27,9 @@ public class CompositeEntityContext : EntityContext
         return GetAffectedEntitiesProvider();
     }
 
-    public override IReadOnlyCollection<object> GetCascadedIncrementalEntities(object input, IReadOnlyCollection<object> entities, IncrementalContext incrementalContext)
+    public override void EnrichIncrementalContextTowardsRoot(object input, IReadOnlyCollection<object> entities, IncrementalContext incrementalContext)
     {
-        var result = new HashSet<object>();
         foreach (var parent in _parents)
-        {
-            foreach (var ent in parent.GetCascadedIncrementalEntities(input, entities, incrementalContext))
-                result.Add(ent);
-        }
-        return result;
+            parent.EnrichIncrementalContextTowardsRoot(input, entities, incrementalContext);
     }
 }

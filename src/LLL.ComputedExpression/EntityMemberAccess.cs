@@ -24,19 +24,17 @@ public class EntityMemberAccess<TMember>(
     }
 
     public Expression CreateIncrementalOriginalValueExpression(
-        ComputedExpressionAnalysis analysis,
         Expression inputParameter,
         Expression incrementalContextExpression)
     {
-        return Member.CreateIncrementalOriginalValueExpression(analysis, this, inputParameter, incrementalContextExpression);
+        return Member.CreateIncrementalOriginalValueExpression(this, inputParameter, incrementalContextExpression);
     }
 
     public Expression CreateIncrementalCurrentValueExpression(
-        ComputedExpressionAnalysis analysis,
         Expression inputParameter,
         Expression incrementalContextExpression)
     {
-        return Member.CreateIncrementalCurrentValueExpression(analysis, this, inputParameter, incrementalContextExpression);
+        return Member.CreateIncrementalCurrentValueExpression(this, inputParameter, incrementalContextExpression);
     }
 }
 

@@ -1,6 +1,5 @@
 using System.Collections;
 using System.Linq.Expressions;
-using LLL.ComputedExpression.EntityContexts;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata;
 
@@ -26,7 +25,7 @@ public class EFCoreEntityNavigation<TSourceEntity, TTargetEntity>(
         var inverse = navigation.Inverse
             ?? throw new InvalidOperationException($"No inverse for navigation '{navigation.DeclaringType.ShortName()}.{navigation.Name}'");
 
-        return new EFCoreEntityNavigation<TTargetEntity, TSourceEntity>(inverse);
+        return (EFCoreEntityNavigation<TTargetEntity, TSourceEntity>)inverse.GetEntityNavigation();
     }
 
     public virtual async Task<IReadOnlyCollection<TTargetEntity>> LoadOriginalAsync(
@@ -51,9 +50,9 @@ public class EFCoreEntityNavigation<TSourceEntity, TTargetEntity>(
             foreach (var originalEntity in navigationEntry.GetOriginalEntities())
             {
                 targetEntities.Add((TTargetEntity)originalEntity);
-                incrementalContext?.AddIncrementalEntity(sourceEntity, navigation, originalEntity);
+                incrementalContext?.AddIncrementalEntity(sourceEntity, this, originalEntity);
                 if (navigation.Inverse is not null)
-                    incrementalContext?.AddIncrementalEntity(originalEntity, navigation.Inverse, sourceEntity);
+                    incrementalContext?.AddIncrementalEntity(originalEntity, GetInverse(), sourceEntity);
             }
         }
         return targetEntities;
@@ -75,9 +74,9 @@ public class EFCoreEntityNavigation<TSourceEntity, TTargetEntity>(
             foreach (var entity in navigationEntry.GetEntities())
             {
                 targetEntities.Add((TTargetEntity)entity);
-                incrementalContext?.AddIncrementalEntity(sourceEntity, navigation, entity);
+                incrementalContext?.AddIncrementalEntity(sourceEntity, this, entity);
                 if (navigation.Inverse is not null)
-                    incrementalContext?.AddIncrementalEntity(entity, navigation.Inverse, sourceEntity);
+                    incrementalContext?.AddIncrementalEntity(entity, GetInverse(), sourceEntity);
             }
         }
         return targetEntities;
@@ -114,21 +113,16 @@ public class EFCoreEntityNavigation<TSourceEntity, TTargetEntity>(
     }
 
     public virtual Expression CreateIncrementalOriginalValueExpression(
-        ComputedExpressionAnalysis analysis,
         IEntityMemberAccess<IEntityNavigation> memberAccess,
         Expression inputExpression,
         Expression incrementalContextExpression)
     {
-        var entityContext = analysis.ResolveEntityContext(memberAccess.Expression,
-            navigation.IsCollection ? EntityContextKeys.Element : EntityContextKeys.None);
-
         return Expression.Convert(
             Expression.Call(
-                GetType().GetMethod(nameof(GetIncrementalOriginalValue), System.Reflection.BindingFlags.Static | System.Reflection.BindingFlags.NonPublic)!,
-                Expression.Constant(navigation),
+                Expression.Constant(this),
+                GetType().GetMethod(nameof(GetIncrementalOriginalValue), System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic)!,
                 inputExpression,
                 memberAccess.FromExpression,
-                Expression.Constant(entityContext, typeof(EntityContext)),
                 incrementalContextExpression
             ),
             navigation.ClrType
@@ -136,21 +130,16 @@ public class EFCoreEntityNavigation<TSourceEntity, TTargetEntity>(
     }
 
     public virtual Expression CreateIncrementalCurrentValueExpression(
-        ComputedExpressionAnalysis analysis,
         IEntityMemberAccess<IEntityNavigation> memberAccess,
         Expression inputExpression,
         Expression incrementalContextExpression)
     {
-        var entityContext = analysis.ResolveEntityContext(memberAccess.Expression,
-            navigation.IsCollection ? EntityContextKeys.Element : EntityContextKeys.None);
-
         return Expression.Convert(
             Expression.Call(
-                GetType().GetMethod(nameof(GetIncrementalCurrentValue), System.Reflection.BindingFlags.Static | System.Reflection.BindingFlags.NonPublic)!,
-                Expression.Constant(navigation),
+                Expression.Constant(this),
+                GetType().GetMethod(nameof(GetIncrementalCurrentValue), System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic)!,
                 inputExpression,
                 memberAccess.FromExpression,
-                Expression.Constant(entityContext, typeof(EntityContext)),
                 incrementalContextExpression
             ),
             navigation.ClrType
@@ -190,29 +179,14 @@ public class EFCoreEntityNavigation<TSourceEntity, TTargetEntity>(
         return navigationEntry.CurrentValue;
     }
 
-    private static object? GetIncrementalOriginalValue(INavigationBase navigation, IEFCoreComputedInput input, TSourceEntity ent, EntityContext entityContext, IncrementalContext incrementalContext)
+    private object? GetIncrementalOriginalValue(IEFCoreComputedInput input, TSourceEntity ent, IncrementalContext incrementalContext)
     {
         var entityEntry = input.DbContext.Entry(ent);
 
         if (entityEntry.State == EntityState.Added)
             throw new Exception($"Cannot access navigation '{navigation.DeclaringType.ShortName()}.{navigation.Name}' original value for an added entity");
 
-        if (incrementalContext!.ShouldLoadAll(ent))
-        {
-            var value = GetOriginalValue(navigation, input, ent);
-            if (value is IEnumerable enumerable)
-            {
-                foreach (var navEnt in enumerable)
-                    incrementalContext.SetShouldLoadAll(navEnt);
-            }
-            else if (value is not null)
-            {
-                incrementalContext.SetShouldLoadAll(value);
-            }
-            return value;
-        }
-
-        var incrementalEntities = incrementalContext!.GetIncrementalEntities(ent, navigation);
+        var incrementalEntities = incrementalContext!.GetIncrementalEntities(ent, this);
 
         var principalEntry = input.DbContext.Entry(ent);
 
@@ -253,29 +227,14 @@ public class EFCoreEntityNavigation<TSourceEntity, TTargetEntity>(
         }
     }
 
-    private static object? GetIncrementalCurrentValue(INavigationBase navigation, IEFCoreComputedInput input, TSourceEntity ent, EntityContext entityContext, IncrementalContext incrementalContext)
+    private object? GetIncrementalCurrentValue(IEFCoreComputedInput input, TSourceEntity ent, IncrementalContext incrementalContext)
     {
         var entityEntry = input.DbContext.Entry(ent);
 
         if (entityEntry.State == EntityState.Deleted)
             throw new Exception($"Cannot access navigation '{navigation.DeclaringType.ShortName()}.{navigation.Name}' current value for a deleted entity");
 
-        if (incrementalContext!.ShouldLoadAll(ent))
-        {
-            var value = GetCurrentValue(navigation, input, ent);
-            if (value is IEnumerable enumerable)
-            {
-                foreach (var navEnt in enumerable)
-                    incrementalContext.SetShouldLoadAll(navEnt);
-            }
-            else if (value is not null)
-            {
-                incrementalContext.SetShouldLoadAll(value);
-            }
-            return value;
-        }
-
-        var incrementalEntities = incrementalContext!.GetIncrementalEntities(ent, navigation);
+        var incrementalEntities = incrementalContext!.GetIncrementalEntities(ent, this);
 
         var principalEntry = input.DbContext.Entry(ent);
 
@@ -316,14 +275,6 @@ public class EFCoreEntityNavigation<TSourceEntity, TTargetEntity>(
         }
     }
 
-    public IReadOnlyCollection<TTargetEntity> GetIncrementalEntities(IEFCoreComputedInput input, IReadOnlyCollection<TSourceEntity> fromEntities, IncrementalContext incrementalContext)
-    {
-        return fromEntities
-            .SelectMany(e => incrementalContext.GetIncrementalEntities(e, navigation))
-            .OfType<TTargetEntity>()
-            .ToArray();
-    }
-
     public async Task<IReadOnlyCollection<TSourceEntity>> GetAffectedEntitiesAsync(IEFCoreComputedInput input, IncrementalContext? incrementalContext)
     {
         var affectedEntities = new HashSet<TSourceEntity>();
@@ -345,7 +296,7 @@ public class EFCoreEntityNavigation<TSourceEntity, TTargetEntity>(
                         foreach (var ent in navigationEntry.GetOriginalEntities())
                         {
                             incrementalContext?.SetShouldLoadAll(ent);
-                            incrementalContext?.AddIncrementalEntity(entityEntry.Entity, navigation, ent);
+                            incrementalContext?.AddIncrementalEntity(entityEntry.Entity, this, ent);
                         }
                     }
 
@@ -354,7 +305,7 @@ public class EFCoreEntityNavigation<TSourceEntity, TTargetEntity>(
                         foreach (var ent in navigationEntry.GetEntities())
                         {
                             incrementalContext?.SetShouldLoadAll(ent);
-                            incrementalContext?.AddIncrementalEntity(entityEntry.Entity, navigation, ent);
+                            incrementalContext?.AddIncrementalEntity(entityEntry.Entity, this, ent);
                         }
                     }
                 }
@@ -382,7 +333,7 @@ public class EFCoreEntityNavigation<TSourceEntity, TTargetEntity>(
                             {
                                 affectedEntities.Add((TSourceEntity)entity);
                                 incrementalContext?.SetShouldLoadAll(entityEntry.Entity);
-                                incrementalContext?.AddIncrementalEntity(entity, navigation, entityEntry.Entity);
+                                incrementalContext?.AddIncrementalEntity(entity, this, entityEntry.Entity);
                             }
                         }
 
@@ -392,7 +343,7 @@ public class EFCoreEntityNavigation<TSourceEntity, TTargetEntity>(
                             {
                                 affectedEntities.Add((TSourceEntity)entity);
                                 incrementalContext?.SetShouldLoadAll(entityEntry.Entity);
-                                incrementalContext?.AddIncrementalEntity(entity, navigation, entityEntry.Entity);
+                                incrementalContext?.AddIncrementalEntity(entity, this, entityEntry.Entity);
                             }
                         }
                     }
@@ -429,7 +380,7 @@ public class EFCoreEntityNavigation<TSourceEntity, TTargetEntity>(
                                 foreach (var otherEntity in otherReferenceEntry.GetOriginalEntities())
                                 {
                                     incrementalContext?.SetShouldLoadAll(otherEntity);
-                                    incrementalContext?.AddIncrementalEntity(entity, navigation, otherEntity);
+                                    incrementalContext?.AddIncrementalEntity(entity, this, otherEntity);
                                 }
                             }
                         }
@@ -443,7 +394,7 @@ public class EFCoreEntityNavigation<TSourceEntity, TTargetEntity>(
                                 foreach (var otherEntity in otherReferenceEntry.GetEntities())
                                 {
                                     incrementalContext?.SetShouldLoadAll(otherEntity);
-                                    incrementalContext?.AddIncrementalEntity(entity, navigation, otherEntity);
+                                    incrementalContext?.AddIncrementalEntity(entity, this, otherEntity);
                                 }
                             }
                         }

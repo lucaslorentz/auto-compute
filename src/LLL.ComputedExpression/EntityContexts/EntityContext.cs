@@ -63,22 +63,16 @@ public abstract class EntityContext
 
     public abstract IAffectedEntitiesProvider? GetParentAffectedEntitiesProvider();
 
-
-    public abstract IReadOnlyCollection<object> GetCascadedIncrementalEntities(object input, IReadOnlyCollection<object> entities, IncrementalContext incrementalContext);
-
-    public virtual IReadOnlyCollection<object> EnrichIncrementalContext(object input, IReadOnlyCollection<object> entities, IncrementalContext incrementalContext)
+    public virtual void EnrichIncrementalContext(object input, IReadOnlyCollection<object> entities, IncrementalContext incrementalContext)
     {
-        var result = new HashSet<object>();
         foreach (var childContext in _childContexts)
-        {
-            foreach (var entity in childContext.EnrichIncrementalContextFromParent(input, entities, incrementalContext))
-                result.Add(entity);
-        }
-        return result;
+            childContext.EnrichIncrementalContextFromParent(input, entities, incrementalContext);
     }
 
-    public virtual IReadOnlyCollection<object> EnrichIncrementalContextFromParent(object input, IReadOnlyCollection<object> parentEntities, IncrementalContext incrementalContext)
+    public virtual void EnrichIncrementalContextFromParent(object input, IReadOnlyCollection<object> parentEntities, IncrementalContext incrementalContext)
     {
-        return EnrichIncrementalContext(input, parentEntities, incrementalContext);
+        EnrichIncrementalContext(input, parentEntities, incrementalContext);
     }
+
+    public abstract void EnrichIncrementalContextTowardsRoot(object input, IReadOnlyCollection<object> entities, IncrementalContext incrementalContext);
 }

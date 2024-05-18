@@ -71,7 +71,6 @@ public class EFCoreEntityProperty<TEntity>(
     }
 
     public Expression CreateIncrementalOriginalValueExpression(
-        ComputedExpressionAnalysis analysis,
         IEntityMemberAccess<IEntityProperty> memberAccess,
         Expression inputExpression,
         Expression incrementalContextExpression)
@@ -80,7 +79,6 @@ public class EFCoreEntityProperty<TEntity>(
     }
 
     public Expression CreateIncrementalCurrentValueExpression(
-        ComputedExpressionAnalysis analysis,
         IEntityMemberAccess<IEntityProperty> memberAccess,
         Expression inputExpression,
         Expression incrementalContextExpression)

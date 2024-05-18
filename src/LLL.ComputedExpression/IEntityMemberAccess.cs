@@ -12,11 +12,9 @@ public interface IEntityMemberAccess<out TMember>
     Expression CreateOriginalValueExpression(Expression inputParameter);
     Expression CreateCurrentValueExpression(Expression inputParameter);
     Expression CreateIncrementalOriginalValueExpression(
-        ComputedExpressionAnalysis analysis,
         Expression inputParameter,
         Expression incrementalContextExpression);
     Expression CreateIncrementalCurrentValueExpression(
-        ComputedExpressionAnalysis analysis,
         Expression inputParameter,
         Expression incrementalContextExpression);
 }

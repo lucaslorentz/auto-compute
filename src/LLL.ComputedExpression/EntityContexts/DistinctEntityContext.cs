@@ -25,15 +25,14 @@ public class DistinctEntityContext : EntityContext
         return GetAffectedEntitiesProvider();
     }
 
-    public override IReadOnlyCollection<object> EnrichIncrementalContext(object input, IReadOnlyCollection<object> entities, IncrementalContext incrementalContext)
+    public override void EnrichIncrementalContext(object input, IReadOnlyCollection<object> entities, IncrementalContext incrementalContext)
     {
-        return base.EnrichIncrementalContext(input, entities, incrementalContext)
-            .Concat(GetCascadedIncrementalEntities(input, entities, incrementalContext))
-            .ToArray();
+        base.EnrichIncrementalContext(input, entities, incrementalContext);
+        EnrichIncrementalContextTowardsRoot(input, entities, incrementalContext);
     }
 
-    public override IReadOnlyCollection<object> GetCascadedIncrementalEntities(object input, IReadOnlyCollection<object> entities, IncrementalContext incrementalContext)
+    public override void EnrichIncrementalContextTowardsRoot(object input, IReadOnlyCollection<object> entities, IncrementalContext incrementalContext)
     {
-        return _parent.GetCascadedIncrementalEntities(input, entities, incrementalContext);
+        _parent.EnrichIncrementalContextTowardsRoot(input, entities, incrementalContext);
     }
 }

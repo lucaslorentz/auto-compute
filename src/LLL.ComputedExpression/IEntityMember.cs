@@ -14,12 +14,10 @@ public interface IEntityMember
         IEntityMemberAccess<IEntityMember> memberAccess,
         Expression inputExpression);
     Expression CreateIncrementalOriginalValueExpression(
-        ComputedExpressionAnalysis analysis,
         IEntityMemberAccess<IEntityMember> memberAccess,
         Expression inputExpression,
         Expression incrementalContextExpression);
     Expression CreateIncrementalCurrentValueExpression(
-        ComputedExpressionAnalysis analysis,
         IEntityMemberAccess<IEntityMember> memberAccess,
         Expression inputExpression,
         Expression incrementalContextExpression);
@@ -38,13 +36,11 @@ public interface IEntityMember<TMember> : IEntityMember
         Expression inputExpression);
 
     Expression CreateIncrementalOriginalValueExpression(
-        ComputedExpressionAnalysis analysis,
         IEntityMemberAccess<TMember> memberAccess,
         Expression inputExpression,
         Expression incrementalContextExpression);
 
     Expression CreateIncrementalCurrentValueExpression(
-        ComputedExpressionAnalysis analysis,
         IEntityMemberAccess<TMember> memberAccess,
         Expression inputExpression,
         Expression incrementalContextExpression);
@@ -74,7 +70,6 @@ public interface IEntityMember<TMember> : IEntityMember
     }
 
     Expression IEntityMember.CreateIncrementalOriginalValueExpression(
-        ComputedExpressionAnalysis analysis,
         IEntityMemberAccess<IEntityMember> memberAccess,
         Expression inputExpression,
         Expression incrementalContextExpression)
@@ -83,14 +78,12 @@ public interface IEntityMember<TMember> : IEntityMember
             throw new ArgumentException($"Param {nameof(memberAccess)} should be of type {typeof(IEntityMemberAccess<TMember>)}");
 
         return CreateIncrementalOriginalValueExpression(
-            analysis,
             memberAccessTyped,
             inputExpression,
             incrementalContextExpression);
     }
 
     Expression IEntityMember.CreateIncrementalCurrentValueExpression(
-        ComputedExpressionAnalysis analysis,
         IEntityMemberAccess<IEntityMember> memberAccess,
         Expression inputExpression,
         Expression incrementalContextExpression)
@@ -99,7 +92,6 @@ public interface IEntityMember<TMember> : IEntityMember
             throw new ArgumentException($"Param {nameof(memberAccess)} should be of type {typeof(IEntityMemberAccess<TMember>)}");
 
         return CreateIncrementalCurrentValueExpression(
-            analysis,
             memberAccessTyped,
             inputExpression,
             incrementalContextExpression);

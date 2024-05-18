@@ -32,30 +32,45 @@ public class NavigationEntityContext : EntityContext
         return affectedEntitiesProvider.LoadNavigation(_navigation.GetInverse());
     }
 
-    public override IReadOnlyCollection<object> EnrichIncrementalContextFromParent(object input, IReadOnlyCollection<object> parentEntities, IncrementalContext incrementalContext)
+    public override void EnrichIncrementalContextFromParent(object input, IReadOnlyCollection<object> parentEntities, IncrementalContext incrementalContext)
     {
-        var entities = _navigation.GetIncrementalEntities(input, parentEntities, incrementalContext);
+        var entities = parentEntities
+            .GroupBy(incrementalContext.ShouldLoadAll)
+            .SelectMany(g =>
+            {
+                if (g.Key)
+                {
+                    return _navigation.LoadOriginalAsync(input, g.ToArray(), incrementalContext).GetAwaiter().GetResult()
+                        .Concat(_navigation.LoadCurrentAsync(input, g.ToArray(), incrementalContext).GetAwaiter().GetResult())
+                        .Distinct()
+                        .Select(e =>
+                        {
+                            incrementalContext.SetShouldLoadAll(e);
+                            return e;
+                        });
+                }
 
-        var requiredEntities = EnrichIncrementalContext(input, entities, incrementalContext).ToArray();
+                return g
+                    .SelectMany(e => incrementalContext.GetIncrementalEntities(e, _navigation))
+                    .Distinct();
+            })
+            .ToHashSet();
 
-        var inverse = _navigation.GetInverse() ?? throw new Exception("Inverse not found");
-
-        var originalEntities = inverse.LoadOriginalAsync(input, requiredEntities, incrementalContext).GetAwaiter().GetResult();
-        var currentEntities = inverse.LoadCurrentAsync(input, requiredEntities, incrementalContext).GetAwaiter().GetResult();
-
-        return originalEntities.Concat(currentEntities).ToArray();
+        EnrichIncrementalContext(input, entities, incrementalContext);
     }
 
-    public override IReadOnlyCollection<object> GetCascadedIncrementalEntities(object input, IReadOnlyCollection<object> entities, IncrementalContext incrementalContext)
+    public override void EnrichIncrementalContextTowardsRoot(object input, IReadOnlyCollection<object> entities, IncrementalContext incrementalContext)
     {
         var inverse = _navigation.GetInverse();
 
-        var parentEntities = inverse.LoadOriginalAsync(input, entities, incrementalContext).GetAwaiter().GetResult()
-            .Concat(inverse.LoadCurrentAsync(input, entities, incrementalContext).GetAwaiter().GetResult())
-            .ToArray();
+        var parentEntities = new HashSet<object>();
 
-        var parentCascaded = _parent.GetCascadedIncrementalEntities(input, parentEntities, incrementalContext).ToArray();
+        foreach (var parent in inverse.LoadOriginalAsync(input, entities, incrementalContext).GetAwaiter().GetResult())
+            parentEntities.Add(parent);
 
-        return _navigation.GetIncrementalEntities(input, parentCascaded, incrementalContext);
+        foreach (var parent in inverse.LoadCurrentAsync(input, entities, incrementalContext).GetAwaiter().GetResult())
+            parentEntities.Add(parent);
+
+        _parent.EnrichIncrementalContextTowardsRoot(input, parentEntities, incrementalContext);
     }
 }

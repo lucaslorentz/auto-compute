@@ -12,7 +12,7 @@ public class ComputedExpressionAnalysis(
     private readonly ConcurrentDictionary<Expression, ConcurrentBag<Func<string, EntityContext?>>> _entityContextProviders = new();
     private readonly ConcurrentDictionary<(Expression, string), EntityContext> _entityContextCache = new();
     private readonly ConcurrentDictionary<Expression, IEntityMemberAccess<IEntityMember>> _entityMemberAccesses = new();
-    private readonly ConcurrentDictionary<(Expression, string), bool> _forcedCreations = [];
+    private readonly ConcurrentDictionary<(Expression, string), bool> _incrementalRequiredCreations = [];
 
     public IComputedExpressionAnalyzer Analyzer => analyzer;
     public Type RootEntityType => rootEntityType;
@@ -51,7 +51,7 @@ public class ComputedExpressionAnalysis(
         Expression toNode,
         string toKey,
         Func<EntityContext, EntityContext>? mapper = null,
-        bool forceCreation = false)
+        bool isRequiredForIncremental = false)
     {
         AddEntityContextProvider(
             toNode,
@@ -79,8 +79,8 @@ public class ComputedExpressionAnalysis(
                 return entityContexts.FirstOrDefault();
             });
 
-        if (forceCreation)
-            _forcedCreations.TryAdd((toNode, toKey), true);
+        if (isRequiredForIncremental)
+            _incrementalRequiredCreations.TryAdd((toNode, toKey), true);
     }
 
     public void AddEntityContextProvider(
@@ -130,9 +130,9 @@ public class ComputedExpressionAnalysis(
         _entityMemberAccesses.TryAdd(node, entityMemberAccess);
     }
 
-    public void CreateForcedItems()
+    public void ResolveIncrementalRequiredContexts()
     {
-        foreach (var ((node, key), _) in _forcedCreations)
+        foreach (var ((node, key), _) in _incrementalRequiredCreations)
         {
             ResolveEntityContext(node, key);
         }
