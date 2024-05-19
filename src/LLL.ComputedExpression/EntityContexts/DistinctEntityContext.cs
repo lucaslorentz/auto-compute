@@ -21,14 +21,14 @@ public class DistinctEntityContext : EntityContext
         return GetAffectedEntitiesProvider();
     }
 
-    public override void EnrichIncrementalContext(object input, IReadOnlyCollection<object> entities, IncrementalContext incrementalContext)
+    public override async Task EnrichIncrementalContextAsync(object input, IReadOnlyCollection<object> entities, IncrementalContext incrementalContext)
     {
-        base.EnrichIncrementalContext(input, entities, incrementalContext);
-        EnrichIncrementalContextTowardsRoot(input, entities, incrementalContext);
+        await base.EnrichIncrementalContextAsync(input, entities, incrementalContext);
+        await EnrichIncrementalContextTowardsRootAsync(input, entities, incrementalContext);
     }
 
-    public override void EnrichIncrementalContextTowardsRoot(object input, IReadOnlyCollection<object> entities, IncrementalContext incrementalContext)
+    public override async Task EnrichIncrementalContextTowardsRootAsync(object input, IReadOnlyCollection<object> entities, IncrementalContext incrementalContext)
     {
-        _parent.EnrichIncrementalContextTowardsRoot(input, entities, incrementalContext);
+        await _parent.EnrichIncrementalContextTowardsRootAsync(input, entities, incrementalContext);
     }
 }

@@ -61,16 +61,27 @@ public abstract class EntityContext
 
     public abstract IAffectedEntitiesProvider? GetParentAffectedEntitiesProvider();
 
-    public virtual void EnrichIncrementalContext(object input, IReadOnlyCollection<object> entities, IncrementalContext incrementalContext)
+    public virtual async Task EnrichIncrementalContextAsync(object input, IReadOnlyCollection<object> entities, IncrementalContext incrementalContext)
     {
         foreach (var childContext in _childContexts)
-            childContext.EnrichIncrementalContextFromParent(input, entities, incrementalContext);
+            await childContext.EnrichIncrementalContextFromParentAsync(input, entities, incrementalContext);
     }
 
-    public virtual void EnrichIncrementalContextFromParent(object input, IReadOnlyCollection<object> parentEntities, IncrementalContext incrementalContext)
+    public virtual async Task EnrichIncrementalContextFromParentAsync(object input, IReadOnlyCollection<object> parentEntities, IncrementalContext incrementalContext)
     {
-        EnrichIncrementalContext(input, parentEntities, incrementalContext);
+        await EnrichIncrementalContextAsync(input, parentEntities, incrementalContext);
     }
 
-    public abstract void EnrichIncrementalContextTowardsRoot(object input, IReadOnlyCollection<object> entities, IncrementalContext incrementalContext);
+    public abstract Task EnrichIncrementalContextTowardsRootAsync(object input, IReadOnlyCollection<object> entities, IncrementalContext incrementalContext);
+
+    public virtual async Task PreLoadNavigationsAsync(object input, IReadOnlyCollection<object> entities, IncrementalContext incrementalContext)
+    {
+        foreach (var childContext in _childContexts)
+            await childContext.PreLoadNavigationsFromParentAsync(input, entities, incrementalContext);
+    }
+
+    public virtual async Task PreLoadNavigationsFromParentAsync(object input, IReadOnlyCollection<object> parentEntities, IncrementalContext incrementalContext)
+    {
+        await PreLoadNavigationsAsync(input, parentEntities, incrementalContext);
+    }
 }

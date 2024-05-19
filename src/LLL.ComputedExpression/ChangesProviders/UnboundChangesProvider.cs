@@ -30,7 +30,9 @@ public class UnboundChangesProvider<TInput, TEntity, TValue, TResult>(
             .ToArray();
 
         if (changeCalculation.IsIncremental)
-            entityContext.EnrichIncrementalContext(input!, affectedEntities, incrementalContext);
+            await entityContext.EnrichIncrementalContextAsync(input!, affectedEntities, incrementalContext);
+        else
+            await entityContext.PreLoadNavigationsAsync(input!, affectedEntities, incrementalContext);
 
         var changes = new Dictionary<TEntity, TResult>();
 

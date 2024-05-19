@@ -23,9 +23,9 @@ public class CompositeEntityContext : EntityContext
         return GetAffectedEntitiesProvider();
     }
 
-    public override void EnrichIncrementalContextTowardsRoot(object input, IReadOnlyCollection<object> entities, IncrementalContext incrementalContext)
+    public override async Task EnrichIncrementalContextTowardsRootAsync(object input, IReadOnlyCollection<object> entities, IncrementalContext incrementalContext)
     {
         foreach (var parent in _parents)
-            parent.EnrichIncrementalContextTowardsRoot(input, entities, incrementalContext);
+            await parent.EnrichIncrementalContextTowardsRootAsync(input, entities, incrementalContext);
     }
 }

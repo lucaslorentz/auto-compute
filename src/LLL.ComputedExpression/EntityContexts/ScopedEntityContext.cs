@@ -22,8 +22,8 @@ public class ScopedEntityContext : EntityContext
         return GetAffectedEntitiesProvider();
     }
 
-    public override void EnrichIncrementalContextTowardsRoot(object input, IReadOnlyCollection<object> entities, IncrementalContext incrementalContext)
+    public override async Task EnrichIncrementalContextTowardsRootAsync(object input, IReadOnlyCollection<object> entities, IncrementalContext incrementalContext)
     {
-        _parent.EnrichIncrementalContextTowardsRoot(input, entities, incrementalContext);
+        await _parent.EnrichIncrementalContextTowardsRootAsync(input, entities, incrementalContext);
     }
 }
