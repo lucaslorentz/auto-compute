@@ -227,6 +227,15 @@ public class LinqMethodsEntityContextPropagator
                             }
                         }
                         break;
+
+                    case nameof(Enumerable.Empty):
+                        analysis.AddEntityContextProvider(
+                            node,
+                            (key) => key == EntityContextKeys.Element
+                                ? new UntrackedEntityContext(methodCallExpression.Method.GetGenericArguments().First())
+                                : null
+                        );
+                        break;
                 }
             }
         }

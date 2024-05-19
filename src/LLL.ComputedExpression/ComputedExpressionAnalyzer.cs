@@ -26,6 +26,9 @@ public class ComputedExpressionAnalyzer<TInput>(
     public ComputedExpressionAnalyzer<TInput> AddDefaults()
     {
         return AddEntityContextPropagator(new UntrackedEntityContextPropagator<TInput>())
+            .AddEntityContextPropagator(new ConditionalEntityContextPropagator())
+            .AddEntityContextPropagator(new ArrayEntityContextPropagator())
+            .AddEntityContextPropagator(new ConvertEntityContextPropagator())
             .AddEntityContextPropagator(new LinqMethodsEntityContextPropagator())
             .AddEntityContextPropagator(new KeyValuePairEntityContextPropagator())
             .AddEntityContextPropagator(new GroupingEntityContextPropagator())
