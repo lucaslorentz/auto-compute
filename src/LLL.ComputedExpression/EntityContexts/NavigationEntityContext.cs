@@ -42,7 +42,7 @@ public class NavigationEntityContext : EntityContext
         var current = await _navigation.LoadCurrentAsync(input, parentEntitiesToLoadAll, incrementalContext);
         foreach (var entity in original.Concat(current))
         {
-            incrementalContext.SetShouldLoadAll(original);
+            incrementalContext.SetShouldLoadAll(entity);
             entities.Add(entity);
         }
 
