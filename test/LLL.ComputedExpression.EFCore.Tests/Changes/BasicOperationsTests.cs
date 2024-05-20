@@ -16,7 +16,7 @@ public class BasicOperationsTests
         var person = new Person { FirstName = "Jane", LastName = "Doe" };
         context!.Add(person);
 
-        var changes = await context.GetChangesAsync(_computedExpression, static c => c.ValueChange());
+        var changes = await context.GetChangesAsync(_computedExpression, default, static c => c.ValueChange());
         changes.Should().BeEquivalentTo(new Dictionary<Person, ValueChange<string?>>{
             { person, new ValueChange<string?>(default, "Jane Doe")}
         });
@@ -30,7 +30,7 @@ public class BasicOperationsTests
         var person = context!.Set<Person>().Find(1)!;
         person.FirstName = "Modified";
 
-        var changes = await context.GetChangesAsync(_computedExpression, static c => c.ValueChange());
+        var changes = await context.GetChangesAsync(_computedExpression, default, static c => c.ValueChange());
         changes.Should().BeEquivalentTo(new Dictionary<Person, ValueChange<string?>>{
             { person, new ValueChange<string?>("John Doe", "Modified Doe")}
         });
@@ -44,7 +44,7 @@ public class BasicOperationsTests
         var person = context!.Set<Person>().Find(1)!;
         context.Remove(person);
 
-        var changes = await context.GetChangesAsync(_computedExpression, static c => c.ValueChange());
+        var changes = await context.GetChangesAsync(_computedExpression, default, static c => c.ValueChange());
         changes.Should().BeEmpty();
     }
 }

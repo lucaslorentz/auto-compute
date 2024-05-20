@@ -23,11 +23,13 @@ public static class DbContextExtensions
     public static async Task<IReadOnlyDictionary<TEntity, TResult>> GetChangesAsync<TEntity, TValue, TResult>(
         this DbContext dbContext,
         Expression<Func<TEntity, TValue>> computedExpression,
+        Expression<Func<TEntity, bool>>? filterExpression,
         Expression<ChangeCalculationSelector<TValue, TResult>> calculationSelector)
         where TEntity : class
     {
         var changesProvider = dbContext.GetChangesProvider(
             computedExpression,
+            filterExpression,
             calculationSelector);
 
         if (changesProvider is null)
@@ -39,14 +41,16 @@ public static class DbContextExtensions
     public static IChangesProvider<TEntity, TResult>? GetChangesProvider<TEntity, TValue, TResult>(
         this DbContext dbContext,
         Expression<Func<TEntity, TValue>> computedExpression,
+        Expression<Func<TEntity, bool>>? filterExpression,
         Expression<ChangeCalculationSelector<TValue, TResult>> calculationSelector)
         where TEntity : class
     {
         var analyzer = GetComputedExpressionAnalyzer(dbContext);
 
         var unboundChangesProvider = analyzer.GetChangesProvider(
-                computedExpression,
-                calculationSelector);
+            computedExpression,
+            filterExpression,
+            calculationSelector);
 
         if (unboundChangesProvider is null)
             return null;

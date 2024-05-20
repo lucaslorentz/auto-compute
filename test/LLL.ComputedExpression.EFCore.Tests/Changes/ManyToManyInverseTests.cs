@@ -19,7 +19,7 @@ public class ManyToManyInverseTests
         var newPerson = new Person();
         person2.Friends.Add(newPerson);
 
-        var changes = await context.GetChangesAsync(_computedExpression, static c => c.ValueChange());
+        var changes = await context.GetChangesAsync(_computedExpression, default, static c => c.ValueChange());
         changes.Should().BeEquivalentTo(new Dictionary<Person, ValueChange<int>>{
             { newPerson, new ValueChange<int>(0, 1)}
         });
@@ -34,7 +34,7 @@ public class ManyToManyInverseTests
         var newPerson = new Person { FriendsInverse = { person2 } };
         context.Add(newPerson);
 
-        var changes = await context.GetChangesAsync(_computedExpression, static c => c.ValueChange());
+        var changes = await context.GetChangesAsync(_computedExpression, default, static c => c.ValueChange());
         changes.Should().BeEquivalentTo(new Dictionary<Person, ValueChange<int>>{
             { newPerson, new ValueChange<int>(0, 1)}
         });
@@ -48,7 +48,7 @@ public class ManyToManyInverseTests
         var person1 = context!.Set<Person>().Find(1)!;
         person1.FirstName = "Modified";
 
-        var changes = await context.GetChangesAsync(_computedExpression, static c => c.ValueChange());
+        var changes = await context.GetChangesAsync(_computedExpression, default, static c => c.ValueChange());
         changes.Should().BeEmpty();
     }
 
@@ -62,7 +62,7 @@ public class ManyToManyInverseTests
         await context.Entry(person2).Navigation(nameof(Person.Friends)).LoadAsync();
         person2.Friends.RemoveAt(0);
 
-        var changes = await context.GetChangesAsync(_computedExpression, static c => c.ValueChange());
+        var changes = await context.GetChangesAsync(_computedExpression, default, static c => c.ValueChange());
         changes.Should().BeEquivalentTo(new Dictionary<Person, ValueChange<int>>{
             { person1, new ValueChange<int>(1, 0)}
         });
@@ -79,7 +79,7 @@ public class ManyToManyInverseTests
 
         person1.FriendsInverse.RemoveAt(0);
 
-        var changes = await context.GetChangesAsync(_computedExpression, static c => c.ValueChange());
+        var changes = await context.GetChangesAsync(_computedExpression, default, static c => c.ValueChange());
         changes.Should().BeEquivalentTo(new Dictionary<Person, ValueChange<int>>{
             { person1, new ValueChange<int>(1, 0)}
         });

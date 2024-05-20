@@ -11,6 +11,7 @@ public class StopTrackingTests
 
         var changesProvider = context.GetChangesProvider(
             (Person p) => p.AsComputedUntracked().FirstName + " " + p.LastName,
+            default,
             c => c.Void());
 
         changesProvider!.ToDebugString()
@@ -24,6 +25,7 @@ public class StopTrackingTests
 
         var changesProvider = context.GetChangesProvider(
             (Person p) => p.AsComputedUntracked().Pets.Count(p => p.Type == "Cat"),
+            default,
             c => c.Void());
 
         changesProvider.Should().BeNull();
@@ -36,6 +38,7 @@ public class StopTrackingTests
 
         var changesProvider = context.GetChangesProvider(
             (Person p) => p.Pets.Count(p => p.AsComputedUntracked().Type == "Cat" && p.Color == "Black"),
+            default,
             c => c.Void());
 
         changesProvider!.ToDebugString()

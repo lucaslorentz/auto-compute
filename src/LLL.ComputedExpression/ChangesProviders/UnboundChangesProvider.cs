@@ -5,7 +5,9 @@ namespace LLL.ComputedExpression.ChangesProviders;
 
 public class UnboundChangesProvider<TInput, TEntity, TValue, TResult>(
     IAffectedEntitiesProvider<TInput, TEntity>? affectedEntitiesProvider,
-    EntityContext entityContext,
+    EntityContext computedEntityContext,
+    Func<TEntity, bool> filter,
+    EntityContext filterEntityContext,
     IEntityActionProvider entityActionProvider,
     IChangeCalculation<TValue, TResult> changeCalculation,
     ComputedValueAccessors<TInput, TEntity, TValue> computedValueAccessors
@@ -25,14 +27,17 @@ public class UnboundChangesProvider<TInput, TEntity, TValue, TResult>(
 
         var affectedEntities = await affectedEntitiesProvider.GetAffectedEntitiesAsync(input, incrementalContext);
 
+        await filterEntityContext.PreLoadNavigationsAsync(input!, affectedEntities, incrementalContext);
+
         affectedEntities = affectedEntities
-            .Where(e => entityActionProvider.GetEntityAction(input!, e) != EntityAction.Delete)
+            .Where(e => entityActionProvider.GetEntityAction(input!, e) != EntityAction.Delete
+                && filter(e))
             .ToArray();
 
         if (changeCalculation.IsIncremental)
-            await entityContext.EnrichIncrementalContextAsync(input!, affectedEntities, incrementalContext);
+            await computedEntityContext.EnrichIncrementalContextAsync(input!, affectedEntities, incrementalContext);
         else
-            await entityContext.PreLoadNavigationsAsync(input!, affectedEntities, incrementalContext);
+            await computedEntityContext.PreLoadNavigationsAsync(input!, affectedEntities, incrementalContext);
 
         var changes = new Dictionary<TEntity, TResult>();
 

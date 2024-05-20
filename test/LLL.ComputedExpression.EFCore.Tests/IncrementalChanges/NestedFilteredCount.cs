@@ -16,7 +16,7 @@ public class NestedFilteredCount
         var pet = context!.Set<Pet>().Find(1)!;
         pet.Type = "Modified";
 
-        var changes = await context.GetChangesAsync(_computedExpression, static c => c.NumberIncremental());
+        var changes = await context.GetChangesAsync(_computedExpression, default, static c => c.NumberIncremental());
 
         var person2 = context!.Set<Person>().Find(2)!;
         changes.Should().BeEquivalentTo(new Dictionary<Person, int>{
@@ -34,7 +34,7 @@ public class NestedFilteredCount
         await context.Entry(person2).Navigation(nameof(Person.Friends)).LoadAsync();
         person2.Friends.Clear();
 
-        var changes = await context.GetChangesAsync(_computedExpression, static c => c.NumberIncremental());
+        var changes = await context.GetChangesAsync(_computedExpression, default, static c => c.NumberIncremental());
         changes.Should().BeEquivalentTo(new Dictionary<Person, int>{
             { person2, -1}
         });
@@ -49,7 +49,7 @@ public class NestedFilteredCount
         await context.Entry(person1).Navigation(nameof(Person.FriendsInverse)).LoadAsync();
         person1.FriendsInverse.Clear();
 
-        var changes = await context.GetChangesAsync(_computedExpression, static c => c.NumberIncremental());
+        var changes = await context.GetChangesAsync(_computedExpression, default, static c => c.NumberIncremental());
 
         var person2 = context!.Set<Person>().Find(2)!;
         changes.Should().BeEquivalentTo(new Dictionary<Person, int>{

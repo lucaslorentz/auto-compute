@@ -17,7 +17,7 @@ public class OneToOneTests
         var pet = context!.Set<Pet>().Find(1)!;
         person.FavoritePet = pet;
 
-        var changes = await context.GetChangesAsync(_computedExpression, static c => c.ValueChange());
+        var changes = await context.GetChangesAsync(_computedExpression, default, static c => c.ValueChange());
         changes.Should().BeEquivalentTo(new Dictionary<Person, ValueChange<string?>>{
             { person, new ValueChange<string?>(null, "Cat")}
         });
@@ -32,7 +32,7 @@ public class OneToOneTests
         var pet = context!.Set<Pet>().Find(1)!;
         pet.FavoritePetInverse = person;
 
-        var changes = await context.GetChangesAsync(_computedExpression, static c => c.ValueChange());
+        var changes = await context.GetChangesAsync(_computedExpression, default, static c => c.ValueChange());
         changes.Should().BeEquivalentTo(new Dictionary<Person, ValueChange<string?>>{
             { person, new ValueChange<string?>(null, "Cat")}
         });
@@ -50,7 +50,7 @@ public class OneToOneTests
 
         pet.Type = "Dog";
 
-        var changes = await context.GetChangesAsync(_computedExpression, static c => c.ValueChange());
+        var changes = await context.GetChangesAsync(_computedExpression, default, static c => c.ValueChange());
         changes.Should().BeEquivalentTo(new Dictionary<Person, ValueChange<string?>>{
             { person, new ValueChange<string?>("Cat", "Dog")}
         });
@@ -68,7 +68,7 @@ public class OneToOneTests
 
         person.FavoritePet = null;
 
-        var changes = await context.GetChangesAsync(_computedExpression, static c => c.ValueChange());
+        var changes = await context.GetChangesAsync(_computedExpression, default, static c => c.ValueChange());
         changes.Should().BeEquivalentTo(new Dictionary<Person, ValueChange<string?>>{
             { person, new ValueChange<string?>("Cat", null)}
         });
@@ -86,7 +86,7 @@ public class OneToOneTests
 
         pet.FavoritePetInverse = null;
 
-        var changes = await context.GetChangesAsync(_computedExpression, static c => c.ValueChange());
+        var changes = await context.GetChangesAsync(_computedExpression, default, static c => c.ValueChange());
         changes.Should().BeEquivalentTo(new Dictionary<Person, ValueChange<string?>>{
             { person, new ValueChange<string?>("Cat", null)}
         });

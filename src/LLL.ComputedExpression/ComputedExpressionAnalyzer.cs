@@ -68,27 +68,68 @@ public class ComputedExpressionAnalyzer<TInput>(
 
     public IUnboundChangesProvider<TInput, TEntity, TResult>? GetChangesProvider<TEntity, TValue, TResult>(
         Expression<Func<TEntity, TValue>> computedExpression,
+        Expression<Func<TEntity, bool>>? filterExpression,
         Expression<ChangeCalculationSelector<TValue, TResult>> changeCalculationSelector)
         where TEntity : class
     {
+        filterExpression ??= static e => true;
+
         var key = (
             ComputedExpression: new ExpressionCacheKey(computedExpression, _expressionEqualityComparer),
+            filterExpression: new ExpressionCacheKey(filterExpression, _expressionEqualityComparer),
             ChangeCalculationSelector: new ExpressionCacheKey(changeCalculationSelector, _expressionEqualityComparer)
         );
 
         return _concurrentCreationCache.GetOrCreate(
             key,
-            k => CreateChangesProvider(computedExpression, changeCalculationSelector)
+            k => CreateChangesProvider(computedExpression, filterExpression, changeCalculationSelector)
         );
     }
 
     private IUnboundChangesProvider<TInput, TEntity, TResult>? CreateChangesProvider<TEntity, TValue, TResult>(
         Expression<Func<TEntity, TValue>> computedExpression,
+        Expression<Func<TEntity, bool>> filterExpression,
         Expression<ChangeCalculationSelector<TValue, TResult>> changeCalculationSelector)
         where TEntity : class
     {
         computedExpression = PrepareComputedExpression(computedExpression);
 
+        var changeCalculation = changeCalculationSelector.Compile()(new ChangeCalculations<TValue>());
+
+        var computedEntityContext = GetEntityContext(computedExpression, changeCalculation.IsIncremental);
+
+        var affectedEntitiesProvider = (IAffectedEntitiesProvider<TInput, TEntity>)computedEntityContext.GetAffectedEntitiesProvider()!;
+
+        if (affectedEntitiesProvider is null)
+            return null;
+
+        var computedValueAccessors = new ComputedValueAccessors<TInput, TEntity, TValue>(
+            changeCalculation.IsIncremental
+                ? GetIncrementalOriginalValueExpression(computedExpression).Compile()
+                : GetOriginalValueExpression(computedExpression).Compile(),
+            changeCalculation.IsIncremental
+                ? GetIncrementalCurrentValueExpression(computedExpression).Compile()
+                : GetCurrentValueExpression(computedExpression).Compile()
+        );
+
+        var filterEntityContext = GetEntityContext(filterExpression, false);
+
+        return new UnboundChangesProvider<TInput, TEntity, TValue, TResult>(
+            affectedEntitiesProvider,
+            computedEntityContext,
+            filterExpression.Compile(),
+            filterEntityContext,
+            RequireEntityActionProvider(),
+            changeCalculation,
+            computedValueAccessors
+        );
+    }
+
+    private RootEntityContext GetEntityContext<TEntity, TValue>(
+        Expression<Func<TEntity, TValue>> computedExpression,
+        bool isIncremental)
+        where TEntity : class
+    {
         var analysis = new ComputedExpressionAnalysis();
 
         var rootEntityType = computedExpression.Parameters[0].Type;
@@ -105,32 +146,10 @@ public class ComputedExpressionAnalyzer<TInput>(
             _memberAccessLocators
         ).Visit(computedExpression);
 
-        var affectedEntitiesProvider = (IAffectedEntitiesProvider<TInput, TEntity>)entityContext.GetAffectedEntitiesProvider()!;
-
-        if (affectedEntitiesProvider is null)
-            return null;
-
-        var changeCalculation = changeCalculationSelector.Compile()(new ChangeCalculations<TValue>());
-
-        if (changeCalculation.IsIncremental)
+        if (isIncremental)
             analysis.ResolveIncrementalRequiredContexts();
 
-        var computedValueAccessors = new ComputedValueAccessors<TInput, TEntity, TValue>(
-            changeCalculation.IsIncremental
-                ? GetIncrementalOriginalValueExpression(computedExpression).Compile()
-                : GetOriginalValueExpression(computedExpression).Compile(),
-            changeCalculation.IsIncremental
-                ? GetIncrementalCurrentValueExpression(computedExpression).Compile()
-                : GetCurrentValueExpression(computedExpression).Compile()
-        );
-
-        return new UnboundChangesProvider<TInput, TEntity, TValue, TResult>(
-            affectedEntitiesProvider,
-            entityContext,
-            RequireEntityActionProvider(),
-            changeCalculation,
-            computedValueAccessors
-        );
+        return entityContext;
     }
 
     private Expression<Func<TInput, IncrementalContext, TEntity, TValue>> GetOriginalValueExpression<TEntity, TValue>(

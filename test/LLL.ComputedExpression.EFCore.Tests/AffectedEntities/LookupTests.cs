@@ -14,6 +14,7 @@ public class LookupTests
 
         var changes = await context.GetChangesAsync(
             (Person person) => person.Pets.ToLookup(p => p).Where(kv => kv.Key.Type != null).Count(),
+            default,
             c => c.Void());
 
         changes.Keys.Should().BeEquivalentTo([pet.Owner]);
@@ -29,6 +30,7 @@ public class LookupTests
 
         var changes = await context.GetChangesAsync(
             (Person person) => person.Pets.ToLookup(p => p.Id).Where(kv => kv.Any(p => p.Type != null)).Count(),
+            default,
             c => c.Void());
 
         changes.Keys.Should().BeEquivalentTo([pet.Owner]);

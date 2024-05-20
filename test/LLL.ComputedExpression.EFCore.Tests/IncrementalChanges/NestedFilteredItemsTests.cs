@@ -17,7 +17,7 @@ public class NestedFilteredItemsTests
         var pet = context!.Set<Pet>().Find(1)!;
         pet.Type = "Modified";
 
-        var changes = await context.GetChangesAsync(_computedExpression, static c => c.SetIncremental());
+        var changes = await context.GetChangesAsync(_computedExpression, default, static c => c.SetIncremental());
 
         var person2 = context!.Set<Person>().Find(2)!;
         changes.Should().BeEquivalentTo(new Dictionary<Person, SetChange<Pet>>{
@@ -35,7 +35,7 @@ public class NestedFilteredItemsTests
         await context.Entry(person2).Navigation(nameof(Person.Friends)).LoadAsync();
         person2.Friends.Clear();
 
-        var changes = await context.GetChangesAsync(_computedExpression, static c => c.SetIncremental());
+        var changes = await context.GetChangesAsync(_computedExpression, default, static c => c.SetIncremental());
 
         var pet = context!.Set<Pet>().Find(1)!;
         changes.Should().BeEquivalentTo(new Dictionary<Person, SetChange<Pet>>{
@@ -52,7 +52,7 @@ public class NestedFilteredItemsTests
         await context.Entry(person1).Navigation(nameof(Person.FriendsInverse)).LoadAsync();
         person1.FriendsInverse.Clear();
 
-        var changes = await context.GetChangesAsync(_computedExpression, static c => c.SetIncremental());
+        var changes = await context.GetChangesAsync(_computedExpression, default, static c => c.SetIncremental());
 
         var person2 = context!.Set<Person>().Find(2)!;
         var pet = context!.Set<Pet>().Find(1)!;

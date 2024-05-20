@@ -23,7 +23,7 @@ public class ManyToManyDistinctTests
 
         person2.Relatives.Add(person1);
 
-        var changes = await context.GetChangesAsync(_computedExpression, static c => c.SetIncremental());
+        var changes = await context.GetChangesAsync(_computedExpression, default, static c => c.SetIncremental());
 
         changes.Should().BeEmpty();
         context.Entry(person2).Navigation(nameof(Person.Friends)).IsLoaded.Should().BeFalse();
@@ -45,7 +45,7 @@ public class ManyToManyDistinctTests
         await context.Entry(person2).Navigation(nameof(Person.Friends)).LoadAsync();
         person2.Friends.Clear();
 
-        var changes = await context.GetChangesAsync(_computedExpression, static c => c.SetIncremental());
+        var changes = await context.GetChangesAsync(_computedExpression, default, static c => c.SetIncremental());
 
         changes.Should().BeEmpty();
         context.Entry(person2).Navigation(nameof(Person.Relatives)).IsLoaded.Should().BeFalse();
@@ -67,7 +67,7 @@ public class ManyToManyDistinctTests
         await context.Entry(person1).Navigation(nameof(Person.FriendsInverse)).LoadAsync();
         person1.FriendsInverse.Clear();
 
-        var changes = await context.GetChangesAsync(_computedExpression, static c => c.SetIncremental());
+        var changes = await context.GetChangesAsync(_computedExpression, default, static c => c.SetIncremental());
 
         var person2 = context!.Set<Person>().Find(2)!;
         var pet = context!.Set<Pet>().Find(1)!;

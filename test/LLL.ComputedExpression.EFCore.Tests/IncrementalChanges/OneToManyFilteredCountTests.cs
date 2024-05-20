@@ -17,7 +17,7 @@ public class OneToManyFilteredCountTests
         var pet = new Pet { Type = "Cat" };
         person.Pets.Add(pet);
 
-        var changes = await context.GetChangesAsync(_computedExpression, static c => c.NumberIncremental());
+        var changes = await context.GetChangesAsync(_computedExpression, default, static c => c.NumberIncremental());
         changes.Should().BeEquivalentTo(new Dictionary<Person, int>{
             { person, 1}
         });
@@ -33,7 +33,7 @@ public class OneToManyFilteredCountTests
         var pet = new Pet { Type = "Cat", Owner = person };
         context.Add(pet);
 
-        var changes = await context.GetChangesAsync(_computedExpression, static c => c.NumberIncremental());
+        var changes = await context.GetChangesAsync(_computedExpression, default, static c => c.NumberIncremental());
         changes.Should().BeEquivalentTo(new Dictionary<Person, int>{
             { person, 1}
         });
@@ -50,7 +50,7 @@ public class OneToManyFilteredCountTests
         var pet = context!.Set<Pet>().Find(1)!;
         pet.Owner = person2;
 
-        var changes = await context.GetChangesAsync(_computedExpression, static c => c.NumberIncremental());
+        var changes = await context.GetChangesAsync(_computedExpression, default, static c => c.NumberIncremental());
         changes.Should().BeEquivalentTo(new Dictionary<Person, int>{
             { person1, -1},
             { person2, 1}
@@ -67,7 +67,7 @@ public class OneToManyFilteredCountTests
         var pet = context!.Set<Pet>().Find(1)!;
         pet.Type = "Modified";
 
-        var changes = await context.GetChangesAsync(_computedExpression, static c => c.NumberIncremental());
+        var changes = await context.GetChangesAsync(_computedExpression, default, static c => c.NumberIncremental());
         changes.Should().BeEquivalentTo(new Dictionary<Person, int>{
             { pet.Owner!, -1}
         });
@@ -83,7 +83,7 @@ public class OneToManyFilteredCountTests
         var pet = context!.Set<Pet>().Find(1)!;
         person.Pets.Remove(pet);
 
-        var changes = await context.GetChangesAsync(_computedExpression, static c => c.NumberIncremental());
+        var changes = await context.GetChangesAsync(_computedExpression, default, static c => c.NumberIncremental());
         changes.Should().BeEquivalentTo(new Dictionary<Person, int>{
             { person, -1}
         });
@@ -99,7 +99,7 @@ public class OneToManyFilteredCountTests
         var pet = context!.Set<Pet>().Find(1)!;
         pet.Owner = null;
 
-        var changes = await context.GetChangesAsync(_computedExpression, static c => c.NumberIncremental());
+        var changes = await context.GetChangesAsync(_computedExpression, default, static c => c.NumberIncremental());
         changes.Should().BeEquivalentTo(new Dictionary<Person, int>{
             { person, -1}
         });
@@ -116,7 +116,7 @@ public class OneToManyFilteredCountTests
         var newPet = new Pet { Type = "Cat" };
         person.Pets.Add(newPet);
 
-        var deltaProvider = context.GetChangesProvider(_computedExpression, static c => c.NumberIncremental())!;
+        var deltaProvider = context.GetChangesProvider(_computedExpression, default, static c => c.NumberIncremental())!;
 
         var changes = await deltaProvider.GetChangesAsync();
         changes.Should().BeEquivalentTo(new Dictionary<Person, int>{

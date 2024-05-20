@@ -44,6 +44,7 @@ public static class EntityTypeBuilderExtensions
 
                 var changesProvider = analyzer.GetChangesProvider(
                     computedExpression,
+                    default,
                     calculationSelector)
                     ?? throw new Exception("Computed expression doesn't have change detectors");
 
