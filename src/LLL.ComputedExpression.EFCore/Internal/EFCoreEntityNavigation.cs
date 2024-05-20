@@ -275,7 +275,7 @@ public class EFCoreEntityNavigation<TSourceEntity, TTargetEntity>(
         }
     }
 
-    public async Task<IReadOnlyCollection<TSourceEntity>> GetAffectedEntitiesAsync(IEFCoreComputedInput input, IncrementalContext? incrementalContext)
+    public virtual async Task<IReadOnlyCollection<TSourceEntity>> GetAffectedEntitiesAsync(IEFCoreComputedInput input, IncrementalContext? incrementalContext)
     {
         var affectedEntities = new HashSet<TSourceEntity>();
         foreach (var entityEntry in input.EntityEntriesOfType(navigation.DeclaringEntityType))
