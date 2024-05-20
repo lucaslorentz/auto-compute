@@ -1,4 +1,5 @@
 using System.Linq.Expressions;
+using System.Reflection;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata;
 
@@ -20,22 +21,10 @@ public class EFCoreEntityProperty<TEntity>(
         IEntityMemberAccess<IEntityProperty> memberAccess,
         Expression inputExpression)
     {
-        var valueGetter = static (IProperty property, IEFCoreComputedInput input, TEntity ent) =>
-        {
-            var dbContext = input.DbContext;
-
-            var entityEntry = dbContext.Entry(ent!);
-
-            if (entityEntry.State == EntityState.Added)
-                throw new Exception($"Cannot access property '{property.DeclaringEntityType.ShortName()}.{property.Name}' original value for an added entity");
-
-            return entityEntry.Property(property).OriginalValue;
-        };
-
         return Expression.Convert(
-            Expression.Invoke(
-                Expression.Constant(valueGetter),
-                Expression.Constant(property),
+            Expression.Call(
+                Expression.Constant(this),
+                GetType().GetMethod(nameof(GetOriginalValue), BindingFlags.Instance | BindingFlags.NonPublic | BindingFlags.FlattenHierarchy)!,
                 inputExpression,
                 memberAccess.FromExpression
             ),
@@ -47,22 +36,10 @@ public class EFCoreEntityProperty<TEntity>(
         IEntityMemberAccess<IEntityProperty> memberAccess,
         Expression inputExpression)
     {
-        var currentValueGetter = static (IProperty property, IEFCoreComputedInput input, TEntity ent) =>
-        {
-            var dbContext = input.DbContext;
-
-            var entityEntry = dbContext.Entry(ent!);
-
-            if (entityEntry.State == EntityState.Deleted)
-                throw new Exception($"Cannot access property '{property.DeclaringEntityType.ShortName()}.{property.Name}' current value for a deleted entity");
-
-            return entityEntry.Property(property).CurrentValue;
-        };
-
         return Expression.Convert(
-            Expression.Invoke(
-                Expression.Constant(currentValueGetter),
-                Expression.Constant(property),
+            Expression.Call(
+                Expression.Constant(this),
+                GetType().GetMethod(nameof(GetCurrentValue), BindingFlags.Instance | BindingFlags.NonPublic | BindingFlags.FlattenHierarchy)!,
                 inputExpression,
                 memberAccess.FromExpression
             ),
@@ -84,6 +61,30 @@ public class EFCoreEntityProperty<TEntity>(
         Expression incrementalContextExpression)
     {
         return CreateCurrentValueExpression(memberAccess, inputExpression);
+    }
+
+    protected virtual object? GetOriginalValue(IEFCoreComputedInput input, TEntity ent)
+    {
+        var dbContext = input.DbContext;
+
+        var entityEntry = dbContext.Entry(ent!);
+
+        if (entityEntry.State == EntityState.Added)
+            throw new Exception($"Cannot access property '{property.DeclaringEntityType.ShortName()}.{property.Name}' original value for an added entity");
+
+        return entityEntry.Property(property).OriginalValue;
+    }
+
+    protected virtual object? GetCurrentValue(IEFCoreComputedInput input, TEntity ent)
+    {
+        var dbContext = input.DbContext;
+
+        var entityEntry = dbContext.Entry(ent!);
+
+        if (entityEntry.State == EntityState.Deleted)
+            throw new Exception($"Cannot access property '{property.DeclaringEntityType.ShortName()}.{property.Name}' current value for a deleted entity");
+
+        return entityEntry.Property(property).CurrentValue;
     }
 
     public virtual async Task<IReadOnlyCollection<TEntity>> GetAffectedEntitiesAsync(IEFCoreComputedInput input, IncrementalContext? incrementalContext)

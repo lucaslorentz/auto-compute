@@ -12,7 +12,7 @@ public class EFCoreEntityNavigation<TSourceEntity, TTargetEntity>(
     where TTargetEntity : class
 {
     public virtual string Name => navigation.Name;
-    public Type TargetEntityType => navigation.TargetEntityType.ClrType;
+    public virtual Type TargetEntityType => navigation.TargetEntityType.ClrType;
     public virtual bool IsCollection => navigation.IsCollection;
 
     public virtual string ToDebugString()
@@ -88,8 +88,8 @@ public class EFCoreEntityNavigation<TSourceEntity, TTargetEntity>(
     {
         return Expression.Convert(
             Expression.Call(
-                GetType().GetMethod(nameof(GetOriginalValue), BindingFlags.Static | BindingFlags.NonPublic | BindingFlags.FlattenHierarchy)!,
-                Expression.Constant(navigation),
+                Expression.Constant(this),
+                GetType().GetMethod(nameof(GetOriginalValue), BindingFlags.Instance | BindingFlags.NonPublic | BindingFlags.FlattenHierarchy)!,
                 inputExpression,
                 memberAccess.FromExpression
             ),
@@ -103,8 +103,8 @@ public class EFCoreEntityNavigation<TSourceEntity, TTargetEntity>(
     {
         return Expression.Convert(
             Expression.Call(
-                GetType().GetMethod(nameof(GetCurrentValue), BindingFlags.Static | BindingFlags.NonPublic | BindingFlags.FlattenHierarchy)!,
-                Expression.Constant(navigation),
+                Expression.Constant(this),
+                GetType().GetMethod(nameof(GetCurrentValue), BindingFlags.Instance | BindingFlags.NonPublic | BindingFlags.FlattenHierarchy)!,
                 inputExpression,
                 memberAccess.FromExpression
             ),
@@ -146,7 +146,7 @@ public class EFCoreEntityNavigation<TSourceEntity, TTargetEntity>(
         );
     }
 
-    protected static object? GetOriginalValue(INavigationBase navigation, IEFCoreComputedInput input, TSourceEntity ent)
+    protected virtual object? GetOriginalValue(IEFCoreComputedInput input, TSourceEntity ent)
     {
         var dbContext = input.DbContext;
 
@@ -163,7 +163,7 @@ public class EFCoreEntityNavigation<TSourceEntity, TTargetEntity>(
         return navigationEntry.GetOriginalValue();
     }
 
-    protected static object? GetCurrentValue(INavigationBase navigation, IEFCoreComputedInput input, TSourceEntity ent)
+    protected virtual object? GetCurrentValue(IEFCoreComputedInput input, TSourceEntity ent)
     {
         var dbContext = input.DbContext;
 
@@ -179,7 +179,7 @@ public class EFCoreEntityNavigation<TSourceEntity, TTargetEntity>(
         return navigationEntry.CurrentValue;
     }
 
-    protected object? GetIncrementalOriginalValue(IEFCoreComputedInput input, TSourceEntity ent, IncrementalContext incrementalContext)
+    protected virtual object? GetIncrementalOriginalValue(IEFCoreComputedInput input, TSourceEntity ent, IncrementalContext incrementalContext)
     {
         var entityEntry = input.DbContext.Entry(ent);
 
@@ -227,7 +227,7 @@ public class EFCoreEntityNavigation<TSourceEntity, TTargetEntity>(
         }
     }
 
-    protected object? GetIncrementalCurrentValue(IEFCoreComputedInput input, TSourceEntity ent, IncrementalContext incrementalContext)
+    protected virtual object? GetIncrementalCurrentValue(IEFCoreComputedInput input, TSourceEntity ent, IncrementalContext incrementalContext)
     {
         var entityEntry = input.DbContext.Entry(ent);
 
