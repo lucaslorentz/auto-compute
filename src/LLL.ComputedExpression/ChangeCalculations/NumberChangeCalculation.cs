@@ -7,6 +7,7 @@ public class NumberChangeCalculation<TValue>(bool incremental)
     where TValue : INumber<TValue>
 {
     public bool IsIncremental => incremental;
+    public bool PreLoadEntities => true;
 
     public TValue GetChange(IComputedValues<TValue> computedValues)
     {

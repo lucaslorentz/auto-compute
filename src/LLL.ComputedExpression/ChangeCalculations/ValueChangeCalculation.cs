@@ -6,6 +6,7 @@ public class ValueChangeCalculation<TValue>(
 ) : IChangeCalculation<TValue, ValueChange<TValue>>
 {
     public bool IsIncremental => false;
+    public bool PreLoadEntities => true;
 
     public ValueChange<TValue> GetChange(IComputedValues<TValue> computedValues)
     {

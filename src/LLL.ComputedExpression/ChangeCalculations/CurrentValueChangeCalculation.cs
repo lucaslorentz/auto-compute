@@ -5,6 +5,7 @@ public class CurrentValueChangeCalculation<TValue>
     : IChangeCalculation<TValue, TValue>
 {
     public bool IsIncremental => false;
+    public bool PreLoadEntities => true;
 
     public TValue GetChange(IComputedValues<TValue> computedValues)
     {

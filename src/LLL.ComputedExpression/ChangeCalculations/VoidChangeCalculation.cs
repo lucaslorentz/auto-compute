@@ -5,6 +5,7 @@ public class VoidChangeCalculation<TValue>
     : IChangeCalculation<TValue, VoidChange>
 {
     public bool IsIncremental => false;
+    public bool PreLoadEntities => false;
 
     public VoidChange GetChange(IComputedValues<TValue> computedValues)
     {

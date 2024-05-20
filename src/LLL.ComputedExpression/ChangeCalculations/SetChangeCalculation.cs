@@ -7,7 +7,7 @@ public class SetChangeCalculation<TElement>(
 ) : IChangeCalculation<IEnumerable<TElement>, SetChange<TElement>>
 {
     public bool IsIncremental => incremental;
-
+    public bool PreLoadEntities => true;
 
     public SetChange<TElement> GetChange(IComputedValues<IEnumerable<TElement>> computedValues)
     {
