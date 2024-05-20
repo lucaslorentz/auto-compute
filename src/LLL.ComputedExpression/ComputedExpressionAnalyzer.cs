@@ -273,7 +273,7 @@ public class ComputedExpressionAnalyzer<TInput>(
     {
         var prepareOutputMethod = GetType().GetMethod(
             nameof(PrepareComputedOutput),
-            BindingFlags.NonPublic | BindingFlags.Static)!
+            BindingFlags.NonPublic | BindingFlags.Static | BindingFlags.FlattenHierarchy)!
             .MakeGenericMethod(returnType);
 
         return Expression.Call(

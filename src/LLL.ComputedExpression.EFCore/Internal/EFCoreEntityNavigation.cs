@@ -1,5 +1,5 @@
-using System.Collections;
 using System.Linq.Expressions;
+using System.Reflection;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata;
 
@@ -88,7 +88,7 @@ public class EFCoreEntityNavigation<TSourceEntity, TTargetEntity>(
     {
         return Expression.Convert(
             Expression.Call(
-                GetType().GetMethod(nameof(GetOriginalValue), System.Reflection.BindingFlags.Static | System.Reflection.BindingFlags.NonPublic)!,
+                GetType().GetMethod(nameof(GetOriginalValue), BindingFlags.Static | BindingFlags.NonPublic | BindingFlags.FlattenHierarchy)!,
                 Expression.Constant(navigation),
                 inputExpression,
                 memberAccess.FromExpression
@@ -103,7 +103,7 @@ public class EFCoreEntityNavigation<TSourceEntity, TTargetEntity>(
     {
         return Expression.Convert(
             Expression.Call(
-                GetType().GetMethod(nameof(GetCurrentValue), System.Reflection.BindingFlags.Static | System.Reflection.BindingFlags.NonPublic)!,
+                GetType().GetMethod(nameof(GetCurrentValue), BindingFlags.Static | BindingFlags.NonPublic | BindingFlags.FlattenHierarchy)!,
                 Expression.Constant(navigation),
                 inputExpression,
                 memberAccess.FromExpression
@@ -120,7 +120,7 @@ public class EFCoreEntityNavigation<TSourceEntity, TTargetEntity>(
         return Expression.Convert(
             Expression.Call(
                 Expression.Constant(this),
-                GetType().GetMethod(nameof(GetIncrementalOriginalValue), System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic)!,
+                GetType().GetMethod(nameof(GetIncrementalOriginalValue), BindingFlags.Instance | BindingFlags.NonPublic | BindingFlags.FlattenHierarchy)!,
                 inputExpression,
                 memberAccess.FromExpression,
                 incrementalContextExpression
@@ -137,7 +137,7 @@ public class EFCoreEntityNavigation<TSourceEntity, TTargetEntity>(
         return Expression.Convert(
             Expression.Call(
                 Expression.Constant(this),
-                GetType().GetMethod(nameof(GetIncrementalCurrentValue), System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic)!,
+                GetType().GetMethod(nameof(GetIncrementalCurrentValue), BindingFlags.Instance | BindingFlags.NonPublic | BindingFlags.FlattenHierarchy)!,
                 inputExpression,
                 memberAccess.FromExpression,
                 incrementalContextExpression
@@ -146,7 +146,7 @@ public class EFCoreEntityNavigation<TSourceEntity, TTargetEntity>(
         );
     }
 
-    private static object? GetOriginalValue(INavigationBase navigation, IEFCoreComputedInput input, TSourceEntity ent)
+    protected static object? GetOriginalValue(INavigationBase navigation, IEFCoreComputedInput input, TSourceEntity ent)
     {
         var dbContext = input.DbContext;
 
@@ -163,7 +163,7 @@ public class EFCoreEntityNavigation<TSourceEntity, TTargetEntity>(
         return navigationEntry.GetOriginalValue();
     }
 
-    private static object? GetCurrentValue(INavigationBase navigation, IEFCoreComputedInput input, TSourceEntity ent)
+    protected static object? GetCurrentValue(INavigationBase navigation, IEFCoreComputedInput input, TSourceEntity ent)
     {
         var dbContext = input.DbContext;
 
@@ -179,7 +179,7 @@ public class EFCoreEntityNavigation<TSourceEntity, TTargetEntity>(
         return navigationEntry.CurrentValue;
     }
 
-    private object? GetIncrementalOriginalValue(IEFCoreComputedInput input, TSourceEntity ent, IncrementalContext incrementalContext)
+    protected object? GetIncrementalOriginalValue(IEFCoreComputedInput input, TSourceEntity ent, IncrementalContext incrementalContext)
     {
         var entityEntry = input.DbContext.Entry(ent);
 
@@ -227,7 +227,7 @@ public class EFCoreEntityNavigation<TSourceEntity, TTargetEntity>(
         }
     }
 
-    private object? GetIncrementalCurrentValue(IEFCoreComputedInput input, TSourceEntity ent, IncrementalContext incrementalContext)
+    protected object? GetIncrementalCurrentValue(IEFCoreComputedInput input, TSourceEntity ent, IncrementalContext incrementalContext)
     {
         var entityEntry = input.DbContext.Entry(ent);
 
