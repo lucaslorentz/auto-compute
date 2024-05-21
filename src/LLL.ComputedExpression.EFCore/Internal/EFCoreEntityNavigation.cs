@@ -44,7 +44,7 @@ public class EFCoreEntityNavigation<TSourceEntity, TTargetEntity>(
 
             var navigationEntry = entityEntry.Navigation(navigation);
 
-            if (!navigationEntry.IsLoaded)
+            if (!navigationEntry.IsLoaded && entityEntry.State != EntityState.Detached)
                 await navigationEntry.LoadAsync();
 
             foreach (var originalEntity in navigationEntry.GetOriginalEntities())
@@ -157,7 +157,7 @@ public class EFCoreEntityNavigation<TSourceEntity, TTargetEntity>(
 
         var navigationEntry = entityEntry.Navigation(navigation);
 
-        if (!navigationEntry.IsLoaded)
+        if (!navigationEntry.IsLoaded && entityEntry.State != EntityState.Detached)
             navigationEntry.Load();
 
         return navigationEntry.GetOriginalValue();
