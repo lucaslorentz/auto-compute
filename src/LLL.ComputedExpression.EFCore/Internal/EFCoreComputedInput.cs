@@ -7,10 +7,15 @@ namespace LLL.ComputedExpression.EFCore.Internal;
 public class EFCoreComputedInput : IEFCoreComputedInput
 {
     private readonly DbContext _dbContext;
+    private ILookup<ITypeBase, EntityEntry>? _entriesByType = null;
 
     public EFCoreComputedInput(DbContext dbContext)
     {
         _dbContext = dbContext;
+        _dbContext.ChangeTracker.DetectedEntityChanges += (o, e) =>
+        {
+            _entriesByType = null;
+        };
     }
 
     public DbContext DbContext => _dbContext;
@@ -19,6 +24,7 @@ public class EFCoreComputedInput : IEFCoreComputedInput
 
     public IEnumerable<EntityEntry> EntityEntriesOfType(ITypeBase entityType)
     {
-        return _dbContext.ChangeTracker.Entries().Where(e => e.Metadata == entityType);
+        _entriesByType ??= _dbContext.ChangeTracker.Entries().ToLookup(e => (ITypeBase)e.Metadata);
+        return _entriesByType[entityType];
     }
 }
