@@ -18,7 +18,7 @@ public interface IAffectedEntitiesProvider<in TInput, TEntity> : IAffectedEntiti
     Type IAffectedEntitiesProvider.InputType => typeof(TInput);
     Type IAffectedEntitiesProvider.EntityType => typeof(TEntity);
 
-    Task<IReadOnlyCollection<TEntity>> GetAffectedEntitiesAsync(TInput input, IncrementalContext? incrementalContext = null);
+    Task<IReadOnlyCollection<TEntity>> GetAffectedEntitiesAsync(TInput input, IncrementalContext incrementalContext);
 
     new IReadOnlyCollection<IAffectedEntitiesProvider<TInput, TEntity>> Flatten()
     {

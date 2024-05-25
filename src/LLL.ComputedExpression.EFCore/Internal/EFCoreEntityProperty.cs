@@ -87,7 +87,7 @@ public class EFCoreEntityProperty<TEntity>(
         return entityEntry.Property(property).CurrentValue;
     }
 
-    public virtual async Task<IReadOnlyCollection<TEntity>> GetAffectedEntitiesAsync(IEFCoreComputedInput input, IncrementalContext? incrementalContext)
+    public virtual async Task<IReadOnlyCollection<TEntity>> GetAffectedEntitiesAsync(IEFCoreComputedInput input, IncrementalContext incrementalContext)
     {
         var affectedEntities = new HashSet<TEntity>();
         foreach (var entityEntry in input.EntityEntriesOfType(property.DeclaringType))

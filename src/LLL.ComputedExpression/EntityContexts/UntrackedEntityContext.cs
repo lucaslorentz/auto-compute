@@ -10,7 +10,7 @@ public class UntrackedEntityContext(Type entityType) : EntityContext
         return null;
     }
 
-    public override async Task EnrichIncrementalContextTowardsRootAsync(object input, IReadOnlyCollection<object> entities, IncrementalContext? incrementalContext)
+    public override async Task EnrichIncrementalContextTowardsRootAsync(object input, IReadOnlyCollection<object> entities, IncrementalContext incrementalContext)
     {
     }
 }

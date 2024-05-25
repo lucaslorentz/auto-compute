@@ -10,7 +10,7 @@ public class LoadNavigationAffectedEntitiesProvider<TInput, TSourceEntity, TTarg
         return $"Load({affectedEntitiesProvider.ToDebugString()}, {navigation.Name})";
     }
 
-    public async Task<IReadOnlyCollection<TTargetEntity>> GetAffectedEntitiesAsync(TInput input, IncrementalContext? incrementalContext)
+    public async Task<IReadOnlyCollection<TTargetEntity>> GetAffectedEntitiesAsync(TInput input, IncrementalContext incrementalContext)
     {
         var affectedEntities = await affectedEntitiesProvider.GetAffectedEntitiesAsync(input, incrementalContext);
         var entities = new HashSet<TTargetEntity>();

@@ -10,7 +10,7 @@ public class NavigationAffectedEntitiesProvider<TInput, TSourceEntity, TTargetEn
         return $"EntitiesWithNavigationChange({navigation.ToDebugString()})";
     }
 
-    public virtual async Task<IReadOnlyCollection<TSourceEntity>> GetAffectedEntitiesAsync(TInput input, IncrementalContext? incrementalContext)
+    public virtual async Task<IReadOnlyCollection<TSourceEntity>> GetAffectedEntitiesAsync(TInput input, IncrementalContext incrementalContext)
     {
         return await navigation.GetAffectedEntitiesAsync(input, incrementalContext);
     }

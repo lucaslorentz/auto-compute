@@ -13,7 +13,7 @@ public class CompositeAffectedEntitiesProvider<TInput, TEntity>(
         return $"Concat({inner})";
     }
 
-    public async Task<IReadOnlyCollection<TEntity>> GetAffectedEntitiesAsync(TInput input, IncrementalContext? incrementalContext)
+    public async Task<IReadOnlyCollection<TEntity>> GetAffectedEntitiesAsync(TInput input, IncrementalContext incrementalContext)
     {
         var entities = new HashSet<TEntity>();
         foreach (var provider in _providers)

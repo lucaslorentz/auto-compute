@@ -31,7 +31,7 @@ public class EFCoreEntityNavigation<TSourceEntity, TTargetEntity>(
     public virtual async Task<IReadOnlyCollection<TTargetEntity>> LoadOriginalAsync(
         IEFCoreComputedInput input,
         IReadOnlyCollection<TSourceEntity> sourceEntities,
-        IncrementalContext? incrementalContext)
+        IncrementalContext incrementalContext)
     {
         await input.DbContext.BulkLoadAsync(sourceEntities, navigation);
 
@@ -61,7 +61,7 @@ public class EFCoreEntityNavigation<TSourceEntity, TTargetEntity>(
     public virtual async Task<IReadOnlyCollection<TTargetEntity>> LoadCurrentAsync(
         IEFCoreComputedInput input,
         IReadOnlyCollection<TSourceEntity> sourceEntities,
-        IncrementalContext? incrementalContext)
+        IncrementalContext incrementalContext)
     {
         await input.DbContext.BulkLoadAsync(sourceEntities, navigation);
 
@@ -275,7 +275,7 @@ public class EFCoreEntityNavigation<TSourceEntity, TTargetEntity>(
         }
     }
 
-    public virtual async Task<IReadOnlyCollection<TSourceEntity>> GetAffectedEntitiesAsync(IEFCoreComputedInput input, IncrementalContext? incrementalContext)
+    public virtual async Task<IReadOnlyCollection<TSourceEntity>> GetAffectedEntitiesAsync(IEFCoreComputedInput input, IncrementalContext incrementalContext)
     {
         var affectedEntities = new HashSet<TSourceEntity>();
         foreach (var entityEntry in input.EntityEntriesOfType(navigation.DeclaringEntityType))
