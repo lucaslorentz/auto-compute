@@ -51,7 +51,7 @@ public class OneToOneInverseTests
         var person = context!.Set<Person>().Find(1)!;
         var pet = context!.Set<Pet>().Find(1)!;
         person.FavoritePet = pet;
-        await context.SaveChangesAsync();
+        await context.SaveAllChangesAsync();
 
         person.FirstName = "Modified";
 
@@ -67,7 +67,7 @@ public class OneToOneInverseTests
         var person = context!.Set<Person>().Find(1)!;
         var pet = context!.Set<Pet>().Find(1)!;
         person.FavoritePet = pet;
-        await context.SaveChangesAsync();
+        await context.SaveAllChangesAsync();
 
         person.FavoritePet = null;
 
@@ -83,7 +83,7 @@ public class OneToOneInverseTests
         var person = context!.Set<Person>().Find(1)!;
         var pet = context!.Set<Pet>().Find(1)!;
         person.FavoritePet = pet;
-        await context.SaveChangesAsync();
+        await context.SaveAllChangesAsync();
 
         pet.FavoritePetInverse = null;
 

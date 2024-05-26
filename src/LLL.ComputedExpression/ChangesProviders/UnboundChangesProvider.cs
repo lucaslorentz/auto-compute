@@ -18,7 +18,7 @@ public class UnboundChangesProvider<TInput, TEntity, TValue, TChange>(
 
     public async Task<IReadOnlyDictionary<TEntity, TChange>> GetChangesAsync(
         TInput input,
-        ChangeMemory<TEntity, TChange> changeMemory)
+        ChangeMemory<TEntity, TChange>? changeMemory)
     {
         if (affectedEntitiesProvider is null)
             return ImmutableDictionary<TEntity, TChange>.Empty;
@@ -46,13 +46,16 @@ public class UnboundChangesProvider<TInput, TEntity, TValue, TChange>(
             changes[entity] = await GetChangeAsync(input, entity, incrementalContext, changeMemory);
         }
 
-        foreach (var entity in changeMemory.GetEntities())
+        if (changeMemory is not null)
         {
-            if (changes.ContainsKey(entity))
-                continue;
+            foreach (var entity in changeMemory.GetEntities())
+            {
+                if (changes.ContainsKey(entity))
+                    continue;
 
-            changes[entity] = await GetChangeAsync(input, entity, incrementalContext, changeMemory);
-            changeMemory.Remove(entity);
+                changes[entity] = await GetChangeAsync(input, entity, incrementalContext, changeMemory);
+                changeMemory.Remove(entity);
+            }
         }
 
         var filteredChanges = changes
@@ -70,14 +73,17 @@ public class UnboundChangesProvider<TInput, TEntity, TValue, TChange>(
         TInput input,
         TEntity entity,
         IncrementalContext incrementalContext,
-        ChangeMemory<TEntity, TChange> changeMemory)
+        ChangeMemory<TEntity, TChange>? changeMemory)
     {
         var valueChange = changeCalculation.GetChange(CreateComputedValues(input, entity, incrementalContext));
         return DeltaChange(changeMemory, entity, valueChange);
     }
 
-    private TChange DeltaChange(ChangeMemory<TEntity, TChange> changeMemory, TEntity entity, TChange result)
+    private TChange DeltaChange(ChangeMemory<TEntity, TChange>? changeMemory, TEntity entity, TChange result)
     {
+        if (changeMemory is null)
+            return result;
+
         var delta = changeMemory.TryGet(entity, out var previousResult)
             ? ChangeCalculation.DeltaChange(previousResult, result)
             : result;

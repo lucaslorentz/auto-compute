@@ -1,4 +1,4 @@
-﻿using System.Linq.Expressions;
+using System.Linq.Expressions;
 using LLL.ComputedExpression.ChangesProviders;
 using LLL.ComputedExpression.EFCore.Internal;
 using Microsoft.EntityFrameworkCore;
@@ -50,33 +50,33 @@ public static class EntityTypeBuilderExtensions
 
                 return async (dbContext) =>
                 {
-                    var numberOfUpdates = 0;
                     var input = dbContext.GetComputedInput();
                     var changes = await changesProvider.GetChangesAsync(input, new ChangeMemory<TEntity, TProperty>());
-                    foreach (var (entity, change) in changes)
+                    return async () =>
                     {
-                        var entityEntry = dbContext.Entry(entity);
-                        var propertyEntry = entityEntry.Property(property);
-
-                        var clrType = propertyEntry.Metadata.ClrType;
-
-                        var originalValue = entityEntry.State == EntityState.Added
-                            ? default!
-                            : (TProperty)propertyEntry.OriginalValue!;
-
-                        var newValue = calculation.ApplyChange(
-                            originalValue,
-                            change
-                        );
-
-                        var valueComparer = property.GetValueComparer();
-                        if (!valueComparer.Equals(propertyEntry.CurrentValue, newValue))
+                        foreach (var (entity, change) in changes)
                         {
+                            var entityEntry = dbContext.Entry(entity);
+                            var propertyEntry = entityEntry.Property(property);
+
+                            var clrType = propertyEntry.Metadata.ClrType;
+
+                            var originalValue = entityEntry.State == EntityState.Added
+                                ? default!
+                                : (TProperty)propertyEntry.OriginalValue!;
+
+                            var newValue = calculation.ApplyChange(
+                                originalValue,
+                                change
+                            );
+
+                            var valueComparer = property.GetValueComparer();
+                            if (valueComparer.Equals(propertyEntry.CurrentValue, newValue))
+                                continue;
+
                             propertyEntry.CurrentValue = newValue;
-                            numberOfUpdates++;
                         }
-                    }
-                    return numberOfUpdates;
+                    };
                 };
             }
             catch (Exception ex)

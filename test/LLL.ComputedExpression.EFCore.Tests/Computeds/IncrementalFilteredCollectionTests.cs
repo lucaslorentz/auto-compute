@@ -16,7 +16,7 @@ public class IncrementalFilteredCollectionTests
         var pet = new Pet { Type = "Cat" };
         person.Pets.Add(pet);
 
-        await context.SaveChangesAsync();
+        await context.SaveAllChangesAsync();
 
         person.Total.Should().Be(2);
     }
@@ -33,7 +33,7 @@ public class IncrementalFilteredCollectionTests
         var pet = new Pet { Type = "Cat", Owner = person };
         context.Add(pet);
 
-        await context.SaveChangesAsync();
+        await context.SaveAllChangesAsync();
 
         person.Total.Should().Be(2);
     }
@@ -50,7 +50,7 @@ public class IncrementalFilteredCollectionTests
         var pet = context!.Set<Pet>().Find(1)!;
         pet.Type = "Modified";
 
-        await context.SaveChangesAsync();
+        await context.SaveAllChangesAsync();
 
         person.Total.Should().Be(0);
     }
@@ -67,7 +67,7 @@ public class IncrementalFilteredCollectionTests
         var pet = context!.Set<Pet>().Find(1)!;
         pet.Type = "Dog";
 
-        await context.SaveChangesAsync();
+        await context.SaveAllChangesAsync();
 
         person.Total.Should().Be(1);
     }
@@ -84,7 +84,7 @@ public class IncrementalFilteredCollectionTests
         var pet = context!.Set<Pet>().Find(1)!;
         person.Pets.Remove(pet);
 
-        await context.SaveChangesAsync();
+        await context.SaveAllChangesAsync();
 
         person.Total.Should().Be(0);
     }
@@ -101,7 +101,7 @@ public class IncrementalFilteredCollectionTests
         var pet = context!.Set<Pet>().Find(1)!;
         pet.Owner = null;
 
-        await context.SaveChangesAsync();
+        await context.SaveAllChangesAsync();
 
         person.Total.Should().Be(0);
     }
