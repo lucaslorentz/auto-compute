@@ -2,10 +2,11 @@
 namespace LLL.ComputedExpression.ChangeCalculations;
 
 public class ValueChangeCalculation<TValue>(
+    bool incremental,
     IEqualityComparer<TValue> comparer
 ) : IChangeCalculation<TValue, ValueChange<TValue>>
 {
-    public bool IsIncremental => false;
+    public bool IsIncremental => incremental;
     public bool PreLoadEntities => true;
 
     public ValueChange<TValue> GetChange(IComputedValues<TValue> computedValues)

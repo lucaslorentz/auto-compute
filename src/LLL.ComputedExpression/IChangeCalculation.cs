@@ -9,7 +9,7 @@ public interface IChangeCalculation<TResult>
     TResult AddDelta(TResult original, TResult delta);
 }
 
-public interface IChangeCalculation<TValue, TResult> : IChangeCalculation<TResult>
+public interface IChangeCalculation<in TValue, TResult> : IChangeCalculation<TResult>
 {
     TResult GetChange(IComputedValues<TValue> computedValues);
 }

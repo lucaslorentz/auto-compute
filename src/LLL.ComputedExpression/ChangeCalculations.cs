@@ -1,5 +1,5 @@
 namespace LLL.ComputedExpression;
 
-public class ChangeCalculations<TValue>
+public class ChangeCalculations<TValue> : IChangeCalculations<TValue>
 {
 }

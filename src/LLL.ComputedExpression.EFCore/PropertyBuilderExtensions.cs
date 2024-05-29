@@ -40,7 +40,7 @@ public static class EntityTypeBuilderExtensions
         {
             try
             {
-                var calculation = calculationSelector.Compile()(new());
+                var calculation = calculationSelector.Compile()(new ChangeCalculations<TValue>());
 
                 var changesProvider = analyzer.GetChangesProvider(
                     computedExpression,

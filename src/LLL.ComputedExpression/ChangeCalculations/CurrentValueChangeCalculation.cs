@@ -1,10 +1,10 @@
 
 namespace LLL.ComputedExpression.ChangeCalculations;
 
-public class CurrentValueChangeCalculation<TValue>
+public class CurrentValueChangeCalculation<TValue>(bool incremental)
     : IChangeCalculation<TValue, TValue>
 {
-    public bool IsIncremental => false;
+    public bool IsIncremental => incremental;
     public bool PreLoadEntities => true;
 
     public TValue GetChange(IComputedValues<TValue> computedValues)

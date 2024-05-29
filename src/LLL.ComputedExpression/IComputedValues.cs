@@ -1,6 +1,6 @@
 namespace LLL.ComputedExpression;
 
-public interface IComputedValues<TValue>
+public interface IComputedValues<out TValue>
 {
     TValue GetOriginalValue();
     TValue GetCurrentValue();
