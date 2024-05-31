@@ -291,22 +291,22 @@ public class EFCoreEntityNavigation<TSourceEntity, TTargetEntity>(
                 {
                     affectedEntities.Add((TSourceEntity)entityEntry.Entity);
 
-                    if (entityEntry.State != EntityState.Added)
-                    {
-                        foreach (var ent in navigationEntry.GetOriginalEntities())
-                        {
-                            incrementalContext?.SetShouldLoadAll(ent);
-                            incrementalContext?.AddIncrementalEntity(entityEntry.Entity, this, ent);
-                        }
-                    }
+                    var originalEntities = entityEntry.State == EntityState.Added
+                        ? []
+                        : navigationEntry.GetOriginalEntities().ToArray();
 
-                    if (entityEntry.State != EntityState.Deleted)
+                    var currentEntities = entityEntry.State == EntityState.Deleted
+                        ? []
+                        : navigationEntry.GetEntities().ToArray();
+
+                    var modifiedEntities = currentEntities.Except(originalEntities)
+                        .Concat(originalEntities.Except(currentEntities))
+                        .ToArray();
+
+                    foreach (var ent in modifiedEntities)
                     {
-                        foreach (var ent in navigationEntry.GetEntities())
-                        {
-                            incrementalContext?.SetShouldLoadAll(ent);
-                            incrementalContext?.AddIncrementalEntity(entityEntry.Entity, this, ent);
-                        }
+                        incrementalContext?.SetShouldLoadAll(ent);
+                        incrementalContext?.AddIncrementalEntity(entityEntry.Entity, this, ent);
                     }
                 }
             }
@@ -327,24 +327,23 @@ public class EFCoreEntityNavigation<TSourceEntity, TTargetEntity>(
                         if (!inverseNavigationEntry.IsLoaded && entityEntry.State != EntityState.Detached)
                             await inverseNavigationEntry.LoadAsync();
 
-                        if (entityEntry.State != EntityState.Added)
-                        {
-                            foreach (var entity in inverseNavigationEntry.GetOriginalEntities())
-                            {
-                                affectedEntities.Add((TSourceEntity)entity);
-                                incrementalContext?.SetShouldLoadAll(entityEntry.Entity);
-                                incrementalContext?.AddIncrementalEntity(entity, this, entityEntry.Entity);
-                            }
-                        }
+                        var originalEntities = entityEntry.State == EntityState.Added
+                            ? []
+                            : inverseNavigationEntry.GetOriginalEntities().ToArray();
 
-                        if (entityEntry.State != EntityState.Deleted)
+                        var currentEntities = entityEntry.State == EntityState.Deleted
+                            ? []
+                            : inverseNavigationEntry.GetEntities().ToArray();
+
+                        var modifiedEntities = currentEntities.Except(originalEntities)
+                            .Concat(originalEntities.Except(currentEntities))
+                            .ToArray();
+
+                        foreach (var entity in modifiedEntities)
                         {
-                            foreach (var entity in inverseNavigationEntry.GetEntities())
-                            {
-                                affectedEntities.Add((TSourceEntity)entity);
-                                incrementalContext?.SetShouldLoadAll(entityEntry.Entity);
-                                incrementalContext?.AddIncrementalEntity(entity, this, entityEntry.Entity);
-                            }
+                            affectedEntities.Add((TSourceEntity)entity);
+                            incrementalContext?.SetShouldLoadAll(entityEntry.Entity);
+                            incrementalContext?.AddIncrementalEntity(entity, this, entityEntry.Entity);
                         }
                     }
                 }
