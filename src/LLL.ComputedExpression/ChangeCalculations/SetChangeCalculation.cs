@@ -16,8 +16,8 @@ public class SetChangeCalculation<TElement>(
 
         return new SetChange<TElement>
         {
-            Removed = original.Except(current, comparer).ToArray(),
-            Added = current.Except(original, comparer).ToArray()
+            Removed = (original ?? []).Except(current ?? [], comparer).ToArray(),
+            Added = (current ?? []).Except(original ?? [], comparer).ToArray()
         };
     }
 
