@@ -197,14 +197,14 @@ public class EFCoreEntityNavigation<TSourceEntity, TTargetEntity>(
                 {
                     var relatedEntry = input.DbContext.Entry(e);
                     skipNavigation.LoadJoinEntity(input, principalEntry, relatedEntry);
-                    return skipNavigation.WasSkipRelated(
+                    return skipNavigation.WasRelated(
                         input,
                         principalEntry,
                         relatedEntry);
                 }
                 else if (navigation is INavigation directNav)
                 {
-                    return directNav.WasDirectlyRelated(
+                    return directNav.WasRelated(
                         principalEntry,
                         input.DbContext.Entry(e));
                 }
@@ -245,14 +245,14 @@ public class EFCoreEntityNavigation<TSourceEntity, TTargetEntity>(
                 {
                     var relatedEntry = input.DbContext.Entry(e);
                     skipNavigation.LoadJoinEntity(input, principalEntry, relatedEntry);
-                    return skipNavigation.IsSkipRelated(
+                    return skipNavigation.IsRelated(
                         input,
                         principalEntry,
                         relatedEntry);
                 }
                 else if (navigation is INavigation directNav)
                 {
-                    return directNav.IsDirectlyRelated(
+                    return directNav.IsRelated(
                         principalEntry,
                         input.DbContext.Entry(e));
                 }
@@ -291,17 +291,7 @@ public class EFCoreEntityNavigation<TSourceEntity, TTargetEntity>(
                 {
                     affectedEntities.Add((TSourceEntity)entityEntry.Entity);
 
-                    var originalEntities = entityEntry.State == EntityState.Added
-                        ? []
-                        : navigationEntry.GetOriginalEntities().ToArray();
-
-                    var currentEntities = entityEntry.State == EntityState.Deleted
-                        ? []
-                        : navigationEntry.GetEntities().ToArray();
-
-                    var modifiedEntities = currentEntities.Except(originalEntities)
-                        .Concat(originalEntities.Except(currentEntities))
-                        .ToArray();
+                    var modifiedEntities = navigationEntry.GetModifiedEntities();
 
                     foreach (var ent in modifiedEntities)
                     {
@@ -327,17 +317,7 @@ public class EFCoreEntityNavigation<TSourceEntity, TTargetEntity>(
                         if (!inverseNavigationEntry.IsLoaded && entityEntry.State != EntityState.Detached)
                             await inverseNavigationEntry.LoadAsync();
 
-                        var originalEntities = entityEntry.State == EntityState.Added
-                            ? []
-                            : inverseNavigationEntry.GetOriginalEntities().ToArray();
-
-                        var currentEntities = entityEntry.State == EntityState.Deleted
-                            ? []
-                            : inverseNavigationEntry.GetEntities().ToArray();
-
-                        var modifiedEntities = currentEntities.Except(originalEntities)
-                            .Concat(originalEntities.Except(currentEntities))
-                            .ToArray();
+                        var modifiedEntities = inverseNavigationEntry.GetModifiedEntities();
 
                         foreach (var entity in modifiedEntities)
                         {

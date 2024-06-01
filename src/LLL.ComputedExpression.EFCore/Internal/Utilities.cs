@@ -26,19 +26,18 @@ public static class Utilities
 
             if (baseNavigation is ISkipNavigation skipNavigation)
             {
-                if (navigationEntry.CurrentValue is IEnumerable currentValue)
+                // Add current items that are not new
+                foreach (var item in navigationEntry.GetEntities())
                 {
-                    foreach (var item in currentValue)
-                    {
-                        var itemEntry = dbContext.Entry(item);
+                    var itemEntry = dbContext.Entry(item);
 
-                        if (skipNavigation.IsSkipRelationNew(input, entityEntry, itemEntry))
-                            continue;
+                    if (skipNavigation.IsRelationshipNew(input, entityEntry, itemEntry))
+                        continue;
 
-                        collectionAccessor.AddStandalone(originalValue, item);
-                    }
+                    collectionAccessor.AddStandalone(originalValue, item);
                 }
 
+                // Add items that were in the collection but were removed
                 var joinReferenceToOther = skipNavigation.Inverse.ForeignKey.DependentToPrincipal;
                 foreach (var joinEntry in input.EntityEntriesOfType(skipNavigation.JoinEntityType))
                 {
@@ -46,33 +45,33 @@ public static class Utilities
                     var otherReferenceEntry = joinEntry.Reference(joinReferenceToOther!);
                     if ((joinEntry.State == EntityState.Deleted || selfReferenceEntry.IsModified || otherReferenceEntry.IsModified)
                         && joinEntry.State != EntityState.Added
-                        && skipNavigation.ForeignKey.IsConnected(entityEntry.CurrentValues, joinEntry.OriginalValues))
+                        && skipNavigation.ForeignKey.IsConnected(entityEntry.OriginalValues, joinEntry.OriginalValues))
                     {
-                        collectionAccessor.AddStandalone(originalValue, otherReferenceEntry.CurrentValue!);
+                        collectionAccessor.AddStandalone(originalValue, otherReferenceEntry.GetOriginalValue()!);
                     }
                 }
             }
             else if (baseNavigation is INavigation navigation)
             {
-                if (navigationEntry.CurrentValue is IEnumerable currentValue)
+                // Add current items that are not new
+                foreach (var item in navigationEntry.GetEntities())
                 {
-                    foreach (var item in currentValue)
-                    {
-                        var itemEntry = dbContext.Entry(item);
+                    var itemEntry = dbContext.Entry(item);
 
-                        if (navigation.IsDirectRelationNew(entityEntry, itemEntry))
-                            continue;
-
-                        collectionAccessor.AddStandalone(originalValue, item);
-                    }
-                }
-
-                foreach (var itemEntry in input.EntityEntriesOfType(baseNavigation.TargetEntityType))
-                {
-                    if (!navigation.WasDirectlyRelated(entityEntry, itemEntry))
+                    if (navigation.IsRelationshipNew(entityEntry, itemEntry))
                         continue;
 
-                    collectionAccessor.AddStandalone(originalValue, itemEntry.Entity);
+                    collectionAccessor.AddStandalone(originalValue, item);
+                }
+
+                // Add items that were in the collection but were removed
+                foreach (var itemEntry in input.EntityEntriesOfType(baseNavigation.TargetEntityType))
+                {
+                    if (!navigation.IsRelated(entityEntry, itemEntry)
+                        && navigation.WasRelated(entityEntry, itemEntry))
+                    {
+                        collectionAccessor.AddStandalone(originalValue, itemEntry.Entity);
+                    }
                 }
             }
 
@@ -130,38 +129,51 @@ public static class Utilities
         }
     }
 
-    public static IEnumerable<object> GetOriginalEntities(this NavigationEntry navigationEntry)
+    public static IReadOnlyCollection<object> GetOriginalEntities(this NavigationEntry navigationEntry)
     {
         var originalValue = navigationEntry.GetOriginalValue();
         if (navigationEntry.Metadata.IsCollection)
         {
             if (originalValue is IEnumerable values)
-            {
-                foreach (var value in values)
-                    yield return value;
-            }
+                return values.OfType<object>().ToArray();
         }
         else if (originalValue is not null)
         {
-            yield return originalValue;
+            return [originalValue];
         }
+
+        return [];
     }
 
-    public static IEnumerable<object> GetEntities(this NavigationEntry navigationEntry)
+    public static IReadOnlyCollection<object> GetEntities(this NavigationEntry navigationEntry)
     {
         var currentValue = navigationEntry.CurrentValue;
         if (navigationEntry.Metadata.IsCollection)
         {
             if (currentValue is IEnumerable values)
-            {
-                foreach (var value in values)
-                    yield return value;
-            }
+                return values.OfType<object>().ToArray();
         }
         else if (currentValue is not null)
         {
-            yield return currentValue;
+            return [currentValue];
         }
+
+        return [];
+    }
+
+    public static IReadOnlyCollection<object> GetModifiedEntities(this NavigationEntry navigationEntry)
+    {
+        var originalEntities = navigationEntry.EntityEntry.State == EntityState.Added
+            ? []
+            : navigationEntry.GetOriginalEntities().ToArray();
+
+        var currentEntities = navigationEntry.EntityEntry.State == EntityState.Deleted
+            ? []
+            : navigationEntry.GetEntities().ToArray();
+
+        return currentEntities.Except(originalEntities)
+            .Concat(originalEntities.Except(currentEntities))
+            .ToArray();
     }
 
     private readonly static ConditionalWeakTable<IProperty, IEntityProperty> _entityProperties = [];
@@ -208,7 +220,7 @@ public static class Utilities
         }
     }
 
-    public static bool WasDirectlyRelated(
+    public static bool WasRelated(
         this INavigation navigation,
         EntityEntry entry,
         EntityEntry relatedEntry)
@@ -224,7 +236,7 @@ public static class Utilities
         return navigation.ForeignKey.IsConnected(principalEntry.OriginalValues, dependantEntry.OriginalValues);
     }
 
-    public static bool IsDirectlyRelated(
+    public static bool IsRelated(
         this INavigation navigation,
         EntityEntry entry,
         EntityEntry relatedEntry)
@@ -240,17 +252,17 @@ public static class Utilities
         return navigation.ForeignKey.IsConnected(principalEntry.CurrentValues, dependantEntry.CurrentValues);
     }
 
-    public static bool IsDirectRelationNew(
+    public static bool IsRelationshipNew(
         this INavigation navigation,
         EntityEntry principalEntry,
         EntityEntry dependentEntry
     )
     {
-        return !navigation.WasDirectlyRelated(principalEntry, dependentEntry)
-            && navigation.IsDirectlyRelated(principalEntry, dependentEntry);
+        return !navigation.WasRelated(principalEntry, dependentEntry)
+            && navigation.IsRelated(principalEntry, dependentEntry);
     }
 
-    public static bool WasSkipRelated(
+    public static bool WasRelated(
         this ISkipNavigation skipNavigation,
         IEFCoreComputedInput input,
         EntityEntry entry,
@@ -275,7 +287,7 @@ public static class Utilities
         return false;
     }
 
-    public static bool IsSkipRelated(
+    public static bool IsRelated(
         this ISkipNavigation skipNavigation,
         IEFCoreComputedInput input,
         EntityEntry entry,
@@ -300,14 +312,14 @@ public static class Utilities
         return false;
     }
 
-    public static bool IsSkipRelationNew(
+    public static bool IsRelationshipNew(
         this ISkipNavigation skipNavigation,
         IEFCoreComputedInput input,
         EntityEntry entry,
         EntityEntry relatedEntry)
     {
-        return !skipNavigation.WasSkipRelated(input, entry, relatedEntry)
-            && skipNavigation.IsSkipRelated(input, entry, relatedEntry);
+        return !skipNavigation.WasRelated(input, entry, relatedEntry)
+            && skipNavigation.IsRelated(input, entry, relatedEntry);
     }
 
     public static void LoadJoinEntity(
