@@ -12,12 +12,17 @@ public class EFCoreEntityMemberAccessLocator(IModel model) :
         if (node is MemberExpression memberExpression
             && memberExpression.Expression is not null)
         {
-            var type = memberExpression.Expression.Type;
-            var entityType = model.FindEntityType(type);
+            var entityExpression = memberExpression.Expression.Type.IsInterface
+                && memberExpression.Expression is UnaryExpression unaryExpression
+                && unaryExpression.NodeType == ExpressionType.Convert
+                ? unaryExpression.Operand
+                : memberExpression.Expression;
+
+            var entityType = model.FindEntityType(entityExpression.Type);
             var navigation = (INavigationBase?)entityType?.FindNavigation(memberExpression.Member)
                 ?? entityType?.FindSkipNavigation(memberExpression.Member);
             if (navigation != null)
-                return EntityMemberAccess.Create(node, memberExpression.Expression, GetNavigation(navigation));
+                return EntityMemberAccess.Create(node, entityExpression, GetNavigation(navigation));
         }
 
         return null;
@@ -28,11 +33,17 @@ public class EFCoreEntityMemberAccessLocator(IModel model) :
         if (node is MemberExpression memberExpression
             && memberExpression.Expression is not null)
         {
-            var type = memberExpression.Expression.Type;
+            var entityExpression = memberExpression.Expression.Type.IsInterface
+                && memberExpression.Expression is UnaryExpression unaryExpression
+                && unaryExpression.NodeType == ExpressionType.Convert
+                ? unaryExpression.Operand
+                : memberExpression.Expression;
+
+            var type = entityExpression.Type;
             var entityType = model.FindEntityType(type);
             var property = entityType?.FindProperty(memberExpression.Member);
             if (property is not null)
-                return EntityMemberAccess.Create(node, memberExpression.Expression, GetProperty(property));
+                return EntityMemberAccess.Create(node, entityExpression, GetProperty(property));
         }
 
         return null;
