@@ -66,10 +66,10 @@ public class ComputedExpressionAnalyzer<TInput>(
         return this;
     }
 
-    public IUnboundChangesProvider<TInput, TEntity, TResult>? GetChangesProvider<TEntity, TValue, TResult>(
+    public IUnboundChangesProvider<TInput, TEntity, TChange>? GetChangesProvider<TEntity, TValue, TChange>(
         Expression<Func<TEntity, TValue>> computedExpression,
         Expression<Func<TEntity, bool>>? filterExpression,
-        Expression<ChangeCalculationSelector<TValue, TResult>> changeCalculationSelector)
+        Expression<ChangeCalculationSelector<TValue, TChange>> changeCalculationSelector)
         where TEntity : class
     {
         filterExpression ??= static e => true;
@@ -86,10 +86,10 @@ public class ComputedExpressionAnalyzer<TInput>(
         );
     }
 
-    private IUnboundChangesProvider<TInput, TEntity, TResult>? CreateChangesProvider<TEntity, TValue, TResult>(
+    private IUnboundChangesProvider<TInput, TEntity, TChange>? CreateChangesProvider<TEntity, TValue, TChange>(
         Expression<Func<TEntity, TValue>> computedExpression,
         Expression<Func<TEntity, bool>> filterExpression,
-        Expression<ChangeCalculationSelector<TValue, TResult>> changeCalculationSelector)
+        Expression<ChangeCalculationSelector<TValue, TChange>> changeCalculationSelector)
         where TEntity : class
     {
         computedExpression = PrepareComputedExpression(computedExpression);
@@ -114,7 +114,7 @@ public class ComputedExpressionAnalyzer<TInput>(
 
         var filterEntityContext = GetEntityContext(filterExpression, false);
 
-        return new UnboundChangesProvider<TInput, TEntity, TValue, TResult>(
+        return new UnboundChangesProvider<TInput, TEntity, TValue, TChange>(
             affectedEntitiesProvider,
             computedEntityContext,
             filterExpression.Compile(),

@@ -3,25 +3,25 @@ using LLL.ComputedExpression.EntityContexts;
 
 namespace LLL.ComputedExpression.ChangesProviders;
 
-public class UnboundChangesProvider<TInput, TEntity, TValue, TResult>(
+public class UnboundChangesProvider<TInput, TEntity, TValue, TChange>(
     IAffectedEntitiesProvider<TInput, TEntity>? affectedEntitiesProvider,
     EntityContext computedEntityContext,
     Func<TEntity, bool> filter,
     EntityContext filterEntityContext,
     IEntityActionProvider entityActionProvider,
-    IChangeCalculation<TValue, TResult> changeCalculation,
+    IChangeCalculation<TValue, TChange> changeCalculation,
     ComputedValueAccessors<TInput, TEntity, TValue> computedValueAccessors
-) : IUnboundChangesProvider<TInput, TEntity, TResult>
+) : IUnboundChangesProvider<TInput, TEntity, TChange>
     where TEntity : class
 {
-    public IChangeCalculation<TResult> ChangeCalculation => changeCalculation;
+    public IChangeCalculation<TChange> ChangeCalculation => changeCalculation;
 
-    public async Task<IReadOnlyDictionary<TEntity, TResult>> GetChangesAsync(
+    public async Task<IReadOnlyDictionary<TEntity, TChange>> GetChangesAsync(
         TInput input,
-        ChangeMemory<TEntity, TResult> changeMemory)
+        ChangeMemory<TEntity, TChange> changeMemory)
     {
         if (affectedEntitiesProvider is null)
-            return ImmutableDictionary<TEntity, TResult>.Empty;
+            return ImmutableDictionary<TEntity, TChange>.Empty;
 
         var incrementalContext = new IncrementalContext();
 
@@ -39,7 +39,7 @@ public class UnboundChangesProvider<TInput, TEntity, TValue, TResult>(
         else if (changeCalculation.PreLoadEntities)
             await computedEntityContext.PreLoadNavigationsAsync(input!, affectedEntities, incrementalContext);
 
-        var changes = new Dictionary<TEntity, TResult>();
+        var changes = new Dictionary<TEntity, TChange>();
 
         foreach (var entity in affectedEntities)
         {
@@ -58,7 +58,7 @@ public class UnboundChangesProvider<TInput, TEntity, TValue, TResult>(
         var filteredChanges = changes
             .Where(kv => !changeCalculation.IsNoChange(kv.Value));
 
-        return new Dictionary<TEntity, TResult>(filteredChanges);
+        return new Dictionary<TEntity, TChange>(filteredChanges);
     }
 
     public string? ToDebugString()
@@ -66,20 +66,20 @@ public class UnboundChangesProvider<TInput, TEntity, TValue, TResult>(
         return affectedEntitiesProvider?.ToDebugString();
     }
 
-    private async Task<TResult> GetChangeAsync(
+    private async Task<TChange> GetChangeAsync(
         TInput input,
         TEntity entity,
         IncrementalContext incrementalContext,
-        ChangeMemory<TEntity, TResult> changeMemory)
+        ChangeMemory<TEntity, TChange> changeMemory)
     {
         var valueChange = changeCalculation.GetChange(CreateComputedValues(input, entity, incrementalContext));
         return DeltaChange(changeMemory, entity, valueChange);
     }
 
-    private TResult DeltaChange(ChangeMemory<TEntity, TResult> changeMemory, TEntity entity, TResult result)
+    private TChange DeltaChange(ChangeMemory<TEntity, TChange> changeMemory, TEntity entity, TChange result)
     {
         var delta = changeMemory.TryGet(entity, out var previousResult)
-            ? ChangeCalculation.CalculateDelta(previousResult, result)
+            ? ChangeCalculation.DeltaChange(previousResult, result)
             : result;
 
         changeMemory.AddOrUpdate(entity, result);
@@ -96,5 +96,5 @@ public class UnboundChangesProvider<TInput, TEntity, TValue, TResult>(
             computedValueAccessors);
     }
 
-    public record class ValueWrapper(TResult Value);
+    public record class ValueWrapper(TChange Value);
 }

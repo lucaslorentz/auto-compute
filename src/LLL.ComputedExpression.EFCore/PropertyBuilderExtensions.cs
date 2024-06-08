@@ -53,7 +53,7 @@ public static class EntityTypeBuilderExtensions
                     var numberOfUpdates = 0;
                     var input = dbContext.GetComputedInput();
                     var changes = await changesProvider.GetChangesAsync(input, new ChangeMemory<TEntity, TProperty>());
-                    foreach (var (entity, value) in changes)
+                    foreach (var (entity, change) in changes)
                     {
                         var entityEntry = dbContext.Entry(entity);
                         var propertyEntry = entityEntry.Property(property);
@@ -64,9 +64,9 @@ public static class EntityTypeBuilderExtensions
                             ? default!
                             : (TProperty)propertyEntry.OriginalValue!;
 
-                        var newValue = calculation.AddDelta(
+                        var newValue = calculation.ApplyChange(
                             originalValue,
-                            value
+                            change
                         );
 
                         var valueComparer = property.GetValueComparer();

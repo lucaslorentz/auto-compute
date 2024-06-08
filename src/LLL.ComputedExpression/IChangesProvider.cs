@@ -1,8 +1,8 @@
 namespace LLL.ComputedExpression;
 
-public interface IChangesProvider<TEntity, TResult>
+public interface IChangesProvider<TEntity, TChange>
 {
     string? ToDebugString();
-    
-    Task<IReadOnlyDictionary<TEntity, TResult>> GetChangesAsync();
+
+    Task<IReadOnlyDictionary<TEntity, TChange>> GetChangesAsync();
 }

@@ -30,7 +30,7 @@ public class ValueChangeCalculation<TValue>(
         return comparer.Equals(result.Original, result.Current);
     }
 
-    public ValueChange<TValue> CalculateDelta(ValueChange<TValue> previous, ValueChange<TValue> current)
+    public ValueChange<TValue> DeltaChange(ValueChange<TValue> previous, ValueChange<TValue> current)
     {
         return new ValueChange<TValue>(
             previous.Current,
@@ -38,11 +38,11 @@ public class ValueChangeCalculation<TValue>(
         );
     }
 
-    public ValueChange<TValue> AddDelta(ValueChange<TValue> value, ValueChange<TValue> delta)
+    public ValueChange<TValue> ApplyChange(ValueChange<TValue> value, ValueChange<TValue> change)
     {
         return new ValueChange<TValue>(
             value.Original,
-            delta.Current
+            change.Current
         );
     }
 }

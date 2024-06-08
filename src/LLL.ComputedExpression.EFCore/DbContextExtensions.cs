@@ -20,11 +20,11 @@ public static class DbContextExtensions
         return optionsBuilder;
     }
 
-    public static async Task<IReadOnlyDictionary<TEntity, TResult>> GetChangesAsync<TEntity, TValue, TResult>(
+    public static async Task<IReadOnlyDictionary<TEntity, TChange>> GetChangesAsync<TEntity, TValue, TChange>(
         this DbContext dbContext,
         Expression<Func<TEntity, TValue>> computedExpression,
         Expression<Func<TEntity, bool>>? filterExpression,
-        Expression<ChangeCalculationSelector<TValue, TResult>> calculationSelector)
+        Expression<ChangeCalculationSelector<TValue, TChange>> calculationSelector)
         where TEntity : class
     {
         var changesProvider = dbContext.GetChangesProvider(
@@ -33,16 +33,16 @@ public static class DbContextExtensions
             calculationSelector);
 
         if (changesProvider is null)
-            return ImmutableDictionary<TEntity, TResult>.Empty;
+            return ImmutableDictionary<TEntity, TChange>.Empty;
 
         return await changesProvider.GetChangesAsync();
     }
 
-    public static IChangesProvider<TEntity, TResult>? GetChangesProvider<TEntity, TValue, TResult>(
+    public static IChangesProvider<TEntity, TChange>? GetChangesProvider<TEntity, TValue, TChange>(
         this DbContext dbContext,
         Expression<Func<TEntity, TValue>> computedExpression,
         Expression<Func<TEntity, bool>>? filterExpression,
-        Expression<ChangeCalculationSelector<TValue, TResult>> calculationSelector)
+        Expression<ChangeCalculationSelector<TValue, TChange>> calculationSelector)
         where TEntity : class
     {
         var analyzer = GetComputedExpressionAnalyzer(dbContext);
@@ -55,10 +55,10 @@ public static class DbContextExtensions
         if (unboundChangesProvider is null)
             return null;
 
-        return new ChangesProvider<IEFCoreComputedInput, TEntity, TResult>(
+        return new ChangesProvider<IEFCoreComputedInput, TEntity, TChange>(
             unboundChangesProvider,
             dbContext.GetComputedInput(),
-            new ChangeMemory<TEntity, TResult>()
+            new ChangeMemory<TEntity, TChange>()
         );
     }
 

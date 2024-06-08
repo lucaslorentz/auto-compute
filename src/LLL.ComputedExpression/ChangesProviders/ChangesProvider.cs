@@ -1,13 +1,13 @@
 namespace LLL.ComputedExpression.ChangesProviders;
 
-public class ChangesProvider<TInput, TEntity, TResult>(
-    IUnboundChangesProvider<TInput, TEntity, TResult> unboundChangesProvider,
+public class ChangesProvider<TInput, TEntity, TChange>(
+    IUnboundChangesProvider<TInput, TEntity, TChange> unboundChangesProvider,
     TInput input,
-    ChangeMemory<TEntity, TResult> memory
-) : IChangesProvider<TEntity, TResult>
+    ChangeMemory<TEntity, TChange> memory
+) : IChangesProvider<TEntity, TChange>
     where TEntity : class
 {
-    public async Task<IReadOnlyDictionary<TEntity, TResult>> GetChangesAsync()
+    public async Task<IReadOnlyDictionary<TEntity, TChange>> GetChangesAsync()
     {
         return await unboundChangesProvider.GetChangesAsync(input, memory);
     }

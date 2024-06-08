@@ -22,12 +22,12 @@ public class VoidChangeCalculation<TValue>
         return false;
     }
 
-    public VoidChange CalculateDelta(VoidChange previous, VoidChange current)
+    public VoidChange DeltaChange(VoidChange previous, VoidChange current)
     {
         return default;
     }
 
-    public VoidChange AddDelta(VoidChange value, VoidChange delta)
+    public VoidChange ApplyChange(VoidChange value, VoidChange change)
     {
         return default;
     }

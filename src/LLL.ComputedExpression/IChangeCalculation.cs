@@ -1,15 +1,15 @@
 namespace LLL.ComputedExpression;
 
-public interface IChangeCalculation<TResult>
+public interface IChangeCalculation<TChange>
 {
     bool IsIncremental { get; }
     bool PreLoadEntities { get; }
-    bool IsNoChange(TResult result);
-    TResult CalculateDelta(TResult previous, TResult current);
-    TResult AddDelta(TResult original, TResult delta);
+    bool IsNoChange(TChange result);
+    TChange DeltaChange(TChange previous, TChange current);
+    TChange ApplyChange(TChange original, TChange change);
 }
 
-public interface IChangeCalculation<in TValue, TResult> : IChangeCalculation<TResult>
+public interface IChangeCalculation<in TValue, TChange> : IChangeCalculation<TChange>
 {
-    TResult GetChange(IComputedValues<TValue> computedValues);
+    TChange GetChange(IComputedValues<TValue> computedValues);
 }

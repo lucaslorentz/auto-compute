@@ -17,13 +17,13 @@ public class CurrentValueChangeCalculation<TValue>(bool incremental)
         return false;
     }
 
-    public TValue CalculateDelta(TValue previous, TValue current)
+    public TValue DeltaChange(TValue previous, TValue current)
     {
         return current;
     }
 
-    public TValue AddDelta(TValue value, TValue delta)
+    public TValue ApplyChange(TValue value, TValue change)
     {
-        return delta;
+        return change;
     }
 }

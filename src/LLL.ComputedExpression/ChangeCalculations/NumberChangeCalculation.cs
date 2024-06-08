@@ -19,13 +19,13 @@ public class NumberChangeCalculation<TValue>(bool incremental)
         return TValue.IsZero(result);
     }
 
-    public TValue CalculateDelta(TValue previous, TValue current)
+    public TValue DeltaChange(TValue previous, TValue current)
     {
         return current - previous;
     }
 
-    public TValue AddDelta(TValue value, TValue delta)
+    public TValue ApplyChange(TValue value, TValue change)
     {
-        return value + delta;
+        return value + change;
     }
 }

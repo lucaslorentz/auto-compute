@@ -26,7 +26,7 @@ public class SetChangeCalculation<TElement>(
         return result.Removed.Count == 0 && result.Added.Count == 0;
     }
 
-    public SetChange<TElement> CalculateDelta(SetChange<TElement> previous, SetChange<TElement> current)
+    public SetChange<TElement> DeltaChange(SetChange<TElement> previous, SetChange<TElement> current)
     {
         return new SetChange<TElement>
         {
@@ -39,12 +39,12 @@ public class SetChangeCalculation<TElement>(
         };
     }
 
-    public SetChange<TElement> AddDelta(SetChange<TElement> value, SetChange<TElement> delta)
+    public SetChange<TElement> ApplyChange(SetChange<TElement> value, SetChange<TElement> change)
     {
         return new SetChange<TElement>
         {
-            Removed = value.Removed.Except(delta.Added).Concat(delta.Removed).ToArray(),
-            Added = value.Added.Except(delta.Removed).Concat(delta.Added).ToArray()
+            Removed = value.Removed.Except(change.Added).Concat(change.Removed).ToArray(),
+            Added = value.Added.Except(change.Removed).Concat(change.Added).ToArray()
         };
     }
 }

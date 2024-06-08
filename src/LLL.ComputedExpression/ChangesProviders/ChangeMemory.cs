@@ -3,12 +3,12 @@ using System.Runtime.CompilerServices;
 
 namespace LLL.ComputedExpression.ChangesProviders;
 
-public class ChangeMemory<TEntity, TResult>
+public class ChangeMemory<TEntity, TChange>
     where TEntity : class
 {
     private readonly ConditionalWeakTable<TEntity, ValueWrapper> _memory = [];
 
-    public bool TryGet(TEntity entity, [NotNullWhen(true)] out TResult? result)
+    public bool TryGet(TEntity entity, [NotNullWhen(true)] out TChange? result)
     {
         _memory.TryGetValue(entity, out var valueWrapper);
 
@@ -22,7 +22,7 @@ public class ChangeMemory<TEntity, TResult>
         return true;
     }
 
-    public void AddOrUpdate(TEntity entity, TResult result)
+    public void AddOrUpdate(TEntity entity, TChange result)
     {
         _memory.AddOrUpdate(entity, new ValueWrapper(result));
     }
@@ -37,5 +37,5 @@ public class ChangeMemory<TEntity, TResult>
         return _memory.Select(x => x.Key).ToArray();
     }
 
-    record class ValueWrapper(TResult Value);
+    record class ValueWrapper(TChange Value);
 }
