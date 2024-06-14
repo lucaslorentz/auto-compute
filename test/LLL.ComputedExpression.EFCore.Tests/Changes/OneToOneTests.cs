@@ -46,7 +46,7 @@ public class OneToOneTests
         var person = context!.Set<Person>().Find(1)!;
         var pet = context!.Set<Pet>().Find(1)!;
         person.FavoritePet = pet;
-        await context.SaveAllChangesAsync();
+        await context.SaveChangesAsync();
 
         pet.Type = "Dog";
 
@@ -64,7 +64,7 @@ public class OneToOneTests
         var person = context!.Set<Person>().Find(1)!;
         var pet = context!.Set<Pet>().Find(1)!;
         person.FavoritePet = pet;
-        await context.SaveAllChangesAsync();
+        await context.SaveChangesAsync();
 
         person.FavoritePet = null;
 
@@ -82,7 +82,7 @@ public class OneToOneTests
         var person = context!.Set<Person>().Find(1)!;
         var pet = context!.Set<Pet>().Find(1)!;
         person.FavoritePet = pet;
-        await context.SaveAllChangesAsync();
+        await context.SaveChangesAsync();
 
         pet.FavoritePetInverse = null;
 

@@ -1,5 +1,4 @@
-﻿using System.Collections.Concurrent;
-using System.Collections.Immutable;
+﻿using System.Collections.Immutable;
 using System.Linq.Expressions;
 using System.Runtime.CompilerServices;
 using LLL.ComputedExpression.ChangesProviders;
@@ -21,30 +20,6 @@ public static class DbContextExtensions
         return optionsBuilder;
     }
 
-    public static void ObserveComputedChanges<TEntity, TValue, TResult>(
-        this DbContext dbContext,
-        Expression<Func<TEntity, TValue>> computedExpression,
-        Expression<Func<TEntity, bool>>? filterExpression,
-        Expression<ChangeCalculationSelector<TValue, TResult>> calculationSelector,
-        Func<IReadOnlyDictionary<TEntity, TResult>, Task> callback)
-        where TEntity : class
-    {
-        var unboundChangesProvider = GetUnboundChangesProvider(dbContext, computedExpression, filterExpression, calculationSelector);
-
-        if (unboundChangesProvider is null)
-            return;
-
-        var computedObservers = GetComputedObservers(dbContext);
-        computedObservers.Add(async (dbContext) =>
-        {
-            var changes = await unboundChangesProvider.GetChangesAsync(dbContext.GetComputedInput(), new ChangeMemory<TEntity, TResult>());
-            if (changes.Count == 0)
-                return null;
-
-            return async () => await callback(changes);
-        });
-    }
-
     public static async Task<IReadOnlyDictionary<TEntity, TChange>> GetChangesAsync<TEntity, TValue, TChange>(
         this DbContext dbContext,
         Expression<Func<TEntity, TValue>> computedExpression,
@@ -52,12 +27,15 @@ public static class DbContextExtensions
         Expression<ChangeCalculationSelector<TValue, TChange>> calculationSelector)
         where TEntity : class
     {
-        var unboundChangesProvider = GetUnboundChangesProvider(dbContext, computedExpression, filterExpression, calculationSelector);
+        var changesProvider = dbContext.GetChangesProvider(
+            computedExpression,
+            filterExpression,
+            calculationSelector);
 
-        if (unboundChangesProvider is null)
+        if (changesProvider is null)
             return ImmutableDictionary<TEntity, TChange>.Empty;
 
-        return await unboundChangesProvider.GetChangesAsync(dbContext.GetComputedInput(), new ChangeMemory<TEntity, TChange>());
+        return await changesProvider.GetChangesAsync();
     }
 
     public static IChangesProvider<TEntity, TChange>? GetChangesProvider<TEntity, TValue, TChange>(
@@ -67,7 +45,12 @@ public static class DbContextExtensions
         Expression<ChangeCalculationSelector<TValue, TChange>> calculationSelector)
         where TEntity : class
     {
-        var unboundChangesProvider = GetUnboundChangesProvider(dbContext, computedExpression, filterExpression, calculationSelector);
+        var analyzer = GetComputedExpressionAnalyzer(dbContext);
+
+        var unboundChangesProvider = analyzer.GetChangesProvider(
+            computedExpression,
+            filterExpression,
+            calculationSelector);
 
         if (unboundChangesProvider is null)
             return null;
@@ -79,61 +62,36 @@ public static class DbContextExtensions
         );
     }
 
-    public static int SaveAllChanges(this DbContext dbContext)
+    public static async Task<int> UpdateComputedsAsync(this DbContext dbContext)
     {
-        var entriesWritten = 0;
+        if (dbContext.Model.FindRuntimeAnnotationValue(ComputedAnnotationNames.Updaters) is not IEnumerable<ComputedUpdater> updaters)
+            throw new Exception($"Cannot find runtime annotation {ComputedAnnotationNames.Updaters} for model");
 
-        dbContext.WithoutAutoDetectChanges(() =>
+        var totalChanges = 0;
+        for (var i = 0; i < 10; i++)
         {
-            for (var i = 0; i < 10; i++)
+            var autoDetectChanges = dbContext.ChangeTracker.AutoDetectChangesEnabled;
+            try
             {
+                dbContext.ChangeTracker.AutoDetectChangesEnabled = false;
                 dbContext.ChangeTracker.DetectChanges();
 
-                if (!dbContext.ChangeTracker.HasChanges())
-                    return;
+                var changes = 0;
 
-                entriesWritten += dbContext.SaveChanges();
+                foreach (var update in updaters)
+                    changes += await update(dbContext);
+
+                if (changes > 0)
+                    totalChanges += changes;
+                else
+                    break;
             }
-        });
-
-        return entriesWritten;
-    }
-
-    public static async Task<int> SaveAllChangesAsync(
-        this DbContext dbContext,
-        CancellationToken cancellationToken = default)
-    {
-        var entriesWritten = 0;
-
-        await dbContext.WithoutAutoDetectChangesAsync(async () =>
-        {
-            for (var i = 0; i < 10; i++)
+            finally
             {
-                dbContext.ChangeTracker.DetectChanges();
-
-                if (!dbContext.ChangeTracker.HasChanges())
-                    return;
-
-                entriesWritten += await dbContext.SaveChangesAsync(cancellationToken);
+                dbContext.ChangeTracker.AutoDetectChangesEnabled = autoDetectChanges;
             }
-        });
-
-        return entriesWritten;
-    }
-
-    private static IUnboundChangesProvider<IEFCoreComputedInput, TEntity, TChange>? GetUnboundChangesProvider<TEntity, TValue, TChange>(
-        DbContext dbContext,
-        Expression<Func<TEntity, TValue>> computedExpression,
-        Expression<Func<TEntity, bool>>? filterExpression,
-        Expression<ChangeCalculationSelector<TValue, TChange>> calculationSelector)
-        where TEntity : class
-    {
-        var analyzer = GetComputedExpressionAnalyzer(dbContext);
-
-        return analyzer.GetChangesProvider(
-            computedExpression,
-            filterExpression,
-            calculationSelector);
+        }
+        return totalChanges;
     }
 
     private static readonly ConditionalWeakTable<DbContext, IEFCoreComputedInput> _inputs = [];
@@ -142,7 +100,7 @@ public static class DbContextExtensions
         return _inputs.GetValue(dbContext, static k => new EFCoreComputedInput(k));
     }
 
-    internal static IComputedExpressionAnalyzer<IEFCoreComputedInput> GetComputedExpressionAnalyzer(this DbContext dbContext)
+    public static IComputedExpressionAnalyzer<IEFCoreComputedInput> GetComputedExpressionAnalyzer(this DbContext dbContext)
     {
         var annotationValue = dbContext.Model.FindRuntimeAnnotation(ComputedAnnotationNames.ExpressionAnalyzer)?.Value;
 
@@ -150,45 +108,5 @@ public static class DbContextExtensions
             throw new Exception($"Cannot find {ComputedAnnotationNames.ExpressionAnalyzer} for model");
 
         return analyzer;
-    }
-
-    private static readonly ConditionalWeakTable<DbContext, ConcurrentBag<ComputedUpdater>> _computedObservers = [];
-    internal static ConcurrentBag<ComputedUpdater> GetComputedObservers(this DbContext dbContext)
-    {
-        return _computedObservers.GetOrCreateValue(dbContext);
-    }
-
-    internal static void WithoutAutoDetectChanges(
-        this DbContext dbContext,
-        Action func)
-    {
-        var autoDetectChanges = dbContext.ChangeTracker.AutoDetectChangesEnabled;
-        try
-        {
-            dbContext.ChangeTracker.AutoDetectChangesEnabled = false;
-
-            func();
-        }
-        finally
-        {
-            dbContext.ChangeTracker.AutoDetectChangesEnabled = autoDetectChanges;
-        }
-    }
-
-    internal static async Task WithoutAutoDetectChangesAsync(
-        this DbContext dbContext,
-        Func<Task> func)
-    {
-        var autoDetectChanges = dbContext.ChangeTracker.AutoDetectChangesEnabled;
-        try
-        {
-            dbContext.ChangeTracker.AutoDetectChangesEnabled = false;
-
-            await func();
-        }
-        finally
-        {
-            dbContext.ChangeTracker.AutoDetectChangesEnabled = autoDetectChanges;
-        }
     }
 }

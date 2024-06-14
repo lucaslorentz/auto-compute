@@ -7,5 +7,5 @@ public interface IUnboundChangesProvider<TInput, TEntity, TChange>
 {
     string? ToDebugString();
 
-    Task<IReadOnlyDictionary<TEntity, TChange>> GetChangesAsync(TInput input, ChangeMemory<TEntity, TChange>? memory);
+    Task<IReadOnlyDictionary<TEntity, TChange>> GetChangesAsync(TInput input, ChangeMemory<TEntity, TChange> memory);
 }

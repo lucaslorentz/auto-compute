@@ -5,4 +5,4 @@ namespace LLL.ComputedExpression.EFCore.Internal;
 
 public delegate ComputedUpdater ComputedUpdaterFactory(IComputedExpressionAnalyzer<IEFCoreComputedInput> analyzer, IProperty property);
 
-public delegate Task<Func<Task>?> ComputedUpdater(DbContext dbContext);
+public delegate Task<int> ComputedUpdater(DbContext dbContext);

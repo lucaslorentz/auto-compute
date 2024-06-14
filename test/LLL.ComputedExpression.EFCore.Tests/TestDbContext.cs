@@ -26,7 +26,7 @@ public static class TestDbContext
             TDbContext.SeedData(context);
             if (seedData is not null)
                 await seedData(context);
-            await context.SaveAllChangesAsync();
+            await context.SaveChangesAsync();
         }
 
         return TDbContext.Create(contextOptions, customizeModel);

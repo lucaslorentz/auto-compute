@@ -3,7 +3,7 @@ namespace LLL.ComputedExpression.ChangesProviders;
 public class ChangesProvider<TInput, TEntity, TChange>(
     IUnboundChangesProvider<TInput, TEntity, TChange> unboundChangesProvider,
     TInput input,
-    ChangeMemory<TEntity, TChange>? memory
+    ChangeMemory<TEntity, TChange> memory
 ) : IChangesProvider<TEntity, TChange>
     where TEntity : class
 {
