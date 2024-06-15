@@ -9,7 +9,7 @@ public class ComputedExpressionAnalysis : IComputedExpressionAnalysis
     private readonly ConcurrentDictionary<Expression, ConcurrentBag<Func<string, EntityContext?>>> _entityContextProviders = new();
     private readonly ConcurrentDictionary<(Expression, string), EntityContext> _entityContextCache = new();
     private readonly ConcurrentDictionary<Expression, IEntityMemberAccess<IEntityMember>> _entityMemberAccesses = new();
-    private readonly ConcurrentDictionary<(Expression, string), bool> _incrementalEntityContexts = [];
+    private readonly ConcurrentBag<Action> _incrementalActions = [];
 
     public EntityContext ResolveEntityContext(Expression node, string key)
     {
@@ -34,18 +34,16 @@ public class ComputedExpressionAnalysis : IComputedExpressionAnalysis
         string fromKey,
         Expression toNode,
         string toKey,
-        Func<EntityContext, EntityContext>? mapper = null,
-        bool forceCreation = false)
+        Func<EntityContext, EntityContext>? mapper = null)
     {
-        PropagateEntityContext([(fromNode, fromKey)], toNode, toKey, mapper, forceCreation);
+        PropagateEntityContext([(fromNode, fromKey)], toNode, toKey, mapper);
     }
 
     public void PropagateEntityContext(
         (Expression fromNode, string fromKey)[] fromNodesKeys,
         Expression toNode,
         string toKey,
-        Func<EntityContext, EntityContext>? mapper = null,
-        bool isRequiredForIncremental = false)
+        Func<EntityContext, EntityContext>? mapper = null)
     {
         AddEntityContextProvider(
             toNode,
@@ -72,9 +70,11 @@ public class ComputedExpressionAnalysis : IComputedExpressionAnalysis
 
                 return entityContexts.FirstOrDefault();
             });
+    }
 
-        if (isRequiredForIncremental)
-            _incrementalEntityContexts.TryAdd((toNode, toKey), true);
+    public void AddIncrementalAction(Action action)
+    {
+        _incrementalActions.Add(action);
     }
 
     public void AddEntityContextProvider(
@@ -124,11 +124,9 @@ public class ComputedExpressionAnalysis : IComputedExpressionAnalysis
         _entityMemberAccesses.TryAdd(node, entityMemberAccess);
     }
 
-    public void ResolveIncrementalRequiredContexts()
+    public void RunIncrementalActions()
     {
-        foreach (var ((node, key), _) in _incrementalEntityContexts)
-        {
-            ResolveEntityContext(node, key);
-        }
+        foreach (var action in _incrementalActions)
+            action();
     }
 }

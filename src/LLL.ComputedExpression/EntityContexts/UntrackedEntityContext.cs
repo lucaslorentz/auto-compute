@@ -1,8 +1,18 @@
 ﻿namespace LLL.ComputedExpression.EntityContexts;
 
-public class UntrackedEntityContext(Type entityType) : EntityContext
+public class UntrackedEntityContext : EntityContext
 {
-    public override Type EntityType => entityType;
+    private readonly Type _entityType;
+    private readonly EntityContext? _parent;
+
+    public UntrackedEntityContext(Type entityType, EntityContext? parent)
+    {
+        _entityType = entityType;
+        _parent = parent;
+        parent?.RegisterChildContext(this);
+    }
+
+    public override Type EntityType => _entityType;
     public override bool IsTrackingChanges => false;
 
     public override IAffectedEntitiesProvider? GetParentAffectedEntitiesProvider()
@@ -12,5 +22,7 @@ public class UntrackedEntityContext(Type entityType) : EntityContext
 
     public override async Task EnrichIncrementalContextTowardsRootAsync(object input, IReadOnlyCollection<object> entities, IncrementalContext incrementalContext)
     {
+        if (_parent is not null)
+            await _parent.EnrichIncrementalContextTowardsRootAsync(input, entities, incrementalContext);
     }
 }

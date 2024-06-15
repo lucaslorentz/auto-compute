@@ -147,7 +147,7 @@ public class ComputedExpressionAnalyzer<TInput>(
         ).Visit(computedExpression);
 
         if (isIncremental)
-            analysis.ResolveIncrementalRequiredContexts();
+            analysis.RunIncrementalActions();
 
         return entityContext;
     }

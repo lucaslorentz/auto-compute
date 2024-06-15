@@ -33,6 +33,22 @@ public class LinqMethodsEntityContextPropagator
 
                 switch (methodCallExpression.Method.Name)
                 {
+                    case nameof(Enumerable.All):
+                    case nameof(Enumerable.Any):
+                    case nameof(Enumerable.Contains):
+                        analysis.PropagateEntityContext(
+                            methodCallExpression.Arguments[0],
+                            EntityContextKeys.Element,
+                            node,
+                            EntityContextKeys.Hidden,
+                            e => new NonIncrementalEntityContext(e)
+                        );
+                        analysis.AddIncrementalAction(() =>
+                        {
+                            analysis.ResolveEntityContext(node, EntityContextKeys.Hidden);
+                        });
+                        break;
+
                     case nameof(Enumerable.AsEnumerable):
                     case nameof(Enumerable.Cast):
                     case nameof(Enumerable.DefaultIfEmpty):
@@ -67,9 +83,12 @@ public class LinqMethodsEntityContextPropagator
                             EntityContextKeys.Element,
                             node,
                             EntityContextKeys.Element,
-                            e => new DistinctEntityContext(e),
-                            true
+                            e => new DistinctEntityContext(e)
                         );
+                        analysis.AddIncrementalAction(() =>
+                        {
+                            analysis.ResolveEntityContext(node, EntityContextKeys.Element);
+                        });
                         break;
 
                     case nameof(Enumerable.Where):
@@ -232,7 +251,7 @@ public class LinqMethodsEntityContextPropagator
                         analysis.AddEntityContextProvider(
                             node,
                             (key) => key == EntityContextKeys.Element
-                                ? new UntrackedEntityContext(methodCallExpression.Method.GetGenericArguments().First())
+                                ? new UntrackedEntityContext(methodCallExpression.Method.GetGenericArguments().First(), null)
                                 : null
                         );
                         break;
