@@ -36,16 +36,10 @@ public class LinqMethodsEntityContextPropagator
                     case nameof(Enumerable.All):
                     case nameof(Enumerable.Any):
                     case nameof(Enumerable.Contains):
-                        analysis.PropagateEntityContext(
-                            methodCallExpression.Arguments[0],
-                            EntityContextKeys.Element,
-                            node,
-                            EntityContextKeys.Hidden,
-                            e => new NonIncrementalEntityContext(e)
-                        );
                         analysis.AddIncrementalAction(() =>
                         {
-                            analysis.ResolveEntityContext(node, EntityContextKeys.Hidden);
+                            var entityContext = analysis.ResolveEntityContext(methodCallExpression.Arguments[0], EntityContextKeys.Element);
+                            entityContext.MarkNavigationToLoadAll();
                         });
                         break;
 

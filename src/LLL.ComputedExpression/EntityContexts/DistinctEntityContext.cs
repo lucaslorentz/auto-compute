@@ -31,4 +31,9 @@ public class DistinctEntityContext : EntityContext
     {
         await _parent.EnrichIncrementalContextTowardsRootAsync(input, entities, incrementalContext);
     }
+
+    public override void MarkNavigationToLoadAll()
+    {
+        _parent.MarkNavigationToLoadAll();
+    }
 }

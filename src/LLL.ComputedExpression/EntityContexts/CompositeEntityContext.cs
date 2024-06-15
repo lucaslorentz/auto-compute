@@ -28,4 +28,10 @@ public class CompositeEntityContext : EntityContext
         foreach (var parent in _parents)
             await parent.EnrichIncrementalContextTowardsRootAsync(input, entities, incrementalContext);
     }
+
+    public override void MarkNavigationToLoadAll()
+    {
+        foreach (var parent in _parents)
+            parent.MarkNavigationToLoadAll();
+    }
 }

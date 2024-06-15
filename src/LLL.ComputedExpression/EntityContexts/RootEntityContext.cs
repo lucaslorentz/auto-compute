@@ -13,4 +13,8 @@ public class RootEntityContext(Type entityType) : EntityContext
     public override async Task EnrichIncrementalContextTowardsRootAsync(object input, IReadOnlyCollection<object> entities, IncrementalContext incrementalContext)
     {
     }
+
+    public override void MarkNavigationToLoadAll()
+    {
+    }
 }

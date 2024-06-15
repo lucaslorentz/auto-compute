@@ -26,4 +26,9 @@ public class ScopedEntityContext : EntityContext
     {
         await _parent.EnrichIncrementalContextTowardsRootAsync(input, entities, incrementalContext);
     }
+
+    public override void MarkNavigationToLoadAll()
+    {
+        _parent.MarkNavigationToLoadAll();
+    }
 }

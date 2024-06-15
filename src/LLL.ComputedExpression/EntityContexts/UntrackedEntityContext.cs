@@ -25,4 +25,9 @@ public class UntrackedEntityContext : EntityContext
         if (_parent is not null)
             await _parent.EnrichIncrementalContextTowardsRootAsync(input, entities, incrementalContext);
     }
+
+    public override void MarkNavigationToLoadAll()
+    {
+        _parent?.MarkNavigationToLoadAll();
+    }
 }

@@ -85,19 +85,5 @@ public abstract class EntityContext
         await PreLoadNavigationsAsync(input, parentEntities, incrementalContext);
     }
 
-    public virtual bool ShouldLoadAll()
-    {
-        return ChildrenShouldLoadAll();
-    }
-
-    protected bool ChildrenShouldLoadAll()
-    {
-        foreach (var childContext in _childContexts)
-        {
-            if (childContext.ShouldLoadAll())
-                return true;
-        }
-
-        return false;
-    }
+    public abstract void MarkNavigationToLoadAll();
 }

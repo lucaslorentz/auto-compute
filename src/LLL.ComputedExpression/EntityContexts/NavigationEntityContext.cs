@@ -6,6 +6,7 @@ public class NavigationEntityContext : EntityContext
 {
     private readonly EntityContext _parent;
     private readonly IEntityNavigation _navigation;
+    private bool _shouldLoadAll;
 
     public NavigationEntityContext(
         EntityContext parent,
@@ -34,10 +35,8 @@ public class NavigationEntityContext : EntityContext
     {
         var entities = new HashSet<object>();
 
-        var shouldLoadAll = ChildrenShouldLoadAll();
-
         var parentEntitiesByLoadAll = parentEntities
-            .ToLookup(e => shouldLoadAll || incrementalContext.ShouldLoadAll(e));
+            .ToLookup(e => _shouldLoadAll || incrementalContext.ShouldLoadAll(e));
 
         var parentEntitiesToLoadAll = parentEntitiesByLoadAll[true].ToArray();
         var original = await _navigation.LoadOriginalAsync(input, parentEntitiesToLoadAll, incrementalContext);
@@ -88,8 +87,8 @@ public class NavigationEntityContext : EntityContext
         await PreLoadNavigationsAsync(input, entities, incrementalContext);
     }
 
-    public override bool ShouldLoadAll()
+    public override void MarkNavigationToLoadAll()
     {
-        return false;
+        _shouldLoadAll = true;
     }
 }
