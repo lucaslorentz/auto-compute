@@ -1,11 +1,11 @@
 ﻿namespace LLL.ComputedExpression.EntityContexts;
 
-public class UntrackedEntityContext : EntityContext
+public class TrackedEntityContext : EntityContext
 {
     private readonly Type _entityType;
     private readonly EntityContext? _parent;
 
-    public UntrackedEntityContext(Type entityType, EntityContext? parent)
+    public TrackedEntityContext(Type entityType, EntityContext? parent)
     {
         _entityType = entityType;
         _parent = parent;
@@ -13,7 +13,7 @@ public class UntrackedEntityContext : EntityContext
     }
 
     public override Type EntityType => _entityType;
-    public override bool IsTrackingChanges => false;
+    public override bool IsTrackingChanges => true;
 
     public override IAffectedEntitiesProvider? GetParentAffectedEntitiesProvider()
     {

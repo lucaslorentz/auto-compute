@@ -6,4 +6,9 @@ public static class UntrackedExtensions
     {
         return value;
     }
+    
+    public static T AsComputedTracked<T>(this T value)
+    {
+        return value;
+    }
 }
