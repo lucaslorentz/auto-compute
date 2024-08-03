@@ -1,8 +1,8 @@
-# Computed Expression ![CI](https://github.com/lucaslorentz/computed-expression/workflows/CI/badge.svg) [![Coverage Status](https://coveralls.io/repos/github/lucaslorentz/computed-expression/badge.svg)](https://coveralls.io/github/lucaslorentz/computed-expression)
+# EF Core AutoCompute ![CI](https://github.com/lucaslorentz/auto-compute/workflows/CI/badge.svg) [![Coverage Status](https://coveralls.io/repos/github/lucaslorentz/auto-compute/badge.svg)](https://coveralls.io/github/lucaslorentz/auto-compute)
 
-Computed Expression is a library designed to automatically maintain derived data within .NET EF Core applications.
+Auto Compute is a library designed to automatically maintain derived data within .NET EF Core applications.
 
-Whether you're implementing denormalization strategies or handling any other form of derived data in your EF Core projects, Computed Expression offers a straightforward solution. It tracks changes across related entities, automatically updating derived properties, thereby reducing complexity, maintenance overhead, and ensuring consistency throughout your application.
+Whether you're implementing denormalization strategies or handling any other form of derived data in your EF Core projects, Auto Compute offers a straightforward solution. It tracks changes across related entities, automatically updating derived properties, thereby reducing complexity, maintenance overhead, and ensuring consistency throughout your application.
 
 This library is an automatic implementation of the approach described by Microsoft in: https://learn.microsoft.com/en-us/ef/core/performance/modeling-for-performance#update-cache-columns-when-inputs-change
 
@@ -10,18 +10,18 @@ This library is an automatic implementation of the approach described by Microso
 
 Install nuget package
 ```sh
-dotnet add package LLL.ComputedExpression.EFCore
+dotnet add package LLL.AutoCompute.EFCore
 ```
 
-Enable by calling UseComputeds from DbContext OnConfiguring:
+Enable by calling UseAutoCompute from DbContext OnConfiguring:
 ```csharp
 protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
-    => optionsBuilder.UseComputeds();
+    => optionsBuilder.UseAutoCompute();
 ```
 Or while adding DbContext to service collection:
 ```
 services.AddDbContext<PersonDbContext>(
-    b => b.UseComputeds());
+    b => b.UseAutoCompute());
 ```
 
 Next, define computed properties in your EF Core mappings. Here's a demonstration:

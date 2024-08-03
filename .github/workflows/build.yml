@@ -11,8 +11,8 @@ env:
   NUGET_KEY: ${{ secrets.NUGET_KEY }}
   # Csproj variables
   Authors: Lucas Lorentz
-  RepositoryUrl: https://github.com/lucaslorentz/computed-expression
-  PackageTags: Computed;Expression;Properties;EntityFramework;EFCore
+  RepositoryUrl: https://github.com/lucaslorentz/auto-compute
+  PackageTags: Auto;Compute;Computed;Expression;Properties;EntityFramework;EFCore
 jobs:
   build:
     runs-on: ubuntu-latest
