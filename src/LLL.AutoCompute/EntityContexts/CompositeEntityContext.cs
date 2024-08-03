@@ -18,9 +18,9 @@ public class CompositeEntityContext : EntityContext
         _parents = parents;
     }
 
-    public override IAffectedEntitiesProvider? GetParentAffectedEntitiesProvider()
+    public override async Task<IReadOnlyCollection<object>> GetParentAffectedEntities(object input, IncrementalContext incrementalContext)
     {
-        return GetAffectedEntitiesProvider();
+        return await GetAffectedEntitiesAsync(input, incrementalContext);
     }
 
     public override async Task EnrichIncrementalContextTowardsRootAsync(object input, IReadOnlyCollection<object> entities, IncrementalContext incrementalContext)

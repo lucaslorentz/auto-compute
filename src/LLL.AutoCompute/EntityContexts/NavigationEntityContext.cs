@@ -1,6 +1,4 @@
-﻿using LLL.AutoCompute.AffectedEntitiesProviders;
-
-namespace LLL.AutoCompute.EntityContexts;
+﻿namespace LLL.AutoCompute.EntityContexts;
 
 public class NavigationEntityContext : EntityContext
 {
@@ -21,14 +19,18 @@ public class NavigationEntityContext : EntityContext
     public override Type EntityType => _navigation.TargetEntityType;
     public override bool IsTrackingChanges { get; }
 
-    public override IAffectedEntitiesProvider? GetParentAffectedEntitiesProvider()
+    public override async Task<IReadOnlyCollection<object>> GetParentAffectedEntities(object input, IncrementalContext incrementalContext)
     {
-        var affectedEntitiesProvider = GetAffectedEntitiesProvider();
+        var entities = await GetAffectedEntitiesAsync(input, incrementalContext);
 
-        if (affectedEntitiesProvider is null)
-            return null;
+        var inverseNavigation = _navigation.GetInverse();
 
-        return affectedEntitiesProvider.LoadNavigation(_navigation.GetInverse());
+        var parentEntities = new HashSet<object>();
+        foreach (var ent in await inverseNavigation.LoadOriginalAsync(input, entities, incrementalContext))
+            parentEntities.Add(ent);
+        foreach (var ent in await inverseNavigation.LoadCurrentAsync(input, entities, incrementalContext))
+            parentEntities.Add(ent);
+        return parentEntities;
     }
 
     public override async Task EnrichIncrementalContextFromParentAsync(object input, IReadOnlyCollection<object> parentEntities, IncrementalContext incrementalContext)

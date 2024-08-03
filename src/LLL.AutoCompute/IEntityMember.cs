@@ -21,6 +21,7 @@ public interface IEntityMember
         IEntityMemberAccess<IEntityMember> memberAccess,
         Expression inputExpression,
         Expression incrementalContextExpression);
+    Task<IReadOnlyCollection<object>> GetAffectedEntitiesAsync(object input, IncrementalContext incrementalContext);
 }
 
 

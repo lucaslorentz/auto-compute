@@ -1,6 +1,6 @@
 ﻿using FluentAssertions;
 
-namespace LLL.AutoCompute.EFCore.Tests.AffectedEntities;
+namespace LLL.AutoCompute.EFCore.Tests.Changes;
 
 public class DictionaryTests
 {

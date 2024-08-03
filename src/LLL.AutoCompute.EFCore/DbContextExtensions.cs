@@ -32,13 +32,10 @@ public static class DbContextExtensions
             filterExpression,
             calculationSelector);
 
-        if (changesProvider is null)
-            return ImmutableDictionary<TEntity, TChange>.Empty;
-
         return await changesProvider.GetChangesAsync();
     }
 
-    public static IChangesProvider<TEntity, TChange>? GetChangesProvider<TEntity, TValue, TChange>(
+    public static IChangesProvider<TEntity, TChange> GetChangesProvider<TEntity, TValue, TChange>(
         this DbContext dbContext,
         Expression<Func<TEntity, TValue>> computedExpression,
         Expression<Func<TEntity, bool>>? filterExpression,
@@ -51,9 +48,6 @@ public static class DbContextExtensions
             computedExpression,
             filterExpression,
             calculationSelector);
-
-        if (unboundChangesProvider is null)
-            return null;
 
         return new ChangesProvider<IEFCoreComputedInput, TEntity, TChange>(
             unboundChangesProvider,

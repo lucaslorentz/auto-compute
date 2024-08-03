@@ -1,10 +1,8 @@
-using System.Collections.Immutable;
 using LLL.AutoCompute.EntityContexts;
 
 namespace LLL.AutoCompute.ChangesProviders;
 
 public class UnboundChangesProvider<TInput, TEntity, TValue, TChange>(
-    IAffectedEntitiesProvider<TInput, TEntity>? affectedEntitiesProvider,
     EntityContext computedEntityContext,
     Func<TEntity, bool> filter,
     EntityContext filterEntityContext,
@@ -20,12 +18,11 @@ public class UnboundChangesProvider<TInput, TEntity, TValue, TChange>(
         TInput input,
         ChangeMemory<TEntity, TChange> changeMemory)
     {
-        if (affectedEntitiesProvider is null)
-            return ImmutableDictionary<TEntity, TChange>.Empty;
-
         var incrementalContext = new IncrementalContext();
 
-        var affectedEntities = await affectedEntitiesProvider.GetAffectedEntitiesAsync(input, incrementalContext);
+        var affectedEntities = (await computedEntityContext.GetAffectedEntitiesAsync(input!, incrementalContext))
+            .Cast<TEntity>()
+            .ToArray();
 
         await filterEntityContext.PreLoadNavigationsAsync(input!, affectedEntities, incrementalContext);
 
@@ -63,7 +60,7 @@ public class UnboundChangesProvider<TInput, TEntity, TValue, TChange>(
 
     public string? ToDebugString()
     {
-        return affectedEntitiesProvider?.ToDebugString();
+        return computedEntityContext.ToString();
     }
 
     private async Task<TChange> GetChangeAsync(

@@ -66,7 +66,7 @@ public class ComputedExpressionAnalyzer<TInput>(
         return this;
     }
 
-    public IUnboundChangesProvider<TInput, TEntity, TChange>? GetChangesProvider<TEntity, TValue, TChange>(
+    public IUnboundChangesProvider<TInput, TEntity, TChange> GetChangesProvider<TEntity, TValue, TChange>(
         Expression<Func<TEntity, TValue>> computedExpression,
         Expression<Func<TEntity, bool>>? filterExpression,
         Expression<ChangeCalculationSelector<TValue, TChange>> changeCalculationSelector)
@@ -86,7 +86,7 @@ public class ComputedExpressionAnalyzer<TInput>(
         );
     }
 
-    private IUnboundChangesProvider<TInput, TEntity, TChange>? CreateChangesProvider<TEntity, TValue, TChange>(
+    private IUnboundChangesProvider<TInput, TEntity, TChange> CreateChangesProvider<TEntity, TValue, TChange>(
         Expression<Func<TEntity, TValue>> computedExpression,
         Expression<Func<TEntity, bool>> filterExpression,
         Expression<ChangeCalculationSelector<TValue, TChange>> changeCalculationSelector)
@@ -97,11 +97,6 @@ public class ComputedExpressionAnalyzer<TInput>(
         var changeCalculation = changeCalculationSelector.Compile()(new ChangeCalculations<TValue>());
 
         var computedEntityContext = GetEntityContext(computedExpression, changeCalculation.IsIncremental);
-
-        var affectedEntitiesProvider = (IAffectedEntitiesProvider<TInput, TEntity>)computedEntityContext.GetAffectedEntitiesProvider()!;
-
-        if (affectedEntitiesProvider is null)
-            return null;
 
         var computedValueAccessors = new ComputedValueAccessors<TInput, TEntity, TValue>(
             changeCalculation.IsIncremental
@@ -115,7 +110,6 @@ public class ComputedExpressionAnalyzer<TInput>(
         var filterEntityContext = GetEntityContext(filterExpression, false);
 
         return new UnboundChangesProvider<TInput, TEntity, TValue, TChange>(
-            affectedEntitiesProvider,
             computedEntityContext,
             filterExpression.Compile(),
             filterEntityContext,

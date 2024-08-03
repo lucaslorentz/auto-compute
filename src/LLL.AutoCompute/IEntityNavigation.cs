@@ -32,7 +32,7 @@ public interface IEntityNavigation<in TInput, TSourceEntity, TTargetEntity> : IE
         if (input is not TInput inputTyped)
             throw new ArgumentException($"Param {nameof(input)} should be of type {typeof(TInput)}");
 
-        return (IReadOnlyCollection<object>)await LoadCurrentAsync(inputTyped, fromEntities.OfType<TSourceEntity>().ToArray(), incrementalContext);
+        return (IReadOnlyCollection<object>)await LoadCurrentAsync(inputTyped, fromEntities.Cast<TSourceEntity>().ToArray(), incrementalContext);
     }
 
     async Task<IReadOnlyCollection<object>> IEntityNavigation.LoadOriginalAsync(object input, IReadOnlyCollection<object> fromEntities, IncrementalContext incrementalContext)
@@ -40,8 +40,16 @@ public interface IEntityNavigation<in TInput, TSourceEntity, TTargetEntity> : IE
         if (input is not TInput inputTyped)
             throw new ArgumentException($"Param {nameof(input)} should be of type {typeof(TInput)}");
 
-        return (IReadOnlyCollection<object>)await LoadOriginalAsync(inputTyped, fromEntities.OfType<TSourceEntity>().ToArray(), incrementalContext);
+        return (IReadOnlyCollection<object>)await LoadOriginalAsync(inputTyped, fromEntities.Cast<TSourceEntity>().ToArray(), incrementalContext);
     }
 
     Task<IReadOnlyCollection<TSourceEntity>> GetAffectedEntitiesAsync(TInput input, IncrementalContext incrementalContext);
+
+    async Task<IReadOnlyCollection<object>> IEntityMember.GetAffectedEntitiesAsync(object input, IncrementalContext incrementalContext)
+    {
+        if (input is not TInput inputTyped)
+            throw new ArgumentException($"Param {nameof(input)} should be of type {typeof(TInput)}");
+
+        return (IReadOnlyCollection<object>)await GetAffectedEntitiesAsync(inputTyped, incrementalContext);
+    }
 }

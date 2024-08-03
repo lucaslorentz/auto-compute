@@ -16,9 +16,9 @@ public class DistinctEntityContext : EntityContext
     public override Type EntityType { get; }
     public override bool IsTrackingChanges { get; }
 
-    public override IAffectedEntitiesProvider? GetParentAffectedEntitiesProvider()
+    public override async Task<IReadOnlyCollection<object>> GetParentAffectedEntities(object input, IncrementalContext incrementalContext)
     {
-        return GetAffectedEntitiesProvider();
+        return await GetAffectedEntitiesAsync(input, incrementalContext);
     }
 
     public override async Task EnrichIncrementalContextAsync(object input, IReadOnlyCollection<object> entities, IncrementalContext incrementalContext)
