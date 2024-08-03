@@ -17,4 +17,8 @@ public class RootEntityContext(Type entityType) : EntityContext
     public override void MarkNavigationToLoadAll()
     {
     }
+
+    protected override void NotifyParentsOfAccessedMember()
+    {
+    }
 }

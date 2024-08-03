@@ -21,9 +21,13 @@ public class NavigationEntityContext : EntityContext
 
     public override async Task<IReadOnlyCollection<object>> GetParentAffectedEntities(object input, IncrementalContext incrementalContext)
     {
-        var entities = await GetAffectedEntitiesAsync(input, incrementalContext);
+        // Short circuit to avoid requiring inverse navigation when no tracked property is accessed
+        if (!HasAccessedMember)
+            return [];
 
         var inverseNavigation = _navigation.GetInverse();
+
+        var entities = await GetAffectedEntitiesAsync(input, incrementalContext);
 
         var parentEntities = new HashSet<object>();
         foreach (var ent in await inverseNavigation.LoadOriginalAsync(input, entities, incrementalContext))
@@ -92,5 +96,10 @@ public class NavigationEntityContext : EntityContext
     public override void MarkNavigationToLoadAll()
     {
         _shouldLoadAll = true;
+    }
+
+    protected override void NotifyParentsOfAccessedMember()
+    {
+        _parent.OnAccessedMember();
     }
 }

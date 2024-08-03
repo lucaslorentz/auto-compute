@@ -30,4 +30,9 @@ public class UntrackedEntityContext : EntityContext
     {
         _parent?.MarkNavigationToLoadAll();
     }
+
+    protected override void NotifyParentsOfAccessedMember()
+    {
+        _parent?.OnAccessedMember();
+    }
 }

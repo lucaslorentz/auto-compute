@@ -10,11 +10,21 @@ public abstract class EntityContext
 
     public abstract Type EntityType { get; }
     public abstract bool IsTrackingChanges { get; }
+    public bool HasAccessedMember { get; private set; }
 
     public void RegisterAccessedMember(IEntityMember member)
     {
         _accessedMembers.Add(member);
+        OnAccessedMember();
     }
+
+    public void OnAccessedMember()
+    {
+        HasAccessedMember = true;
+        NotifyParentsOfAccessedMember();
+    }
+
+    protected abstract void NotifyParentsOfAccessedMember();
 
     public virtual void RegisterChildContext(EntityContext context)
     {

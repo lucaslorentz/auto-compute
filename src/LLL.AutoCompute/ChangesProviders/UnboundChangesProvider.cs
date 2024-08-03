@@ -58,11 +58,6 @@ public class UnboundChangesProvider<TInput, TEntity, TValue, TChange>(
         return new Dictionary<TEntity, TChange>(filteredChanges);
     }
 
-    public string? ToDebugString()
-    {
-        return computedEntityContext.ToString();
-    }
-
     private async Task<TChange> GetChangeAsync(
         TInput input,
         TEntity entity,

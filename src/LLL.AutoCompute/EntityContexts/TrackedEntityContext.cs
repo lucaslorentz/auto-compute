@@ -3,13 +3,13 @@
 public class TrackedEntityContext : EntityContext
 {
     private readonly Type _entityType;
-    private readonly EntityContext? _parent;
+    private readonly EntityContext _parent;
 
-    public TrackedEntityContext(Type entityType, EntityContext? parent)
+    public TrackedEntityContext(Type entityType, EntityContext parent)
     {
         _entityType = entityType;
         _parent = parent;
-        parent?.RegisterChildContext(this);
+        parent.RegisterChildContext(this);
     }
 
     public override Type EntityType => _entityType;
@@ -22,12 +22,16 @@ public class TrackedEntityContext : EntityContext
 
     public override async Task EnrichIncrementalContextTowardsRootAsync(object input, IReadOnlyCollection<object> entities, IncrementalContext incrementalContext)
     {
-        if (_parent is not null)
-            await _parent.EnrichIncrementalContextTowardsRootAsync(input, entities, incrementalContext);
+        await _parent.EnrichIncrementalContextTowardsRootAsync(input, entities, incrementalContext);
     }
 
     public override void MarkNavigationToLoadAll()
     {
-        _parent?.MarkNavigationToLoadAll();
+        _parent.MarkNavigationToLoadAll();
+    }
+
+    protected override void NotifyParentsOfAccessedMember()
+    {
+        _parent.OnAccessedMember();
     }
 }

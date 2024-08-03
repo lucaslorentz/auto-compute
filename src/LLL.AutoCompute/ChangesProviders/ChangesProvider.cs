@@ -11,9 +11,4 @@ public class ChangesProvider<TInput, TEntity, TChange>(
     {
         return await unboundChangesProvider.GetChangesAsync(input, memory);
     }
-
-    public string? ToDebugString()
-    {
-        return unboundChangesProvider?.ToDebugString();
-    }
 }

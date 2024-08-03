@@ -36,4 +36,9 @@ public class DistinctEntityContext : EntityContext
     {
         _parent.MarkNavigationToLoadAll();
     }
+
+    protected override void NotifyParentsOfAccessedMember()
+    {
+        _parent.OnAccessedMember();
+    }
 }
