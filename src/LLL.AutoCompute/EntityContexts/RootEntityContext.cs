@@ -18,7 +18,7 @@ public class RootEntityContext(Type entityType) : EntityContext
     {
     }
 
-    protected override void NotifyParentsOfAccessedMember()
+    protected override void NotifyParentsOfAccessedMember(IEntityMember member)
     {
     }
 }

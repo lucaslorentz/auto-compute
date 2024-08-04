@@ -22,7 +22,7 @@ public class NavigationEntityContext : EntityContext
     public override async Task<IReadOnlyCollection<object>> GetParentAffectedEntities(object input, IncrementalContext incrementalContext)
     {
         // Short circuit to avoid requiring inverse navigation when no tracked property is accessed
-        if (!HasAccessedMember)
+        if (!AllAccessedMembers.Any())
             return [];
 
         var inverseNavigation = _navigation.GetInverse();
@@ -98,8 +98,8 @@ public class NavigationEntityContext : EntityContext
         _shouldLoadAll = true;
     }
 
-    protected override void NotifyParentsOfAccessedMember()
+    protected override void NotifyParentsOfAccessedMember(IEntityMember member)
     {
-        _parent.OnAccessedMember();
+        _parent.OnAccessedMember(member);
     }
 }

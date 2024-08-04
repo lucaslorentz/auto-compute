@@ -2,29 +2,30 @@ namespace LLL.AutoCompute.EntityContexts;
 
 public abstract class EntityContext
 {
-    private readonly IList<IEntityMember> _accessedMembers = [];
+    private readonly HashSet<IEntityMember> _accessedMembers = [];
+    private readonly HashSet<IEntityMember> _allAccessedMembers = [];
     private readonly IList<EntityContext> _childContexts = [];
 
     public IEnumerable<IEntityMember> AccessedMembers => _accessedMembers;
+    public IEnumerable<IEntityMember> AllAccessedMembers => _allAccessedMembers;
     public IEnumerable<EntityContext> ChildContexts => _childContexts;
 
     public abstract Type EntityType { get; }
     public abstract bool IsTrackingChanges { get; }
-    public bool HasAccessedMember { get; private set; }
 
     public void RegisterAccessedMember(IEntityMember member)
     {
         _accessedMembers.Add(member);
-        OnAccessedMember();
+        OnAccessedMember(member);
     }
 
-    public void OnAccessedMember()
+    public void OnAccessedMember(IEntityMember member)
     {
-        HasAccessedMember = true;
-        NotifyParentsOfAccessedMember();
+        _allAccessedMembers.Add(member);
+        NotifyParentsOfAccessedMember(member);
     }
 
-    protected abstract void NotifyParentsOfAccessedMember();
+    protected abstract void NotifyParentsOfAccessedMember(IEntityMember member);
 
     public virtual void RegisterChildContext(EntityContext context)
     {

@@ -30,8 +30,8 @@ public class TrackedEntityContext : EntityContext
         _parent.MarkNavigationToLoadAll();
     }
 
-    protected override void NotifyParentsOfAccessedMember()
+    protected override void NotifyParentsOfAccessedMember(IEntityMember member)
     {
-        _parent.OnAccessedMember();
+        _parent.OnAccessedMember(member);
     }
 }
