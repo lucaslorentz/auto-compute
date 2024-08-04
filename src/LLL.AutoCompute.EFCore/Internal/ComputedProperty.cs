@@ -32,7 +32,7 @@ public class ComputedProperty<TEntity, TValue>(
     {
         var numberOfUpdates = 0;
         var input = dbContext.GetComputedInput();
-        var changes = await changesProvider.GetChangesAsync(input, new ChangesProviders.ChangeMemory<TEntity, TValue>());
+        var changes = await changesProvider.GetChangesAsync(input, null);
         foreach (var (entity, change) in changes)
         {
             var entityEntry = dbContext.Entry(entity);

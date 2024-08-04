@@ -8,5 +8,5 @@ public interface IUnboundChangesProvider<TInput, TEntity, TChange>
 {
     EntityContext EntityContext { get; }
     IChangeCalculation<TChange> ChangeCalculation { get; }
-    Task<IReadOnlyDictionary<TEntity, TChange>> GetChangesAsync(TInput input, ChangeMemory<TEntity, TChange> memory);
+    Task<IReadOnlyDictionary<TEntity, TChange>> GetChangesAsync(TInput input, ChangeMemory<TEntity, TChange>? memory);
 }
