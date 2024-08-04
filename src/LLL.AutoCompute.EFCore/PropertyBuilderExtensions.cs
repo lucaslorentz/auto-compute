@@ -1,20 +1,11 @@
 ﻿using System.Linq.Expressions;
-using LLL.AutoCompute.ChangesProviders;
 using LLL.AutoCompute.EFCore.Internal;
-using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
 namespace LLL.AutoCompute.EFCore;
 
 public static class EntityTypeBuilderExtensions
 {
-    private static PropertyBuilder<TProperty> HasComputedPropertyFactory<TProperty>(
-        this PropertyBuilder<TProperty> propertyBuilder,
-        ComputedPropertyFactory computedPropertyFactory)
-    {
-        return propertyBuilder.HasAnnotation(ComputedAnnotationNames.PropertyFactory, computedPropertyFactory);
-    }
-
     public static PropertyBuilder<TProperty> ComputedProperty<TEntity, TProperty>(
         this EntityTypeBuilder<TEntity> entityTypeBuilder,
         Expression<Func<TEntity, TProperty>> propertyExpression,
@@ -58,5 +49,12 @@ public static class EntityTypeBuilderExtensions
             }
         });
         return propertyBuilder;
+    }
+    
+    private static PropertyBuilder<TProperty> HasComputedPropertyFactory<TProperty>(
+        this PropertyBuilder<TProperty> propertyBuilder,
+        ComputedPropertyFactory computedPropertyFactory)
+    {
+        return propertyBuilder.HasAnnotation(ComputedAnnotationNames.PropertyFactory, computedPropertyFactory);
     }
 }

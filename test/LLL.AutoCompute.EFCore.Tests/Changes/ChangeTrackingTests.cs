@@ -2,7 +2,7 @@
 
 namespace LLL.AutoCompute.EFCore.Tests.Changes;
 
-public class UntrackedTests
+public class ChangeTrackingTests
 {
     [Fact]
     public async void Property()
