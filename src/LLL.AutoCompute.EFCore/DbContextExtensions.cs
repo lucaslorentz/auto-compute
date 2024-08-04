@@ -57,16 +57,15 @@ public static class DbContextExtensions
 
     public static async Task<int> UpdateComputedsAsync(this DbContext dbContext)
     {
-        if (dbContext.Model.FindRuntimeAnnotationValue(ComputedAnnotationNames.SortedProperties) is not IEnumerable<ComputedProperty> computedProperties)
-            throw new Exception($"Cannot find runtime annotation {ComputedAnnotationNames.SortedProperties} for model");
-
         return await WithoutAutoDetectChangesAsync(dbContext, async () =>
         {
             var totalChanges = 0;
 
             dbContext.ChangeTracker.DetectChanges();
 
-            foreach (var computedProperty in computedProperties)
+            var sortedComputedProperties = dbContext.Model.GetSortedComputedProperties();
+
+            foreach (var computedProperty in sortedComputedProperties)
             {
                 var changes = await computedProperty.Update(dbContext);
 

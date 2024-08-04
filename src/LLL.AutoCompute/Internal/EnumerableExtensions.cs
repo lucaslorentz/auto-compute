@@ -2,7 +2,7 @@ using System.Collections;
 
 namespace LLL.AutoCompute.Internal;
 
-public static class EnumerableExtensions
+internal static class EnumerableExtensions
 {
     public static Array ToArray(this IEnumerable source, Type type)
     {

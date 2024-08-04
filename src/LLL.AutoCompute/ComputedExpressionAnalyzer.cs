@@ -5,8 +5,8 @@ using LLL.AutoCompute.Caching;
 using LLL.AutoCompute.ChangesProviders;
 using LLL.AutoCompute.EntityContextPropagators;
 using LLL.AutoCompute.EntityContexts;
-using LLL.AutoCompute.ExpressionVisitors;
 using LLL.AutoCompute.Internal;
+using LLL.AutoCompute.Internal.ExpressionVisitors;
 
 namespace LLL.AutoCompute;
 
@@ -25,7 +25,7 @@ public class ComputedExpressionAnalyzer<TInput>(
 
     public ComputedExpressionAnalyzer<TInput> AddDefaults()
     {
-        return AddEntityContextPropagator(new UntrackedEntityContextPropagator<TInput>())
+        return AddEntityContextPropagator(new ChangeTrackingEntityContextPropagator<TInput>())
             .AddEntityContextPropagator(new ConditionalEntityContextPropagator())
             .AddEntityContextPropagator(new ArrayEntityContextPropagator())
             .AddEntityContextPropagator(new ConvertEntityContextPropagator())
@@ -59,8 +59,7 @@ public class ComputedExpressionAnalyzer<TInput>(
     }
 
     public ComputedExpressionAnalyzer<TInput> SetEntityActionProvider(
-        IEntityActionProvider<TInput> entityActionProvider
-    )
+        IEntityActionProvider<TInput> entityActionProvider)
     {
         _entityActionProvider = entityActionProvider;
         return this;
@@ -94,7 +93,7 @@ public class ComputedExpressionAnalyzer<TInput>(
     {
         computedExpression = PrepareComputedExpression(computedExpression);
 
-        var changeCalculation = changeCalculationSelector.Compile()(new ChangeCalculations<TValue>());
+        var changeCalculation = changeCalculationSelector.Compile()(ChangeCalculations<TValue>.Instance);
 
         var computedEntityContext = GetEntityContext(computedExpression, changeCalculation.IsIncremental);
 

@@ -1,6 +1,6 @@
 namespace LLL.AutoCompute;
 
-public static class UntrackedExtensions
+public static class ChangeTrackingExtensions
 {
     public static T AsComputedUntracked<T>(this T value)
     {

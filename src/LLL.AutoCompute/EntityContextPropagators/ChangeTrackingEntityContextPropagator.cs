@@ -3,30 +3,30 @@ using LLL.AutoCompute.EntityContexts;
 
 namespace LLL.AutoCompute.EntityContextPropagators;
 
-public class UntrackedEntityContextPropagator<TInput> : IEntityContextPropagator
+public class ChangeTrackingEntityContextPropagator<TInput> : IEntityContextPropagator
 {
     public void PropagateEntityContext(Expression node, IComputedExpressionAnalysis analysis)
     {
         if (node is MethodCallExpression methodCallExpression
-            && methodCallExpression.Method.DeclaringType == typeof(UntrackedExtensions))
+            && methodCallExpression.Method.DeclaringType == typeof(ChangeTrackingExtensions))
         {
-            if (methodCallExpression.Method.Name == nameof(UntrackedExtensions.AsComputedUntracked))
+            if (methodCallExpression.Method.Name == nameof(ChangeTrackingExtensions.AsComputedUntracked))
             {
                 analysis.PropagateEntityContext(
                     methodCallExpression.Arguments[0],
                     EntityContextKeys.None,
                     node,
                     EntityContextKeys.None,
-                    (e) => new UntrackedEntityContext(node.Type, e));
+                    (e) => new ChangeTrackingEntityContext(node.Type, false, e));
             }
-            else if (methodCallExpression.Method.Name == nameof(UntrackedExtensions.AsComputedTracked))
+            else if (methodCallExpression.Method.Name == nameof(ChangeTrackingExtensions.AsComputedTracked))
             {
                 analysis.PropagateEntityContext(
                     methodCallExpression.Arguments[0],
                     EntityContextKeys.None,
                     node,
                     EntityContextKeys.None,
-                    (e) => new TrackedEntityContext(node.Type, e));
+                    (e) => new ChangeTrackingEntityContext(node.Type, true, e));
             }
         }
     }

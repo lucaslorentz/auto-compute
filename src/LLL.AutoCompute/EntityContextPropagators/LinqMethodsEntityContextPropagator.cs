@@ -245,7 +245,7 @@ public class LinqMethodsEntityContextPropagator
                         analysis.AddEntityContextProvider(
                             node,
                             (key) => key == EntityContextKeys.Element
-                                ? new UntrackedEntityContext(methodCallExpression.Method.GetGenericArguments().First(), null)
+                                ? new ChangeTrackingEntityContext(methodCallExpression.Method.GetGenericArguments().First(), false, null)
                                 : null
                         );
                         break;

@@ -1,12 +1,11 @@
 using System.Collections;
-using LLL.AutoCompute.EFCore.Internal;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.ChangeTracking;
 using Microsoft.EntityFrameworkCore.Metadata;
 
-namespace LLL.AutoCompute.EFCore;
+namespace LLL.AutoCompute.EFCore.Internal;
 
-internal static class Utilities
+internal static class ModelExtensions
 {
     public static object? GetOriginalValue(this NavigationEntry navigationEntry)
     {
@@ -211,6 +210,15 @@ internal static class Utilities
         return analyzer;
     }
 
+
+    public static IReadOnlyList<ComputedProperty> GetSortedComputedProperties(this IModel model)
+    {
+        if (model.FindRuntimeAnnotationValue(ComputedAnnotationNames.SortedProperties) is not IReadOnlyList<ComputedProperty> computedProperties)
+            throw new Exception($"Cannot find runtime annotation {ComputedAnnotationNames.SortedProperties} for model");
+
+        return computedProperties;
+    }
+
     public static ComputedProperty? GetComputedProperty(this IProperty property)
     {
         return property.GetOrAddRuntimeAnnotationValue(
@@ -283,16 +291,6 @@ internal static class Utilities
         return navigation.ForeignKey.IsConnected(principalEntry.CurrentValues, dependantEntry.CurrentValues);
     }
 
-    public static bool IsRelationshipNew(
-        this INavigation navigation,
-        EntityEntry principalEntry,
-        EntityEntry dependentEntry
-    )
-    {
-        return !navigation.WasRelated(principalEntry, dependentEntry)
-            && navigation.IsRelated(principalEntry, dependentEntry);
-    }
-
     public static bool WasRelated(
         this ISkipNavigation skipNavigation,
         IEFCoreComputedInput input,
@@ -341,16 +339,6 @@ internal static class Utilities
         }
 
         return false;
-    }
-
-    public static bool IsRelationshipNew(
-        this ISkipNavigation skipNavigation,
-        IEFCoreComputedInput input,
-        EntityEntry entry,
-        EntityEntry relatedEntry)
-    {
-        return !skipNavigation.WasRelated(input, entry, relatedEntry)
-            && skipNavigation.IsRelated(input, entry, relatedEntry);
     }
 
     public static void LoadJoinEntity(
@@ -405,6 +393,26 @@ internal static class Utilities
         }
     }
 
+    private static bool IsRelationshipNew(
+        this INavigation navigation,
+        EntityEntry principalEntry,
+        EntityEntry dependentEntry
+    )
+    {
+        return !navigation.WasRelated(principalEntry, dependentEntry)
+            && navigation.IsRelated(principalEntry, dependentEntry);
+    }
+
+    private static bool IsRelationshipNew(
+        this ISkipNavigation skipNavigation,
+        IEFCoreComputedInput input,
+        EntityEntry entry,
+        EntityEntry relatedEntry)
+    {
+        return !skipNavigation.WasRelated(input, entry, relatedEntry)
+            && skipNavigation.IsRelated(input, entry, relatedEntry);
+    }
+
     private static bool IsConnected(
         this IForeignKey foreignKey,
         PropertyValues principalValues,
@@ -425,7 +433,7 @@ internal static class Utilities
         return true;
     }
 
-    public static IQueryable<object> QueryEntityType(this DbContext dbContext, IEntityType entityType)
+    private static IQueryable<object> QueryEntityType(this DbContext dbContext, IEntityType entityType)
     {
         var genericSetMethod = typeof(DbContext).GetMethod("Set", 1, [typeof(string)])
             ?? throw new Exception("DbContext generic Set method not found");

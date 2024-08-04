@@ -2,7 +2,7 @@
 
 namespace LLL.AutoCompute.EFCore.Tests.Changes;
 
-public class StopTrackingTests
+public class UntrackedTests
 {
     [Fact]
     public async void Property()
@@ -14,7 +14,7 @@ public class StopTrackingTests
         person.FirstName = "Modified";
 
         var changes = await context.GetChangesAsync(
-            (Person p) => p.FirstName + " " + p.LastName,
+            (Person p) => p.AsComputedUntracked().AsComputedTracked().FirstName + " " + p.LastName,
             default,
             c => c.Void());
         changes.Should().HaveCount(1);
@@ -36,7 +36,7 @@ public class StopTrackingTests
         person.Pets.Clear();
 
         var changes = await context.GetChangesAsync(
-            (Person p) => p.Pets.Count(p => p.Type == "Cat"),
+            (Person p) => p.AsComputedUntracked().AsComputedTracked().Pets.Count(p => p.Type == "Cat"),
             default,
             c => c.Void());
         changes.Should().HaveCount(1);
@@ -57,7 +57,7 @@ public class StopTrackingTests
         pet.Type = "Modified";
 
         var changes = await context.GetChangesAsync(
-            (Person p) => p.Pets.Count(p => p.Type == "Cat" && p.Color == "Black"),
+            (Person p) => p.Pets.Count(p => p.AsComputedUntracked().AsComputedTracked().Type == "Cat" && p.Color == "Black"),
             default,
             c => c.Void());
         changes.Should().HaveCount(1);

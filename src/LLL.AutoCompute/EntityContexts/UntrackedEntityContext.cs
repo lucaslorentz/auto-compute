@@ -1,19 +1,19 @@
 ﻿namespace LLL.AutoCompute.EntityContexts;
 
-public class UntrackedEntityContext : EntityContext
+public class ChangeTrackingEntityContext : EntityContext
 {
-    private readonly Type _entityType;
     private readonly EntityContext? _parent;
 
-    public UntrackedEntityContext(Type entityType, EntityContext? parent)
+    public ChangeTrackingEntityContext(Type entityType, bool trackChanges, EntityContext? parent)
     {
-        _entityType = entityType;
+        EntityType = entityType;
+        IsTrackingChanges = trackChanges;
         _parent = parent;
         parent?.RegisterChildContext(this);
     }
 
-    public override Type EntityType => _entityType;
-    public override bool IsTrackingChanges => false;
+    public override Type EntityType { get; }
+    public override bool IsTrackingChanges { get; }
 
     public override async Task<IReadOnlyCollection<object>> GetParentAffectedEntities(object input, IncrementalContext incrementalContext)
     {

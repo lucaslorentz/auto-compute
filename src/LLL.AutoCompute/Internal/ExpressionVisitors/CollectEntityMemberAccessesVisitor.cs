@@ -1,6 +1,6 @@
 ﻿using System.Linq.Expressions;
 
-namespace LLL.AutoCompute.ExpressionVisitors;
+namespace LLL.AutoCompute.Internal.ExpressionVisitors;
 
 internal class CollectEntityMemberAccessesVisitor(
     IComputedExpressionAnalysis analysis,
