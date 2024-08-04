@@ -54,7 +54,7 @@ In this example, NumberOfCats is incremented/decremented based on changes to Pet
 
 The following DbContext methods are also available for unmapped scenarios:
 - **GetChangesAsync**: Given a computed expression, it returns the root entities affected and their computed value changes. This also supports returning incremental computed changes. This method always returns the changes between unmodified DBContext and its current state.
-- **GetChangesProviderAsync**: RhangesAsync, but returns a change provider with **GetChangesAsync** method in it. Each time **GetChangesAsync** is called, it returns changes between the last time it was called and the current DBContext state.
+- **GetChangesProviderAsync**: Returns a change provider with **GetChangesAsync** method in it. Each time **GetChangesAsync** is called, it returns changes between the last time it was called and the current DBContext state.
 
 ## License
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
