@@ -1,5 +1,4 @@
 using System.Collections;
-using System.Runtime.CompilerServices;
 using LLL.AutoCompute.EFCore.Internal;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.ChangeTracking;
@@ -7,7 +6,7 @@ using Microsoft.EntityFrameworkCore.Metadata;
 
 namespace LLL.AutoCompute.EFCore;
 
-public static class Utilities
+internal static class Utilities
 {
     public static object? GetOriginalValue(this NavigationEntry navigationEntry)
     {
@@ -176,24 +175,56 @@ public static class Utilities
             .ToArray();
     }
 
-    private readonly static ConditionalWeakTable<IProperty, IEntityProperty> _entityProperties = [];
     public static IEntityProperty GetEntityProperty(this IProperty property)
     {
-        return _entityProperties.GetValue(property, static (property) =>
-        {
-            var closedType = typeof(EFCoreEntityProperty<>).MakeGenericType(property.DeclaringType.ClrType);
-            return (IEntityProperty)Activator.CreateInstance(closedType, property)!;
-        });
+        return property.GetOrAddRuntimeAnnotationValue(
+            ComputedAnnotationNames.EntityMember,
+            static (property) =>
+            {
+                var closedType = typeof(EFCoreEntityProperty<>)
+                    .MakeGenericType(property!.DeclaringType.ClrType);
+                return (IEntityProperty)Activator.CreateInstance(closedType, property)!;
+            },
+            property);
     }
 
-    private readonly static ConditionalWeakTable<INavigationBase, IEntityNavigation> _entityNavigations = [];
     public static IEntityNavigation GetEntityNavigation(this INavigationBase navigation)
     {
-        return _entityNavigations.GetValue(navigation, static (navigation) =>
-        {
-            var closedType = typeof(EFCoreEntityNavigation<,>).MakeGenericType(navigation.DeclaringType.ClrType, navigation.TargetEntityType.ClrType);
-            return (IEntityNavigation)Activator.CreateInstance(closedType, navigation)!;
-        });
+        return navigation.GetOrAddRuntimeAnnotationValue(
+            ComputedAnnotationNames.EntityMember,
+            static (navigation) =>
+            {
+                var closedType = typeof(EFCoreEntityNavigation<,>)
+                    .MakeGenericType(navigation!.DeclaringType.ClrType, navigation.TargetEntityType.ClrType);
+                return (IEntityNavigation)Activator.CreateInstance(closedType, navigation)!;
+            },
+            navigation);
+    }
+
+    public static IComputedExpressionAnalyzer<IEFCoreComputedInput> GetComputedExpressionAnalyzer(this IModel model)
+    {
+        var annotationValue = model.FindRuntimeAnnotation(ComputedAnnotationNames.ExpressionAnalyzer)?.Value;
+
+        if (annotationValue is not IComputedExpressionAnalyzer<IEFCoreComputedInput> analyzer)
+            throw new Exception($"Cannot find {ComputedAnnotationNames.ExpressionAnalyzer} for model");
+
+        return analyzer;
+    }
+
+    public static ComputedProperty? GetComputedProperty(this IProperty property)
+    {
+        return property.GetOrAddRuntimeAnnotationValue(
+            ComputedAnnotationNames.Property,
+            static (property) =>
+            {
+                if (property!.FindAnnotation(ComputedAnnotationNames.PropertyFactory)?.Value is not ComputedPropertyFactory computedPropertyFactory)
+                    return null;
+
+                var analyzer = property!.DeclaringType.Model.GetComputedExpressionAnalyzer();
+
+                return computedPropertyFactory(analyzer, property);
+            },
+            property);
     }
 
     public static async Task BulkLoadAsync<TEntity>(this DbContext dbContext, IEnumerable<TEntity> entities, INavigationBase navigation)

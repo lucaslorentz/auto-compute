@@ -1,4 +1,5 @@
 ﻿using LLL.AutoCompute;
+using LLL.AutoCompute.EFCore;
 using LLL.AutoCompute.EFCore.Internal;
 using Microsoft.EntityFrameworkCore.Metadata;
 using Microsoft.EntityFrameworkCore.Metadata.Conventions;
@@ -8,26 +9,35 @@ class ComputedRuntimeConvention(Func<IModel, IComputedExpressionAnalyzer<IEFCore
     public IModel ProcessModelFinalized(IModel model)
     {
         var analyzer = analyzerFactory(model);
-
         model.AddRuntimeAnnotation(ComputedAnnotationNames.ExpressionAnalyzer, analyzer);
 
-        var computedUpdaters = new List<ComputedUpdater>();
+        var computedProperties = model.GetEntityTypes()
+            .SelectMany(e => e.GetProperties())
+            .Select(p => p.GetComputedProperty())
+            .Where(c => c is not null)
+            .Select(c => c!)
+            .ToArray();
 
-        foreach (var entityType in model.GetEntityTypes())
-        {
-            foreach (var property in entityType.GetProperties())
-            {
-                if (property.FindAnnotation(ComputedAnnotationNames.UpdaterFactory)?.Value is ComputedUpdaterFactory computedUpdaterFactory)
-                {
-                    computedUpdaters.Add(
-                        computedUpdaterFactory(analyzer, property)
-                    );
-                }
-            }
-        }
+        foreach (var computedProperty in computedProperties)
+            ValidateCyclicComputedDependencies(computedProperty, computedProperty);
 
-        model.AddRuntimeAnnotation(ComputedAnnotationNames.Updaters, computedUpdaters);
+        var sortedComputedProperties = computedProperties.TopoSort(c => c.GetDependencies());
+
+        model.AddRuntimeAnnotation(ComputedAnnotationNames.SortedProperties, sortedComputedProperties);
 
         return model;
+    }
+
+    private static void ValidateCyclicComputedDependencies(
+        ComputedProperty initialComputedProperty,
+        ComputedProperty current)
+    {
+        foreach (var dependency in current.GetDependencies())
+        {
+            if (Equals(dependency, initialComputedProperty))
+                throw new Exception($"Cyclic computed dependency between {initialComputedProperty.Property} and {dependency.Property}");
+
+            ValidateCyclicComputedDependencies(initialComputedProperty, dependency);
+        }
     }
 }

@@ -5,16 +5,22 @@ using Microsoft.EntityFrameworkCore.Metadata;
 
 namespace LLL.AutoCompute.EFCore.Internal;
 
+public abstract class EFCoreEntityProperty(IProperty property)
+{
+    public IProperty Property => property;
+}
+
 public class EFCoreEntityProperty<TEntity>(
     IProperty property
-) : IEntityProperty<IEFCoreComputedInput, TEntity>
+) : EFCoreEntityProperty(property),
+    IEntityProperty<IEFCoreComputedInput, TEntity>
     where TEntity : class
 {
-    public virtual string Name => property.Name;
+    public virtual string Name => Property.Name;
 
     public virtual string ToDebugString()
     {
-        return $"{property.DeclaringType.ShortName()}.{property.Name}";
+        return $"{Property.DeclaringType.ShortName()}.{Property.Name}";
     }
 
     public virtual Expression CreateOriginalValueExpression(
@@ -28,7 +34,7 @@ public class EFCoreEntityProperty<TEntity>(
                 inputExpression,
                 memberAccess.FromExpression
             ),
-            property.ClrType
+            Property.ClrType
         );
     }
 
@@ -43,7 +49,7 @@ public class EFCoreEntityProperty<TEntity>(
                 inputExpression,
                 memberAccess.FromExpression
             ),
-            property.ClrType
+            Property.ClrType
         );
     }
 
@@ -70,9 +76,9 @@ public class EFCoreEntityProperty<TEntity>(
         var entityEntry = dbContext.Entry(ent!);
 
         if (entityEntry.State == EntityState.Added)
-            throw new Exception($"Cannot access property '{property.DeclaringType.ShortName()}.{property.Name}' original value for an added entity");
+            throw new Exception($"Cannot access property '{Property.DeclaringType.ShortName()}.{Property.Name}' original value for an added entity");
 
-        return entityEntry.Property(property).OriginalValue;
+        return entityEntry.Property(Property).OriginalValue;
     }
 
     protected virtual object? GetCurrentValue(IEFCoreComputedInput input, TEntity ent)
@@ -82,21 +88,21 @@ public class EFCoreEntityProperty<TEntity>(
         var entityEntry = dbContext.Entry(ent!);
 
         if (entityEntry.State == EntityState.Deleted)
-            throw new Exception($"Cannot access property '{property.DeclaringType.ShortName()}.{property.Name}' current value for a deleted entity");
+            throw new Exception($"Cannot access property '{Property.DeclaringType.ShortName()}.{Property.Name}' current value for a deleted entity");
 
-        return entityEntry.Property(property).CurrentValue;
+        return entityEntry.Property(Property).CurrentValue;
     }
 
     public virtual async Task<IReadOnlyCollection<TEntity>> GetAffectedEntitiesAsync(IEFCoreComputedInput input, IncrementalContext incrementalContext)
     {
         var affectedEntities = new HashSet<TEntity>();
-        foreach (var entityEntry in input.EntityEntriesOfType(property.DeclaringType))
+        foreach (var entityEntry in input.EntityEntriesOfType(Property.DeclaringType))
         {
             if (entityEntry.State == EntityState.Added
                 || entityEntry.State == EntityState.Deleted
                 || entityEntry.State == EntityState.Modified)
             {
-                var propertyEntry = entityEntry.Property(property);
+                var propertyEntry = entityEntry.Property(Property);
                 if (entityEntry.State == EntityState.Added
                     || entityEntry.State == EntityState.Deleted
                     || propertyEntry.IsModified)

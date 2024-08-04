@@ -1,5 +1,4 @@
-﻿using System.Collections.Immutable;
-using System.Linq.Expressions;
+﻿using System.Linq.Expressions;
 using System.Runtime.CompilerServices;
 using LLL.AutoCompute.ChangesProviders;
 using LLL.AutoCompute.EFCore.Internal;
@@ -58,34 +57,28 @@ public static class DbContextExtensions
 
     public static async Task<int> UpdateComputedsAsync(this DbContext dbContext)
     {
-        if (dbContext.Model.FindRuntimeAnnotationValue(ComputedAnnotationNames.Updaters) is not IEnumerable<ComputedUpdater> updaters)
-            throw new Exception($"Cannot find runtime annotation {ComputedAnnotationNames.Updaters} for model");
+        if (dbContext.Model.FindRuntimeAnnotationValue(ComputedAnnotationNames.SortedProperties) is not IEnumerable<ComputedProperty> computedProperties)
+            throw new Exception($"Cannot find runtime annotation {ComputedAnnotationNames.SortedProperties} for model");
 
-        var totalChanges = 0;
-        for (var i = 0; i < 10; i++)
+        return await WithoutAutoDetectChangesAsync(dbContext, async () =>
         {
-            var autoDetectChanges = dbContext.ChangeTracker.AutoDetectChangesEnabled;
-            try
+            var totalChanges = 0;
+
+            dbContext.ChangeTracker.DetectChanges();
+
+            foreach (var computedProperty in computedProperties)
             {
-                dbContext.ChangeTracker.AutoDetectChangesEnabled = false;
-                dbContext.ChangeTracker.DetectChanges();
-
-                var changes = 0;
-
-                foreach (var update in updaters)
-                    changes += await update(dbContext);
+                var changes = await computedProperty.Update(dbContext);
 
                 if (changes > 0)
+                {
                     totalChanges += changes;
-                else
-                    break;
+                    dbContext.ChangeTracker.DetectChanges();
+                }
             }
-            finally
-            {
-                dbContext.ChangeTracker.AutoDetectChangesEnabled = autoDetectChanges;
-            }
-        }
-        return totalChanges;
+
+            return totalChanges;
+        });
     }
 
     private static readonly ConditionalWeakTable<DbContext, IEFCoreComputedInput> _inputs = [];
@@ -96,11 +89,22 @@ public static class DbContextExtensions
 
     public static IComputedExpressionAnalyzer<IEFCoreComputedInput> GetComputedExpressionAnalyzer(this DbContext dbContext)
     {
-        var annotationValue = dbContext.Model.FindRuntimeAnnotation(ComputedAnnotationNames.ExpressionAnalyzer)?.Value;
+        return dbContext.Model.GetComputedExpressionAnalyzer();
+    }
 
-        if (annotationValue is not IComputedExpressionAnalyzer<IEFCoreComputedInput> analyzer)
-            throw new Exception($"Cannot find {ComputedAnnotationNames.ExpressionAnalyzer} for model");
-
-        return analyzer;
+    internal static async Task<T> WithoutAutoDetectChangesAsync<T>(
+        this DbContext dbContext,
+        Func<Task<T>> func)
+    {
+        var autoDetectChanges = dbContext.ChangeTracker.AutoDetectChangesEnabled;
+        try
+        {
+            dbContext.ChangeTracker.AutoDetectChangesEnabled = false;
+            return await func();
+        }
+        finally
+        {
+            dbContext.ChangeTracker.AutoDetectChangesEnabled = autoDetectChanges;
+        }
     }
 }

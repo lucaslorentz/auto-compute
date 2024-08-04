@@ -1,3 +1,5 @@
+using LLL.AutoCompute.EntityContexts;
+
 namespace LLL.AutoCompute.ChangesProviders;
 
 public class ChangesProvider<TInput, TEntity, TChange>(
@@ -7,6 +9,9 @@ public class ChangesProvider<TInput, TEntity, TChange>(
 ) : IChangesProvider<TEntity, TChange>
     where TEntity : class
 {
+    public EntityContext EntityContext => unboundChangesProvider.EntityContext;
+    public IChangeCalculation<TChange> ChangeCalculation => unboundChangesProvider.ChangeCalculation;
+
     public async Task<IReadOnlyDictionary<TEntity, TChange>> GetChangesAsync()
     {
         return await unboundChangesProvider.GetChangesAsync(input, memory);

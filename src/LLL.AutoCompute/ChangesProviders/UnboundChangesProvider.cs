@@ -3,7 +3,7 @@ using LLL.AutoCompute.EntityContexts;
 namespace LLL.AutoCompute.ChangesProviders;
 
 public class UnboundChangesProvider<TInput, TEntity, TValue, TChange>(
-    EntityContext computedEntityContext,
+    EntityContext entityContext,
     Func<TEntity, bool> filter,
     EntityContext filterEntityContext,
     IEntityActionProvider entityActionProvider,
@@ -12,6 +12,7 @@ public class UnboundChangesProvider<TInput, TEntity, TValue, TChange>(
 ) : IUnboundChangesProvider<TInput, TEntity, TChange>
     where TEntity : class
 {
+    public EntityContext EntityContext => entityContext;
     public IChangeCalculation<TChange> ChangeCalculation => changeCalculation;
 
     public async Task<IReadOnlyDictionary<TEntity, TChange>> GetChangesAsync(
@@ -20,7 +21,7 @@ public class UnboundChangesProvider<TInput, TEntity, TValue, TChange>(
     {
         var incrementalContext = new IncrementalContext();
 
-        var affectedEntities = (await computedEntityContext.GetAffectedEntitiesAsync(input!, incrementalContext))
+        var affectedEntities = (await entityContext.GetAffectedEntitiesAsync(input!, incrementalContext))
             .Cast<TEntity>()
             .ToArray();
 
@@ -32,9 +33,9 @@ public class UnboundChangesProvider<TInput, TEntity, TValue, TChange>(
             .ToArray();
 
         if (changeCalculation.IsIncremental)
-            await computedEntityContext.EnrichIncrementalContextAsync(input!, affectedEntities, incrementalContext);
+            await entityContext.EnrichIncrementalContextAsync(input!, affectedEntities, incrementalContext);
         else if (changeCalculation.PreLoadEntities)
-            await computedEntityContext.PreLoadNavigationsAsync(input!, affectedEntities, incrementalContext);
+            await entityContext.PreLoadNavigationsAsync(input!, affectedEntities, incrementalContext);
 
         var changes = new Dictionary<TEntity, TChange>();
 
