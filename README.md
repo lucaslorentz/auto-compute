@@ -31,7 +31,9 @@ Computed properties are updated by doing a **full evaluation** of the expression
 
 Example:
 ```csharp
-personBuilder.ComputedProperty(person => person.NumberOfCats, person => person.Pets.Count(pet => pet.Type == "Cat"));
+personBuilder.ComputedProperty(
+    p => p.NumberOfCats,
+    p => p.Pets.Count(pet => pet.Type == "Cat"));
 ```
 In this example, all pets from all affected persons will be lazy-loaded during re-evaluation.
 
@@ -41,7 +43,10 @@ Incremental computed properties are updated **without fully loading accessed col
 
 Example:
 ```csharp
-personBuilder.ComputedProperty(p => p.NumberOfCats, b => b.AddCollection(person => person.Pets.Count(pet => pet.Type == "Cat"), static c => c.NumberIncremental());
+personBuilder.ComputedProperty(
+    p => p.NumberOfCats,
+    p => p.Pets.Count(pet => pet.Type == "Cat"),
+    static c => c.NumberIncremental());
 ```
 In this example, NumberOfCats is incremented/decremented based on changes to Pets collection or to Pet's Type property, without loading all pets from affected persons.
 
