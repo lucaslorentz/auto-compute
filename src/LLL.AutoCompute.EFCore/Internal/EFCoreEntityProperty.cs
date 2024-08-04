@@ -70,7 +70,7 @@ public class EFCoreEntityProperty<TEntity>(
         var entityEntry = dbContext.Entry(ent!);
 
         if (entityEntry.State == EntityState.Added)
-            throw new Exception($"Cannot access property '{property.DeclaringEntityType.ShortName()}.{property.Name}' original value for an added entity");
+            throw new Exception($"Cannot access property '{property.DeclaringType.ShortName()}.{property.Name}' original value for an added entity");
 
         return entityEntry.Property(property).OriginalValue;
     }
@@ -82,7 +82,7 @@ public class EFCoreEntityProperty<TEntity>(
         var entityEntry = dbContext.Entry(ent!);
 
         if (entityEntry.State == EntityState.Deleted)
-            throw new Exception($"Cannot access property '{property.DeclaringEntityType.ShortName()}.{property.Name}' current value for a deleted entity");
+            throw new Exception($"Cannot access property '{property.DeclaringType.ShortName()}.{property.Name}' current value for a deleted entity");
 
         return entityEntry.Property(property).CurrentValue;
     }

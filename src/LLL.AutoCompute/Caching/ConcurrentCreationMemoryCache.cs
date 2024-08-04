@@ -17,9 +17,9 @@ public class ConcurrentCreationMemoryCache : IConcurrentCreationCache
     public T GetOrCreate<K, T>(K key, Func<K, T> create)
         where K : notnull
     {
-        if (_memoryCache.TryGetValue(key, out T value))
+        if (_memoryCache.TryGetValue(key, out T? value))
         {
-            return value;
+            return value!;
         }
 
         var creationLock = _semaphores.GetOrAdd(key!, _ => new SemaphoreSlim(1, 1));

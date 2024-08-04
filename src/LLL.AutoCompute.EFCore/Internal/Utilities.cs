@@ -181,7 +181,7 @@ public static class Utilities
     {
         return _entityProperties.GetValue(property, static (property) =>
         {
-            var closedType = typeof(EFCoreEntityProperty<>).MakeGenericType(property.DeclaringEntityType.ClrType);
+            var closedType = typeof(EFCoreEntityProperty<>).MakeGenericType(property.DeclaringType.ClrType);
             return (IEntityProperty)Activator.CreateInstance(closedType, property)!;
         });
     }
@@ -191,7 +191,7 @@ public static class Utilities
     {
         return _entityNavigations.GetValue(navigation, static (navigation) =>
         {
-            var closedType = typeof(EFCoreEntityNavigation<,>).MakeGenericType(navigation.DeclaringEntityType.ClrType, navigation.TargetEntityType.ClrType);
+            var closedType = typeof(EFCoreEntityNavigation<,>).MakeGenericType(navigation.DeclaringType.ClrType, navigation.TargetEntityType.ClrType);
             return (IEntityNavigation)Activator.CreateInstance(closedType, navigation)!;
         });
     }
