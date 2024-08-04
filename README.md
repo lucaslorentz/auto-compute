@@ -35,7 +35,7 @@ personBuilder.ComputedProperty(
     p => p.NumberOfCats,
     p => p.Pets.Count(pet => pet.Type == "Cat"));
 ```
-In this example, all pets from all affected persons will be lazy-loaded during re-evaluation.
+In this example, all pets from all affected persons will be pre-loaded before computation.
 
 ### Incremental computed properties
 
