@@ -17,11 +17,11 @@ This library is an automatic implementation of the approach described by Microso
         p => p.Pets.Count(pet => pet.Type == "Cat"));
     ```
 
-4. That's it! Property number of cats will update automatically during `dbContext.SaveChanges()`.
+4. That's it! The computed property will update automatically during `dbContext.SaveChanges()`.
 
 ## How it works
 
-**Auto Compute** analyzes computed expressions and monitors changes to all referenced data. When some change happens, it traverses inverse navigations to find all entities that could have been affected and updates their computed properties.
+**Auto Compute** analyzes computed expressions and monitors changes to all referenced data. When some change happens, it traverses inverse navigations to load all entities that could have been affected and update their computed properties.
 
 ## Mapping features
 
