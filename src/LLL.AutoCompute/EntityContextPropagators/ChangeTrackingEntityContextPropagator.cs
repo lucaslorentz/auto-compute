@@ -3,7 +3,7 @@ using LLL.AutoCompute.EntityContexts;
 
 namespace LLL.AutoCompute.EntityContextPropagators;
 
-public class ChangeTrackingEntityContextPropagator<TInput> : IEntityContextPropagator
+public class ChangeTrackingEntityContextPropagator : IEntityContextPropagator
 {
     public void PropagateEntityContext(Expression node, IComputedExpressionAnalysis analysis)
     {
@@ -17,7 +17,7 @@ public class ChangeTrackingEntityContextPropagator<TInput> : IEntityContextPropa
                     EntityContextKeys.None,
                     node,
                     EntityContextKeys.None,
-                    (e) => new ChangeTrackingEntityContext(node.Type, false, e));
+                    (e) => new ChangeTrackingEntityContext(e.EntityType, false, e));
             }
             else if (methodCallExpression.Method.Name == nameof(ChangeTrackingExtensions.AsComputedTracked))
             {
@@ -26,7 +26,7 @@ public class ChangeTrackingEntityContextPropagator<TInput> : IEntityContextPropa
                     EntityContextKeys.None,
                     node,
                     EntityContextKeys.None,
-                    (e) => new ChangeTrackingEntityContext(node.Type, true, e));
+                    (e) => new ChangeTrackingEntityContext(e.EntityType, true, e));
             }
         }
     }
