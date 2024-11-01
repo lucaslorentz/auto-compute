@@ -37,9 +37,9 @@ personBuilder.ComputedProperty(
 ```
 In this example, all pets from all affected persons will be pre-loaded before computation.
 
-### Incremental computed properties
+### Incrementally computed properties
 
-Incremental computed properties are updated **without fully loading accessed collections!** The incremental change is computed loading only necessary items from collections, and then it is added to the previously computed value.
+Incrementally computed properties are updated **without fully loading accessed collections!** The incremental change is computed loading only necessary items from collections, and then it is added to the previously computed value.
 
 Example:
 ```csharp
@@ -50,11 +50,32 @@ personBuilder.ComputedProperty(
 ```
 In this example, NumberOfCats is incremented/decremented based on changes to Pets collection or to Pet's Type property, without loading all pets from affected persons.
 
-## DbContext extension methods
+## Reacting to changes
 
-The following DbContext methods are also available for unmapped scenarios:
-- **GetChangesAsync**: Given a computed expression, it returns the root entities affected and their computed value changes. This also supports returning incremental computed changes. This method always returns the changes between unmodified DBContext and its current state.
-- **GetChangesProviderAsync**: Returns a change provider with **GetChangesAsync** method in it. Each time **GetChangesAsync** is called, it returns changes between the last time it was called and the current DBContext state.
+We also provide some extension methods to DBContext to make it easier to implement reactions to DBContext changes:
+- **GetChangesAsync**: Returns the root entities affected and their computed value changes since the last save changes. It also supports incrementally computed values.
+- **GetChangesProviderAsync**: Creates a change provider with a **GetChangesAsync** that behaves similarly to the method above but returns value changes since it was last called.
+
+Example:
+```csharp
+// Collect changes before saving
+var catsChanges = await context.GetChangesAsync(
+    (Person person) => person.Pets.Where(p => p.Type == "Cat").Count(),
+    default,
+    static c => c.NumberIncremental());
+
+// Save changes
+await context.SaveChangesAsync();
+
+// Send messages about the changes 
+foreach (var change in catsChanges) {
+    var person = change.Key;
+    var catsAdded = change.Value;
+    if (catsAdded > 0) {
+        SendMessageTo(person, $"Congratulations on your new {(catsAdded > 1 ? "cats" : "cat")}"!)
+    }
+}
+```
 
 ## License
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
