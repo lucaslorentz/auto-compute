@@ -102,4 +102,12 @@ public class NavigationEntityContext : EntityContext
     {
         _parent.OnAccessedMember(member);
     }
+
+    public override void ValidateSelf()
+    {
+        if (AllAccessedMembers.Any())
+        {
+            _navigation.GetInverse();
+        }
+    }
 }

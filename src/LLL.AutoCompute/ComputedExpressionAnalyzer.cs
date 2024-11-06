@@ -107,6 +107,7 @@ public class ComputedExpressionAnalyzer<TInput>(
         var filterEntityContext = GetEntityContext(filterExpression, false);
 
         return new UnboundChangesProvider<TInput, TEntity, TValue, TChange>(
+            computedExpression,
             computedEntityContext,
             filterExpression.Compile(),
             filterEntityContext,
@@ -139,6 +140,8 @@ public class ComputedExpressionAnalyzer<TInput>(
 
         if (isIncremental)
             analysis.RunIncrementalActions();
+
+        entityContext.ValidateAll();
 
         return entityContext;
     }

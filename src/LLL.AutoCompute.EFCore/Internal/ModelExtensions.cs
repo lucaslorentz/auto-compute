@@ -1,15 +1,20 @@
 using System.Collections;
+using LLL.AutoCompute.EFCore.Metadata.Internal;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.ChangeTracking;
+using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
 
 namespace LLL.AutoCompute.EFCore.Internal;
 
-internal static class ModelExtensions
+public static class ModelExtensions
 {
     public static object? GetOriginalValue(this NavigationEntry navigationEntry)
     {
         var entityEntry = navigationEntry.EntityEntry;
+
+        if (!navigationEntry.IsLoaded && entityEntry.State != EntityState.Detached)
+            navigationEntry.Load();
 
         var dbContext = navigationEntry.EntityEntry.Context;
 
@@ -198,41 +203,6 @@ internal static class ModelExtensions
                 return (IEntityNavigation)Activator.CreateInstance(closedType, navigation)!;
             },
             navigation);
-    }
-
-    public static IComputedExpressionAnalyzer<IEFCoreComputedInput> GetComputedExpressionAnalyzer(this IModel model)
-    {
-        var annotationValue = model.FindRuntimeAnnotation(ComputedAnnotationNames.ExpressionAnalyzer)?.Value;
-
-        if (annotationValue is not IComputedExpressionAnalyzer<IEFCoreComputedInput> analyzer)
-            throw new Exception($"Cannot find {ComputedAnnotationNames.ExpressionAnalyzer} for model");
-
-        return analyzer;
-    }
-
-
-    public static IReadOnlyList<ComputedProperty> GetSortedComputedProperties(this IModel model)
-    {
-        if (model.FindRuntimeAnnotationValue(ComputedAnnotationNames.SortedProperties) is not IReadOnlyList<ComputedProperty> computedProperties)
-            throw new Exception($"Cannot find runtime annotation {ComputedAnnotationNames.SortedProperties} for model");
-
-        return computedProperties;
-    }
-
-    public static ComputedProperty? GetComputedProperty(this IProperty property)
-    {
-        return property.GetOrAddRuntimeAnnotationValue(
-            ComputedAnnotationNames.Property,
-            static (property) =>
-            {
-                if (property!.FindAnnotation(ComputedAnnotationNames.PropertyFactory)?.Value is not ComputedPropertyFactory computedPropertyFactory)
-                    return null;
-
-                var analyzer = property!.DeclaringType.Model.GetComputedExpressionAnalyzer();
-
-                return computedPropertyFactory(analyzer, property);
-            },
-            property);
     }
 
     public static async Task BulkLoadAsync<TEntity>(this DbContext dbContext, IEnumerable<TEntity> entities, INavigationBase navigation)

@@ -2,11 +2,7 @@
 
 namespace LLL.AutoCompute;
 
-public interface IComputedExpressionAnalyzer
-{
-}
-
-public interface IComputedExpressionAnalyzer<TInput> : IComputedExpressionAnalyzer
+public interface IComputedExpressionAnalyzer<TInput>
 {
     IUnboundChangesProvider<TInput, TEntity, TChange> GetChangesProvider<TEntity, TValue, TChange>(
         Expression<Func<TEntity, TValue>> computedExpression,

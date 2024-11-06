@@ -3,7 +3,7 @@ namespace LLL.AutoCompute.EFCore;
 
 internal static class EnumerableExtensions
 {
-    public static IEnumerable<T> TopoSort<T>(
+    public static IReadOnlyList<T> TopoSort<T>(
         this IReadOnlyList<T> source,
         Func<T, IEnumerable<T>> getDependencies)
         where T : notnull

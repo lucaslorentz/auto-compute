@@ -5,25 +5,33 @@ using Microsoft.EntityFrameworkCore.Metadata;
 
 namespace LLL.AutoCompute.EFCore.Internal;
 
+public abstract class EFCoreEntityNavigation(
+    INavigationBase navigation)
+    : EFCoreEntityMember
+{
+    public override IPropertyBase PropertyBase => navigation;
+    public INavigationBase Navigation => navigation;
+}
+
 public class EFCoreEntityNavigation<TSourceEntity, TTargetEntity>(
     INavigationBase navigation
-) : IEntityNavigation<IEFCoreComputedInput, TSourceEntity, TTargetEntity>
+) : EFCoreEntityNavigation(navigation), IEntityNavigation<IEFCoreComputedInput, TSourceEntity, TTargetEntity>
     where TSourceEntity : class
     where TTargetEntity : class
 {
-    public virtual string Name => navigation.Name;
-    public virtual Type TargetEntityType => navigation.TargetEntityType.ClrType;
-    public virtual bool IsCollection => navigation.IsCollection;
+    public virtual string Name => Navigation.Name;
+    public virtual Type TargetEntityType => Navigation.TargetEntityType.ClrType;
+    public virtual bool IsCollection => Navigation.IsCollection;
 
     public virtual string ToDebugString()
     {
-        return $"{navigation.DeclaringEntityType.ShortName()}.{navigation.Name}";
+        return $"{Navigation.DeclaringEntityType.ShortName()}.{Navigation.Name}";
     }
 
     public virtual IEntityNavigation<IEFCoreComputedInput, TTargetEntity, TSourceEntity> GetInverse()
     {
-        var inverse = navigation.Inverse
-            ?? throw new InvalidOperationException($"No inverse for navigation '{navigation.DeclaringType.ShortName()}.{navigation.Name}'");
+        var inverse = Navigation.Inverse
+            ?? throw new InvalidOperationException($"No inverse for navigation '{Navigation.DeclaringType.ShortName()}.{Navigation.Name}'");
 
         return (EFCoreEntityNavigation<TTargetEntity, TSourceEntity>)inverse.GetEntityNavigation();
     }
@@ -33,7 +41,7 @@ public class EFCoreEntityNavigation<TSourceEntity, TTargetEntity>(
         IReadOnlyCollection<TSourceEntity> sourceEntities,
         IncrementalContext incrementalContext)
     {
-        await input.DbContext.BulkLoadAsync(sourceEntities, navigation);
+        await input.DbContext.BulkLoadAsync(sourceEntities, Navigation);
 
         var targetEntities = new HashSet<TTargetEntity>();
         foreach (var sourceEntity in sourceEntities)
@@ -42,7 +50,7 @@ public class EFCoreEntityNavigation<TSourceEntity, TTargetEntity>(
             if (entityEntry.State == EntityState.Added)
                 continue;
 
-            var navigationEntry = entityEntry.Navigation(navigation);
+            var navigationEntry = entityEntry.Navigation(Navigation);
 
             if (!navigationEntry.IsLoaded && entityEntry.State != EntityState.Detached)
                 await navigationEntry.LoadAsync();
@@ -51,7 +59,7 @@ public class EFCoreEntityNavigation<TSourceEntity, TTargetEntity>(
             {
                 targetEntities.Add((TTargetEntity)originalEntity);
                 incrementalContext?.AddIncrementalEntity(sourceEntity, this, originalEntity);
-                if (navigation.Inverse is not null)
+                if (Navigation.Inverse is not null)
                     incrementalContext?.AddIncrementalEntity(originalEntity, GetInverse(), sourceEntity);
             }
         }
@@ -63,19 +71,19 @@ public class EFCoreEntityNavigation<TSourceEntity, TTargetEntity>(
         IReadOnlyCollection<TSourceEntity> sourceEntities,
         IncrementalContext incrementalContext)
     {
-        await input.DbContext.BulkLoadAsync(sourceEntities, navigation);
+        await input.DbContext.BulkLoadAsync(sourceEntities, Navigation);
 
         var targetEntities = new HashSet<TTargetEntity>();
         foreach (var sourceEntity in sourceEntities)
         {
             var entityEntry = input.DbContext.Entry(sourceEntity!);
-            var navigationEntry = entityEntry.Navigation(navigation);
+            var navigationEntry = entityEntry.Navigation(Navigation);
 
             foreach (var entity in navigationEntry.GetEntities())
             {
                 targetEntities.Add((TTargetEntity)entity);
                 incrementalContext?.AddIncrementalEntity(sourceEntity, this, entity);
-                if (navigation.Inverse is not null)
+                if (Navigation.Inverse is not null)
                     incrementalContext?.AddIncrementalEntity(entity, GetInverse(), sourceEntity);
             }
         }
@@ -93,7 +101,7 @@ public class EFCoreEntityNavigation<TSourceEntity, TTargetEntity>(
                 inputExpression,
                 memberAccess.FromExpression
             ),
-            navigation.ClrType
+            Navigation.ClrType
         );
     }
 
@@ -108,7 +116,7 @@ public class EFCoreEntityNavigation<TSourceEntity, TTargetEntity>(
                 inputExpression,
                 memberAccess.FromExpression
             ),
-            navigation.ClrType
+            Navigation.ClrType
         );
     }
 
@@ -125,7 +133,7 @@ public class EFCoreEntityNavigation<TSourceEntity, TTargetEntity>(
                 memberAccess.FromExpression,
                 incrementalContextExpression
             ),
-            navigation.ClrType
+            Navigation.ClrType
         );
     }
 
@@ -142,7 +150,7 @@ public class EFCoreEntityNavigation<TSourceEntity, TTargetEntity>(
                 memberAccess.FromExpression,
                 incrementalContextExpression
             ),
-            navigation.ClrType
+            Navigation.ClrType
         );
     }
 
@@ -153,9 +161,9 @@ public class EFCoreEntityNavigation<TSourceEntity, TTargetEntity>(
         var entityEntry = dbContext.Entry(ent!);
 
         if (entityEntry.State == EntityState.Added)
-            throw new Exception($"Cannot access navigation '{navigation.DeclaringType.ShortName()}.{navigation.Name}' original value for an added entity");
+            throw new Exception($"Cannot access navigation '{Navigation.DeclaringType.ShortName()}.{Navigation.Name}' original value for an added entity");
 
-        var navigationEntry = entityEntry.Navigation(navigation);
+        var navigationEntry = entityEntry.Navigation(Navigation);
 
         if (!navigationEntry.IsLoaded && entityEntry.State != EntityState.Detached)
             navigationEntry.Load();
@@ -170,9 +178,9 @@ public class EFCoreEntityNavigation<TSourceEntity, TTargetEntity>(
         var entityEntry = dbContext.Entry(ent!);
 
         if (entityEntry.State == EntityState.Deleted)
-            throw new Exception($"Cannot access navigation '{navigation.DeclaringType.ShortName()}.{navigation.Name}' current value for a deleted entity");
+            throw new Exception($"Cannot access navigation '{Navigation.DeclaringType.ShortName()}.{Navigation.Name}' current value for a deleted entity");
 
-        var navigationEntry = entityEntry.Navigation(navigation);
+        var navigationEntry = entityEntry.Navigation(Navigation);
         if (!navigationEntry.IsLoaded && entityEntry.State != EntityState.Detached)
             navigationEntry.Load();
 
@@ -184,7 +192,7 @@ public class EFCoreEntityNavigation<TSourceEntity, TTargetEntity>(
         var entityEntry = input.DbContext.Entry(ent);
 
         if (entityEntry.State == EntityState.Added)
-            throw new Exception($"Cannot access navigation '{navigation.DeclaringType.ShortName()}.{navigation.Name}' original value for an added entity");
+            throw new Exception($"Cannot access navigation '{Navigation.DeclaringType.ShortName()}.{Navigation.Name}' original value for an added entity");
 
         var incrementalEntities = incrementalContext!.GetIncrementalEntities(ent, this);
 
@@ -193,7 +201,7 @@ public class EFCoreEntityNavigation<TSourceEntity, TTargetEntity>(
         var entities = incrementalEntities
             .Where(e =>
             {
-                if (navigation is ISkipNavigation skipNavigation)
+                if (Navigation is ISkipNavigation skipNavigation)
                 {
                     var relatedEntry = input.DbContext.Entry(e);
                     skipNavigation.LoadJoinEntity(input, principalEntry, relatedEntry);
@@ -202,7 +210,7 @@ public class EFCoreEntityNavigation<TSourceEntity, TTargetEntity>(
                         principalEntry,
                         relatedEntry);
                 }
-                else if (navigation is INavigation directNav)
+                else if (Navigation is INavigation directNav)
                 {
                     return directNav.WasRelated(
                         principalEntry,
@@ -213,9 +221,9 @@ public class EFCoreEntityNavigation<TSourceEntity, TTargetEntity>(
             })
             .ToArray();
 
-        if (navigation.IsCollection)
+        if (Navigation.IsCollection)
         {
-            var collectionAccessor = navigation.GetCollectionAccessor()!;
+            var collectionAccessor = Navigation.GetCollectionAccessor()!;
             var collection = collectionAccessor.Create();
             foreach (var entity in entities)
                 collectionAccessor.AddStandalone(collection, entity);
@@ -232,7 +240,7 @@ public class EFCoreEntityNavigation<TSourceEntity, TTargetEntity>(
         var entityEntry = input.DbContext.Entry(ent);
 
         if (entityEntry.State == EntityState.Deleted)
-            throw new Exception($"Cannot access navigation '{navigation.DeclaringType.ShortName()}.{navigation.Name}' current value for a deleted entity");
+            throw new Exception($"Cannot access navigation '{Navigation.DeclaringType.ShortName()}.{Navigation.Name}' current value for a deleted entity");
 
         var incrementalEntities = incrementalContext!.GetIncrementalEntities(ent, this);
 
@@ -241,7 +249,7 @@ public class EFCoreEntityNavigation<TSourceEntity, TTargetEntity>(
         var entities = incrementalEntities
             .Where(e =>
             {
-                if (navigation is ISkipNavigation skipNavigation)
+                if (Navigation is ISkipNavigation skipNavigation)
                 {
                     var relatedEntry = input.DbContext.Entry(e);
                     skipNavigation.LoadJoinEntity(input, principalEntry, relatedEntry);
@@ -250,7 +258,7 @@ public class EFCoreEntityNavigation<TSourceEntity, TTargetEntity>(
                         principalEntry,
                         relatedEntry);
                 }
-                else if (navigation is INavigation directNav)
+                else if (Navigation is INavigation directNav)
                 {
                     return directNav.IsRelated(
                         principalEntry,
@@ -261,9 +269,9 @@ public class EFCoreEntityNavigation<TSourceEntity, TTargetEntity>(
             })
             .ToArray();
 
-        if (navigation.IsCollection)
+        if (Navigation.IsCollection)
         {
-            var collectionAccessor = navigation.GetCollectionAccessor()!;
+            var collectionAccessor = Navigation.GetCollectionAccessor()!;
             var collection = collectionAccessor.Create();
             foreach (var entity in entities)
                 collectionAccessor.AddStandalone(collection, entity);
@@ -278,13 +286,13 @@ public class EFCoreEntityNavigation<TSourceEntity, TTargetEntity>(
     public virtual async Task<IReadOnlyCollection<TSourceEntity>> GetAffectedEntitiesAsync(IEFCoreComputedInput input, IncrementalContext incrementalContext)
     {
         var affectedEntities = new HashSet<TSourceEntity>();
-        foreach (var entityEntry in input.EntityEntriesOfType(navigation.DeclaringEntityType))
+        foreach (var entityEntry in input.EntityEntriesOfType(Navigation.DeclaringEntityType))
         {
             if (entityEntry.State == EntityState.Added
                 || entityEntry.State == EntityState.Deleted
                 || entityEntry.State == EntityState.Modified)
             {
-                var navigationEntry = entityEntry.Navigation(navigation);
+                var navigationEntry = entityEntry.Navigation(Navigation);
                 if (entityEntry.State == EntityState.Added
                     || entityEntry.State == EntityState.Deleted
                     || navigationEntry.IsModified)
@@ -301,15 +309,15 @@ public class EFCoreEntityNavigation<TSourceEntity, TTargetEntity>(
                 }
             }
         }
-        if (navigation.Inverse is not null)
+        if (Navigation.Inverse is not null)
         {
-            foreach (var entityEntry in input.EntityEntriesOfType(navigation.Inverse.DeclaringEntityType))
+            foreach (var entityEntry in input.EntityEntriesOfType(Navigation.Inverse.DeclaringEntityType))
             {
                 if (entityEntry.State == EntityState.Added
                     || entityEntry.State == EntityState.Deleted
                     || entityEntry.State == EntityState.Modified)
                 {
-                    var inverseNavigationEntry = entityEntry.Navigation(navigation.Inverse);
+                    var inverseNavigationEntry = entityEntry.Navigation(Navigation.Inverse);
                     if (entityEntry.State == EntityState.Added
                         || entityEntry.State == EntityState.Deleted
                         || inverseNavigationEntry.IsModified)
@@ -329,7 +337,7 @@ public class EFCoreEntityNavigation<TSourceEntity, TTargetEntity>(
                 }
             }
         }
-        if (navigation is ISkipNavigation skipNavigation)
+        if (Navigation is ISkipNavigation skipNavigation)
         {
             var dependentToPrincipal = skipNavigation.ForeignKey.DependentToPrincipal!;
             var joinReferenceToOther = skipNavigation.Inverse.ForeignKey.DependentToPrincipal;

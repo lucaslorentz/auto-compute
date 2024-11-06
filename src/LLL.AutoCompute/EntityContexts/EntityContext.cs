@@ -80,4 +80,14 @@ public abstract class EntityContext
     }
 
     public abstract void MarkNavigationToLoadAll();
+
+    public void ValidateAll()
+    {
+        ValidateSelf();
+
+        foreach (var childContext in _childContexts)
+            childContext.ValidateAll();
+    }
+
+    public virtual void ValidateSelf() { }
 }

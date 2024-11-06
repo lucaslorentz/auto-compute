@@ -7,13 +7,15 @@ namespace LLL.AutoCompute.EFCore;
 public class ComputedOptionsBuilder
 {
     private readonly ComputedOptionsExtension _extension;
+    private readonly DbContextOptionsBuilder _optionsBuilder;
+    private bool _enableUpdateComputedsOnSave = true;
 
     public ComputedOptionsBuilder(DbContextOptionsBuilder optionsBuilder)
     {
         _extension = optionsBuilder.Options.FindExtension<ComputedOptionsExtension>()
             ?? new ComputedOptionsExtension();
 
-        optionsBuilder.AddInterceptors(new ComputedInterceptor());
+        _optionsBuilder = optionsBuilder;
     }
 
     public ComputedOptionsBuilder AnalyzerFactory(Func<IServiceProvider, IModel, ComputedExpressionAnalyzer<IEFCoreComputedInput>>? factory)
@@ -28,8 +30,17 @@ public class ComputedOptionsBuilder
         return this;
     }
 
+    public ComputedOptionsBuilder EnableUpdateComputedsOnSave(bool enable)
+    {
+        _enableUpdateComputedsOnSave = enable;
+        return this;
+    }
+
     internal ComputedOptionsExtension Build()
     {
+        if (_enableUpdateComputedsOnSave)
+            _optionsBuilder.AddInterceptors(new ComputedInterceptor());
+
         return _extension;
     }
 }

@@ -1,3 +1,4 @@
+using System.Linq.Expressions;
 using LLL.AutoCompute.EntityContexts;
 
 namespace LLL.AutoCompute.ChangesProviders;
@@ -9,6 +10,7 @@ public class ChangesProvider<TInput, TEntity, TChange>(
 ) : IChangesProvider<TEntity, TChange>
     where TEntity : class
 {
+    LambdaExpression IChangesProvider.Expression => unboundChangesProvider.Expression;
     public EntityContext EntityContext => unboundChangesProvider.EntityContext;
     public IChangeCalculation<TChange> ChangeCalculation => unboundChangesProvider.ChangeCalculation;
 

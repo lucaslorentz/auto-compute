@@ -1,7 +1,8 @@
-using System.Linq.Expressions;
+﻿using System.Linq.Expressions;
 using System.Runtime.CompilerServices;
 using LLL.AutoCompute.ChangesProviders;
 using LLL.AutoCompute.EFCore.Internal;
+using LLL.AutoCompute.EFCore.Metadata.Internal;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 
@@ -41,7 +42,7 @@ public static class DbContextExtensions
         ChangeCalculationSelector<TValue, TChange> calculationSelector)
         where TEntity : class
     {
-        var analyzer = GetComputedExpressionAnalyzer(dbContext);
+        var analyzer = dbContext.Model.GetComputedExpressionAnalyzerOrThrow();
 
         var changeCalculation = calculationSelector(ChangeCalculations<TValue>.Instance);
 
@@ -65,11 +66,11 @@ public static class DbContextExtensions
 
             dbContext.ChangeTracker.DetectChanges();
 
-            var sortedComputedProperties = dbContext.Model.GetSortedComputedProperties();
+            var sortedComputeds = dbContext.Model.GetSortedComputedsOrThrow();
 
-            foreach (var computedProperty in sortedComputedProperties)
+            foreach (var computed in sortedComputeds)
             {
-                var changes = await computedProperty.Update(dbContext);
+                var changes = await computed.Update(dbContext);
 
                 if (changes > 0)
                 {
@@ -86,11 +87,6 @@ public static class DbContextExtensions
     internal static IEFCoreComputedInput GetComputedInput(this DbContext dbContext)
     {
         return _inputs.GetValue(dbContext, static k => new EFCoreComputedInput(k));
-    }
-
-    public static IComputedExpressionAnalyzer<IEFCoreComputedInput> GetComputedExpressionAnalyzer(this DbContext dbContext)
-    {
-        return dbContext.Model.GetComputedExpressionAnalyzer();
     }
 
     internal static async Task<T> WithoutAutoDetectChangesAsync<T>(

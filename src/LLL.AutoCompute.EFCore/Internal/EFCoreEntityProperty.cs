@@ -5,8 +5,11 @@ using Microsoft.EntityFrameworkCore.Metadata;
 
 namespace LLL.AutoCompute.EFCore.Internal;
 
-public abstract class EFCoreEntityProperty(IProperty property)
+public abstract class EFCoreEntityProperty(
+    IProperty property)
+    : EFCoreEntityMember
 {
+    public override IPropertyBase PropertyBase => property;
     public IProperty Property => property;
 }
 

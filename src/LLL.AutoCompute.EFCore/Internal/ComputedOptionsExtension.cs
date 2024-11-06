@@ -1,5 +1,6 @@
 ﻿using System.Linq.Expressions;
 using LLL.AutoCompute.Caching;
+using LLL.AutoCompute.EFCore.Metadata.Conventions;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
 using Microsoft.EntityFrameworkCore.Metadata.Conventions.Infrastructure;
