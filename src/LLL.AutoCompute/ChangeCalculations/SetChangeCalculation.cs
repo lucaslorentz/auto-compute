@@ -1,13 +1,14 @@
 
 namespace LLL.AutoCompute.ChangeCalculations;
 
-public class SetChangeCalculation<TElement>(
+public record class SetChangeCalculation<TElement>(
     bool incremental,
-    IEqualityComparer<TElement> comparer
-) : IChangeCalculation<IEnumerable<TElement>, SetChange<TElement>>
+    IEqualityComparer<TElement>? comparer = null)
+    : IChangeCalculation<IEnumerable<TElement>, SetChange<TElement>>
 {
     public bool IsIncremental => incremental;
     public bool PreLoadEntities => true;
+    public IEqualityComparer<TElement> Comparer {get;} = comparer ?? EqualityComparer<TElement>.Default;
 
     public SetChange<TElement> GetChange(IComputedValues<IEnumerable<TElement>> computedValues)
     {

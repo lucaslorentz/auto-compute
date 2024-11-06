@@ -1,7 +1,7 @@
 
 namespace LLL.AutoCompute.ChangeCalculations;
 
-public class CurrentValueChangeCalculation<TValue>(bool incremental)
+public record class CurrentValueChangeCalculation<TValue>(bool incremental)
     : IChangeCalculation<TValue, TValue>
 {
     public bool IsIncremental => incremental;

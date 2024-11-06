@@ -68,7 +68,7 @@ public class ComputedExpressionAnalyzer<TInput>(
     public IUnboundChangesProvider<TInput, TEntity, TChange> GetChangesProvider<TEntity, TValue, TChange>(
         Expression<Func<TEntity, TValue>> computedExpression,
         Expression<Func<TEntity, bool>>? filterExpression,
-        Expression<ChangeCalculationSelector<TValue, TChange>> changeCalculationSelector)
+        IChangeCalculation<TValue, TChange> changeCalculation)
         where TEntity : class
     {
         filterExpression ??= static e => true;
@@ -76,24 +76,22 @@ public class ComputedExpressionAnalyzer<TInput>(
         var key = (
             ComputedExpression: new ExpressionCacheKey(computedExpression, _expressionEqualityComparer),
             filterExpression: new ExpressionCacheKey(filterExpression, _expressionEqualityComparer),
-            ChangeCalculationSelector: new ExpressionCacheKey(changeCalculationSelector, _expressionEqualityComparer)
+            ChangeCalculation: changeCalculation
         );
 
         return _concurrentCreationCache.GetOrCreate(
             key,
-            k => CreateChangesProvider(computedExpression, filterExpression, changeCalculationSelector)
+            k => CreateChangesProvider(computedExpression, filterExpression, changeCalculation)
         );
     }
 
     private IUnboundChangesProvider<TInput, TEntity, TChange> CreateChangesProvider<TEntity, TValue, TChange>(
         Expression<Func<TEntity, TValue>> computedExpression,
         Expression<Func<TEntity, bool>> filterExpression,
-        Expression<ChangeCalculationSelector<TValue, TChange>> changeCalculationSelector)
+        IChangeCalculation<TValue, TChange> changeCalculation)
         where TEntity : class
     {
         computedExpression = PrepareComputedExpression(computedExpression);
-
-        var changeCalculation = changeCalculationSelector.Compile()(ChangeCalculations<TValue>.Instance);
 
         var computedEntityContext = GetEntityContext(computedExpression, changeCalculation.IsIncremental);
 

@@ -1,4 +1,4 @@
-﻿using System.Linq.Expressions;
+using System.Linq.Expressions;
 using LLL.AutoCompute.EFCore.Internal;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
@@ -23,7 +23,7 @@ public static class EntityTypeBuilderExtensions
         this EntityTypeBuilder<TEntity> entityTypeBuilder,
         Expression<Func<TEntity, TProperty>> propertyExpression,
         Expression<Func<TEntity, TValue>> computedExpression,
-        Expression<ChangeCalculationSelector<TValue, TProperty>> calculationSelector)
+        ChangeCalculationSelector<TValue, TProperty> calculationSelector)
         where TEntity : class
     {
         var propertyBuilder = entityTypeBuilder.Property(propertyExpression);
@@ -31,12 +31,12 @@ public static class EntityTypeBuilderExtensions
         {
             try
             {
-                var calculation = calculationSelector.Compile()(ChangeCalculations<TValue>.Instance);
+                var calculation = calculationSelector(ChangeCalculations<TValue>.Instance);
 
                 var changesProvider = analyzer.GetChangesProvider(
                     computedExpression,
                     default,
-                    calculationSelector);
+                    calculation);
 
                 if (!changesProvider.EntityContext.AllAccessedMembers.Any())
                     throw new Exception("Computed expression doesn't have tracked accessed members");

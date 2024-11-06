@@ -1,13 +1,12 @@
 
 namespace LLL.AutoCompute.ChangeCalculations;
 
-public class ValueChangeCalculation<TValue>(
-    bool incremental,
-    IEqualityComparer<TValue> comparer
-) : IChangeCalculation<TValue, ValueChange<TValue>>
+public record class ValueChangeCalculation<TValue>(IEqualityComparer<TValue>? comparer = null)
+    : IChangeCalculation<TValue, ValueChange<TValue>>
 {
-    public bool IsIncremental => incremental;
+    public bool IsIncremental => false;
     public bool PreLoadEntities => true;
+    public IEqualityComparer<TValue> Comparer { get; } = comparer ?? EqualityComparer<TValue>.Default;
 
     public ValueChange<TValue> GetChange(IComputedValues<TValue> computedValues)
     {
@@ -27,7 +26,7 @@ public class ValueChangeCalculation<TValue>(
 
     public bool IsNoChange(ValueChange<TValue> result)
     {
-        return comparer.Equals(result.Original, result.Current);
+        return Comparer.Equals(result.Original, result.Current);
     }
 
     public ValueChange<TValue> DeltaChange(ValueChange<TValue> previous, ValueChange<TValue> current)
@@ -45,10 +44,4 @@ public class ValueChangeCalculation<TValue>(
             change.Current
         );
     }
-}
-
-public readonly struct ValueChange<TValue>(TValue? original, TValue current)
-{
-    public TValue? Original => original;
-    public TValue Current => current;
 }

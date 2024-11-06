@@ -2,7 +2,7 @@ using System.Numerics;
 
 namespace LLL.AutoCompute.ChangeCalculations;
 
-public class NumberChangeCalculation<TValue>(bool incremental)
+public record class NumberChangeCalculation<TValue>(bool incremental)
     : IChangeCalculation<TValue, TValue>
     where TValue : INumber<TValue>
 {

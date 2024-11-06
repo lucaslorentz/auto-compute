@@ -1,4 +1,4 @@
-﻿using System.Linq.Expressions;
+using System.Linq.Expressions;
 using System.Runtime.CompilerServices;
 using LLL.AutoCompute.ChangesProviders;
 using LLL.AutoCompute.EFCore.Internal;
@@ -23,7 +23,7 @@ public static class DbContextExtensions
         this DbContext dbContext,
         Expression<Func<TEntity, TValue>> computedExpression,
         Expression<Func<TEntity, bool>>? filterExpression,
-        Expression<ChangeCalculationSelector<TValue, TChange>> calculationSelector)
+        ChangeCalculationSelector<TValue, TChange> calculationSelector)
         where TEntity : class
     {
         var changesProvider = dbContext.GetChangesProvider(
@@ -38,15 +38,17 @@ public static class DbContextExtensions
         this DbContext dbContext,
         Expression<Func<TEntity, TValue>> computedExpression,
         Expression<Func<TEntity, bool>>? filterExpression,
-        Expression<ChangeCalculationSelector<TValue, TChange>> calculationSelector)
+        ChangeCalculationSelector<TValue, TChange> calculationSelector)
         where TEntity : class
     {
         var analyzer = GetComputedExpressionAnalyzer(dbContext);
 
+        var changeCalculation = calculationSelector(ChangeCalculations<TValue>.Instance);
+
         var unboundChangesProvider = analyzer.GetChangesProvider(
             computedExpression,
             filterExpression,
-            calculationSelector);
+            changeCalculation);
 
         return new ChangesProvider<IEFCoreComputedInput, TEntity, TChange>(
             unboundChangesProvider,

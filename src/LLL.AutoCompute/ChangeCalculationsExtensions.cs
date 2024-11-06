@@ -24,17 +24,10 @@ public static class ChangeCalculationsExtensions
     }
 
     public static ValueChangeCalculation<TValue> ValueChange<TValue>(
-        this IChangeCalculations<TValue> calculations)
-    {
-        return calculations.ValueChange(null);
-    }
-
-    public static ValueChangeCalculation<TValue> ValueChange<TValue>(
         this IChangeCalculations<TValue> _,
-        IEqualityComparer<TValue>? comparer)
+        IEqualityComparer<TValue>? comparer = null)
     {
-        comparer ??= EqualityComparer<TValue>.Default;
-        return new ValueChangeCalculation<TValue>(false, comparer);
+        return new ValueChangeCalculation<TValue>(comparer);
     }
 
     public static NumberChangeCalculation<TValue> NumberIncremental<TValue>(
@@ -45,16 +38,9 @@ public static class ChangeCalculationsExtensions
     }
 
     public static SetChangeCalculation<TElement> SetIncremental<TElement>(
-        this IChangeCalculations<IEnumerable<TElement>> _)
-    {
-        return _.SetIncremental(null);
-    }
-
-    public static SetChangeCalculation<TElement> SetIncremental<TElement>(
         this IChangeCalculations<IEnumerable<TElement>> _,
-        IEqualityComparer<TElement>? comparer)
+        IEqualityComparer<TElement>? comparer = null)
     {
-        comparer ??= EqualityComparer<TElement>.Default;
         return new SetChangeCalculation<TElement>(true, comparer);
     }
 }
