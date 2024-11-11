@@ -17,7 +17,7 @@ class ComputedRuntimeConvention(Func<IModel, IComputedExpressionAnalyzer<IEFCore
         var computeds = CreateComputeds(model, analyzer);
 
         foreach (var computed in computeds)
-            ValidateCyclicComputedDependencies(computed, computed);
+            ValidateCyclicComputedDependencies(computed, computed, []);
 
         var sortedComputeds = computeds.TopoSort(c => c.GetComputedDependencies());
 
@@ -75,15 +75,18 @@ class ComputedRuntimeConvention(Func<IModel, IComputedExpressionAnalyzer<IEFCore
     }
 
     private static void ValidateCyclicComputedDependencies(
-        Computed initialComputedMember,
-        Computed current)
+        Computed initial,
+        Computed current,
+        HashSet<Computed> visited)
     {
+        visited.Add(current);
+        
         foreach (var dependency in current.GetComputedDependencies())
         {
-            if (Equals(dependency, initialComputedMember))
-                throw new Exception($"Cyclic computed dependency between {initialComputedMember.ToDebugString()} and {dependency.ToDebugString()}");
+            if (visited.Contains(dependency))
+                throw new Exception($"Cyclic computed dependency between {initial.ToDebugString()} and {current.ToDebugString()}");
 
-            ValidateCyclicComputedDependencies(initialComputedMember, dependency);
+            ValidateCyclicComputedDependencies(initial, dependency, visited);
         }
     }
 }
