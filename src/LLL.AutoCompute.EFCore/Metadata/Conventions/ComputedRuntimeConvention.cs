@@ -5,7 +5,8 @@ using Microsoft.EntityFrameworkCore.Metadata.Conventions;
 
 namespace LLL.AutoCompute.EFCore.Metadata.Conventions;
 
-class ComputedRuntimeConvention(Func<IModel, IComputedExpressionAnalyzer<IEFCoreComputedInput>> analyzerFactory) : IModelFinalizedConvention
+class ComputedRuntimeConvention(Func<IModel, IComputedExpressionAnalyzer<IEFCoreComputedInput>> analyzerFactory)
+    : IModelFinalizedConvention
 {
     public IModel ProcessModelFinalized(IModel model)
     {
@@ -43,7 +44,7 @@ class ComputedRuntimeConvention(Func<IModel, IComputedExpressionAnalyzer<IEFCore
                 computeds.AddRange(entityTypeComputeds);
             }
 
-            foreach (var property in entityType.GetProperties())
+            foreach (var property in entityType.GetDeclaredProperties())
             {
                 var propertyFactories = property.GetComputedFactories();
                 if (propertyFactories is not null)
@@ -56,7 +57,7 @@ class ComputedRuntimeConvention(Func<IModel, IComputedExpressionAnalyzer<IEFCore
                 }
             }
 
-            foreach (var navigation in entityType.GetNavigations())
+            foreach (var navigation in entityType.GetDeclaredNavigations())
             {
                 var navigationFactories = navigation.GetComputedFactories();
                 if (navigationFactories is not null)

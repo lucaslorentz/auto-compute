@@ -11,6 +11,7 @@ public class ComputedConventionSetPlugin(
 {
     public ConventionSet ModifyConventions(ConventionSet conventionSet)
     {
+        conventionSet.Add(new RemoveComputedAnnotationsConvention());
         conventionSet.Add(new ComputedRuntimeConvention(analyzerFactory));
 
         return conventionSet;
