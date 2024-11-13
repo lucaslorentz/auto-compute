@@ -9,8 +9,7 @@ public abstract class EFCoreEntityProperty(
     IProperty property)
     : EFCoreEntityMember
 {
-    public override IPropertyBase PropertyBase => property;
-    public IProperty Property => property;
+    public override IProperty Property => property;
 }
 
 public class EFCoreEntityProperty<TEntity>(

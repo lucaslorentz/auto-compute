@@ -9,7 +9,7 @@ public abstract class EFCoreEntityNavigation(
     INavigationBase navigation)
     : EFCoreEntityMember
 {
-    public override IPropertyBase PropertyBase => navigation;
+    public override INavigationBase Property => navigation;
     public INavigationBase Navigation => navigation;
 }
 

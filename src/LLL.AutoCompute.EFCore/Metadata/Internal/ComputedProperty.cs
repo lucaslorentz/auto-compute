@@ -1,3 +1,4 @@
+using System.Linq.Expressions;
 using LLL.AutoCompute.EFCore.Internal;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.ChangeTracking;
@@ -5,21 +6,19 @@ using Microsoft.EntityFrameworkCore.Metadata;
 
 namespace LLL.AutoCompute.EFCore.Metadata.Internal;
 
-public abstract class ComputedProperty(
-    IProperty property,
-    IUnboundChangesProvider changesProvider
-) : Computed(changesProvider)
+public abstract class ComputedProperty : ComputedMember
 {
-    public IProperty Property => property;
+    public abstract IProperty Property { get; }
 }
 
 public class ComputedProperty<TEntity, TProperty>(
     IProperty property,
     IUnboundChangesProvider<IEFCoreComputedInput, TEntity, TProperty> changesProvider
-) : ComputedProperty(property, changesProvider)
+) : ComputedProperty
     where TEntity : class
 {
-    public new IUnboundChangesProvider<IEFCoreComputedInput, TEntity, TProperty> ChangesProvider => changesProvider;
+    public override IUnboundChangesProvider<IEFCoreComputedInput, TEntity, TProperty> ChangesProvider => changesProvider;
+    public override IProperty Property => property;
 
     public override string ToDebugString()
     {
@@ -50,6 +49,25 @@ public class ComputedProperty<TEntity, TProperty>(
             }
         }
         return numberOfUpdates;
+    }
+
+    public override async Task Fix(object ent, DbContext dbContext)
+    {
+        await FixInconsistency((TEntity)ent, dbContext);
+    }
+
+    public async Task FixInconsistency(TEntity entity, DbContext dbContext)
+    {
+        var entityEntry = dbContext.Entry(entity);
+        var propertyEntry = entityEntry.Property(Property);
+
+        var newValue = ((Expression<Func<TEntity, TProperty>>)ChangesProvider.Expression).Compile()(entity);
+
+        var valueComparer = Property.GetValueComparer();
+        if (!valueComparer.Equals(propertyEntry.CurrentValue, newValue))
+        {
+            propertyEntry.CurrentValue = newValue;
+        }
     }
 
     private static TProperty GetOriginalValue(PropertyEntry propertyEntry)

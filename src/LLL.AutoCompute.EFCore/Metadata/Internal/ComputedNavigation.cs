@@ -1,3 +1,4 @@
+using System.Linq.Expressions;
 using LLL.AutoCompute.EFCore.Internal;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.ChangeTracking;
@@ -5,21 +6,19 @@ using Microsoft.EntityFrameworkCore.Metadata;
 
 namespace LLL.AutoCompute.EFCore.Metadata.Internal;
 
-public abstract class ComputedNavigation(
-    INavigationBase navigation,
-    IUnboundChangesProvider changesProvider
-) : Computed(changesProvider)
+public abstract class ComputedNavigation : ComputedMember
 {
-    public INavigationBase Navigation => navigation;
+    public abstract INavigationBase Navigation { get; }
 }
 
 public class ComputedNavigation<TEntity, TProperty>(
     INavigationBase navigation,
     IUnboundChangesProvider<IEFCoreComputedInput, TEntity, TProperty> changesProvider
-) : ComputedNavigation(navigation, changesProvider)
+) : ComputedNavigation
     where TEntity : class
 {
-    public new IUnboundChangesProvider<IEFCoreComputedInput, TEntity, TProperty> ChangesProvider => changesProvider;
+    public override IUnboundChangesProvider<IEFCoreComputedInput, TEntity, TProperty> ChangesProvider => changesProvider;
+    public override INavigationBase Navigation => navigation;
 
     public override string ToDebugString()
     {
@@ -49,6 +48,24 @@ public class ComputedNavigation<TEntity, TProperty>(
             }
         }
         return numberOfUpdates;
+    }
+
+    public override async Task Fix(object ent, DbContext dbContext)
+    {
+        await FixInconsistency((TEntity)ent, dbContext);
+    }
+
+    public async Task FixInconsistency(TEntity entity, DbContext dbContext)
+    {
+        var entityEntry = dbContext.Entry(entity);
+        var navigationEntry = entityEntry.Navigation(Navigation);
+
+        var newValue = ((Expression<Func<TEntity, TProperty>>)ChangesProvider.Expression).Compile()(entity);
+
+        if (!Equals(navigationEntry.CurrentValue, newValue))
+        {
+            navigationEntry.CurrentValue = newValue;
+        }
     }
 
     private static TProperty GetOriginalValue(NavigationEntry navigationEntry)

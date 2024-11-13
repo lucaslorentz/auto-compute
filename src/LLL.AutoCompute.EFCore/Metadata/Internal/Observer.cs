@@ -3,12 +3,18 @@ using Microsoft.EntityFrameworkCore;
 
 namespace LLL.AutoCompute.EFCore.Metadata.Internal;
 
-public class ComputedObserver<TEntity, TChange>(
+public abstract class Observer : ComputedBase
+{
+}
+
+public class Observer<TEntity, TChange>(
     IUnboundChangesProvider<IEFCoreComputedInput, TEntity, TChange> changesProvider,
     Func<ComputedChangeEventData<TEntity, TChange>, Task> callback
-) : Computed(changesProvider)
+) : Observer
     where TEntity : class
 {
+    public override IUnboundChangesProvider<IEFCoreComputedInput, TEntity, TChange> ChangesProvider => changesProvider;
+
     public override string ToDebugString()
     {
         return "Observer";

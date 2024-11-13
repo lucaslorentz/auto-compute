@@ -26,47 +26,44 @@ class ComputedRuntimeConvention(Func<IModel, IComputedExpressionAnalyzer<IEFCore
         return model;
     }
 
-    private static IReadOnlyList<Computed> CreateComputeds(
+    private static IReadOnlyList<ComputedBase> CreateComputeds(
         IModel model,
         IComputedExpressionAnalyzer<IEFCoreComputedInput> analyzer)
     {
-        var computeds = new List<Computed>();
+        var computeds = new List<ComputedBase>();
 
         foreach (var entityType in model.GetEntityTypes())
         {
-            var entityTypeFactories = entityType.GetComputedFactories();
-            if (entityTypeFactories is not null)
+            var observersFactories = entityType.GetObserversFactories();
+            if (observersFactories is not null)
             {
-                var entityTypeComputeds = entityTypeFactories
+                var observers = observersFactories
                     .Select(f => f(analyzer, entityType))
+                    .OfType<Observer>()
                     .ToArray();
-                entityType.SetComputeds(entityTypeComputeds);
-                computeds.AddRange(entityTypeComputeds);
+                entityType.SetObservers(observers);
+                computeds.AddRange(observers);
             }
 
             foreach (var property in entityType.GetDeclaredProperties())
             {
-                var propertyFactories = property.GetComputedFactories();
-                if (propertyFactories is not null)
+                var computedFacotry = property.GetComputedFactory();
+                if (computedFacotry is not null)
                 {
-                    var propertyComputeds = propertyFactories
-                        .Select(f => f(analyzer, property))
-                        .ToArray();
-                    property.SetComputeds(propertyComputeds);
-                    computeds.AddRange(propertyComputeds);
+                    var computed = computedFacotry(analyzer, property);
+                    property.SetComputed(computed);
+                    computeds.Add(computed);
                 }
             }
 
             foreach (var navigation in entityType.GetDeclaredNavigations())
             {
-                var navigationFactories = navigation.GetComputedFactories();
-                if (navigationFactories is not null)
+                var computedFactory = navigation.GetComputedFactory();
+                if (computedFactory is not null)
                 {
-                    var navigationComputeds = navigationFactories
-                        .Select(f => f(analyzer, navigation))
-                        .ToArray();
-                    navigation.SetComputeds(navigationComputeds);
-                    computeds.AddRange(navigationComputeds);
+                    var computed = computedFactory(analyzer, navigation);
+                    navigation.SetComputed(computed);
+                    computeds.Add(computed);
                 }
             }
         }
@@ -75,12 +72,12 @@ class ComputedRuntimeConvention(Func<IModel, IComputedExpressionAnalyzer<IEFCore
     }
 
     private static void ValidateCyclicComputedDependencies(
-        Computed initial,
-        Computed current,
-        HashSet<Computed> visited)
+        ComputedBase initial,
+        ComputedBase current,
+        HashSet<ComputedBase> visited)
     {
         visited.Add(current);
-        
+
         foreach (var dependency in current.GetComputedDependencies())
         {
             if (visited.Contains(dependency))

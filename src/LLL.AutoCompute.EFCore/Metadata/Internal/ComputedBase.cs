@@ -3,22 +3,24 @@ using Microsoft.EntityFrameworkCore;
 
 namespace LLL.AutoCompute.EFCore.Metadata.Internal;
 
-public abstract class Computed(IUnboundChangesProvider changesProvider)
+public abstract class ComputedBase
 {
     public abstract string ToDebugString();
 
-    public IUnboundChangesProvider ChangesProvider => changesProvider;
+    public abstract IUnboundChangesProvider ChangesProvider { get; }
 
     public IEnumerable<IEntityMember> GetDependencies()
     {
-        return changesProvider.EntityContext.AllAccessedMembers;
+        return ChangesProvider.EntityContext.AllAccessedMembers;
     }
 
-    public IEnumerable<Computed> GetComputedDependencies()
+    public IEnumerable<ComputedMember> GetComputedDependencies()
     {
         return GetDependencies()
             .OfType<EFCoreEntityMember>()
-            .SelectMany(e => e.PropertyBase.GetComputeds() ?? [])
+            .Select(e => e.Property.GetComputed())
+            .Where(c => c is not null)
+            .Select(c => c!)
             .ToArray();
     }
 

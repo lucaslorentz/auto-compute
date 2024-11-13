@@ -4,5 +4,5 @@ namespace LLL.AutoCompute.EFCore.Internal;
 
 public abstract class EFCoreEntityMember
 {
-    public abstract IPropertyBase PropertyBase { get; }
+    public abstract IPropertyBase Property { get; }
 }
