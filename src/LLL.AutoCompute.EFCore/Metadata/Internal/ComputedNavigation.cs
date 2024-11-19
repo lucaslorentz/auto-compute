@@ -41,6 +41,9 @@ public class ComputedNavigation<TEntity, TProperty>(
                     change)
                 : change;
 
+            if (!navigationEntry.IsLoaded && entityEntry.State != EntityState.Detached)
+                await navigationEntry.LoadAsync();
+
             if (!Equals(navigationEntry.CurrentValue, newValue))
             {
                 navigationEntry.CurrentValue = newValue;
