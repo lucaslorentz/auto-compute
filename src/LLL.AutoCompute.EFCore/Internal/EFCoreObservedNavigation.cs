@@ -5,17 +5,17 @@ using Microsoft.EntityFrameworkCore.Metadata;
 
 namespace LLL.AutoCompute.EFCore.Internal;
 
-public abstract class EFCoreEntityNavigation(
+public abstract class EFCoreObservedNavigation(
     INavigationBase navigation)
-    : EFCoreEntityMember
+    : EFCoreObservedMember
 {
     public override INavigationBase Property => navigation;
     public INavigationBase Navigation => navigation;
 }
 
-public class EFCoreEntityNavigation<TSourceEntity, TTargetEntity>(
+public class EFCoreObservedNavigation<TSourceEntity, TTargetEntity>(
     INavigationBase navigation
-) : EFCoreEntityNavigation(navigation), IEntityNavigation<IEFCoreComputedInput, TSourceEntity, TTargetEntity>
+) : EFCoreObservedNavigation(navigation), IObservedNavigation<IEFCoreComputedInput, TSourceEntity, TTargetEntity>
     where TSourceEntity : class
     where TTargetEntity : class
 {
@@ -28,12 +28,12 @@ public class EFCoreEntityNavigation<TSourceEntity, TTargetEntity>(
         return $"{Navigation.DeclaringEntityType.ShortName()}.{Navigation.Name}";
     }
 
-    public virtual IEntityNavigation<IEFCoreComputedInput, TTargetEntity, TSourceEntity> GetInverse()
+    public virtual IObservedNavigation<IEFCoreComputedInput, TTargetEntity, TSourceEntity> GetInverse()
     {
         var inverse = Navigation.Inverse
             ?? throw new InvalidOperationException($"No inverse for navigation '{Navigation.DeclaringType.ShortName()}.{Navigation.Name}'");
 
-        return (EFCoreEntityNavigation<TTargetEntity, TSourceEntity>)inverse.GetEntityNavigation();
+        return (EFCoreObservedNavigation<TTargetEntity, TSourceEntity>)inverse.GetObservedNavigation();
     }
 
     public virtual async Task<IReadOnlyCollection<TTargetEntity>> LoadOriginalAsync(
@@ -91,7 +91,7 @@ public class EFCoreEntityNavigation<TSourceEntity, TTargetEntity>(
     }
 
     public virtual Expression CreateOriginalValueExpression(
-        IEntityMemberAccess<IEntityNavigation> memberAccess,
+        IObservedMemberAccess<IObservedNavigation> memberAccess,
         Expression inputExpression)
     {
         return Expression.Convert(
@@ -106,7 +106,7 @@ public class EFCoreEntityNavigation<TSourceEntity, TTargetEntity>(
     }
 
     public virtual Expression CreateCurrentValueExpression(
-        IEntityMemberAccess<IEntityNavigation> memberAccess,
+        IObservedMemberAccess<IObservedNavigation> memberAccess,
         Expression inputExpression)
     {
         return Expression.Convert(
@@ -121,7 +121,7 @@ public class EFCoreEntityNavigation<TSourceEntity, TTargetEntity>(
     }
 
     public virtual Expression CreateIncrementalOriginalValueExpression(
-        IEntityMemberAccess<IEntityNavigation> memberAccess,
+        IObservedMemberAccess<IObservedNavigation> memberAccess,
         Expression inputExpression,
         Expression incrementalContextExpression)
     {
@@ -138,7 +138,7 @@ public class EFCoreEntityNavigation<TSourceEntity, TTargetEntity>(
     }
 
     public virtual Expression CreateIncrementalCurrentValueExpression(
-        IEntityMemberAccess<IEntityNavigation> memberAccess,
+        IObservedMemberAccess<IObservedNavigation> memberAccess,
         Expression inputExpression,
         Expression incrementalContextExpression)
     {

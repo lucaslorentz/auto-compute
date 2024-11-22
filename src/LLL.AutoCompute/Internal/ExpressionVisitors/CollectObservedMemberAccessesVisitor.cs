@@ -2,9 +2,9 @@
 
 namespace LLL.AutoCompute.Internal.ExpressionVisitors;
 
-internal class CollectEntityMemberAccessesVisitor(
+internal class CollectObservedMemberAccessesVisitor(
     IComputedExpressionAnalysis analysis,
-    IReadOnlyCollection<IEntityMemberAccessLocator> memberAccessLocators
+    IReadOnlyCollection<IObservedMemberAccessLocator> memberAccessLocators
 ) : ExpressionVisitor
 {
     public override Expression? Visit(Expression? node)
@@ -13,7 +13,7 @@ internal class CollectEntityMemberAccessesVisitor(
         {
             foreach (var memberAccessLocator in memberAccessLocators)
             {
-                var memberAccess = memberAccessLocator.GetEntityMemberAccess(node);
+                var memberAccess = memberAccessLocator.GetObservedMemberAccess(node);
                 if (memberAccess is not null)
                 {
                     var entityContext = analysis.ResolveEntityContext(memberAccess.FromExpression, EntityContextKeys.None);

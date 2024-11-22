@@ -3,12 +3,12 @@
 public class NavigationEntityContext : EntityContext
 {
     private readonly EntityContext _parent;
-    private readonly IEntityNavigation _navigation;
+    private readonly IObservedNavigation _navigation;
     private bool _shouldLoadAll;
 
     public NavigationEntityContext(
         EntityContext parent,
-        IEntityNavigation navigation)
+        IObservedNavigation navigation)
     {
         _parent = parent;
         _navigation = navigation;
@@ -98,7 +98,7 @@ public class NavigationEntityContext : EntityContext
         _shouldLoadAll = true;
     }
 
-    protected override void NotifyParentsOfAccessedMember(IEntityMember member)
+    protected override void NotifyParentsOfAccessedMember(IObservedMember member)
     {
         _parent.OnAccessedMember(member);
     }

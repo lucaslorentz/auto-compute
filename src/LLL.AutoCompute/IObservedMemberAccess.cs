@@ -2,8 +2,8 @@ using System.Linq.Expressions;
 
 namespace LLL.AutoCompute;
 
-public interface IEntityMemberAccess<out TMember>
-    where TMember : IEntityMember
+public interface IObservedMemberAccess<out TMember>
+    where TMember : IObservedMember
 {
     Expression Expression { get; }
     Expression FromExpression { get; }

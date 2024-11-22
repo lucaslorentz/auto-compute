@@ -32,7 +32,7 @@ public class ScopedEntityContext : EntityContext
         _parent.MarkNavigationToLoadAll();
     }
 
-    protected override void NotifyParentsOfAccessedMember(IEntityMember member)
+    protected override void NotifyParentsOfAccessedMember(IObservedMember member)
     {
         _parent.OnAccessedMember(member);
     }

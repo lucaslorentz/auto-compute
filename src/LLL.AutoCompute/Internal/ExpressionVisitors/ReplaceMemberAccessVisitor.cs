@@ -3,8 +3,8 @@ using System.Linq.Expressions;
 namespace LLL.AutoCompute.Internal.ExpressionVisitors;
 
 internal class ReplaceMemberAccessVisitor(
-    IReadOnlyCollection<IEntityMemberAccessLocator> memberAccessLocators,
-    Func<IEntityMemberAccess<IEntityMember>, Expression> expressionModifier
+    IReadOnlyCollection<IObservedMemberAccessLocator> memberAccessLocators,
+    Func<IObservedMemberAccess<IObservedMember>, Expression> expressionModifier
 ) : ExpressionVisitor
 {
     public override Expression? Visit(Expression? node)
@@ -13,7 +13,7 @@ internal class ReplaceMemberAccessVisitor(
         {
             foreach (var memberAccessLocator in memberAccessLocators)
             {
-                var memberAccess = memberAccessLocator.GetEntityMemberAccess(node);
+                var memberAccess = memberAccessLocator.GetObservedMemberAccess(node);
                 if (memberAccess is not null)
                 {
                     var modifiedNode = expressionModifier(memberAccess);

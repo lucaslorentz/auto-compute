@@ -9,7 +9,7 @@ public abstract class ComputedBase
 
     public abstract IUnboundChangesProvider ChangesProvider { get; }
 
-    public IEnumerable<IEntityMember> GetDependencies()
+    public IEnumerable<IObservedMember> GetDependencies()
     {
         return ChangesProvider.EntityContext.AllAccessedMembers;
     }
@@ -17,7 +17,7 @@ public abstract class ComputedBase
     public IEnumerable<ComputedMember> GetComputedDependencies()
     {
         return GetDependencies()
-            .OfType<EFCoreEntityMember>()
+            .OfType<EFCoreObservedMember>()
             .Select(e => e.Property.GetComputed())
             .Where(c => c is not null)
             .Select(c => c!)

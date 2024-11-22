@@ -1,24 +1,24 @@
 ﻿namespace LLL.AutoCompute;
 
-public interface IEntityNavigation : IEntityMember<IEntityNavigation>
+public interface IObservedNavigation : IObservedMember<IObservedNavigation>
 {
     Type SourceEntityType { get; }
     Type TargetEntityType { get; }
     bool IsCollection { get; }
-    IEntityNavigation GetInverse();
+    IObservedNavigation GetInverse();
     Task<IReadOnlyCollection<object>> LoadCurrentAsync(object input, IReadOnlyCollection<object> fromEntities, IncrementalContext incrementalContext);
     Task<IReadOnlyCollection<object>> LoadOriginalAsync(object input, IReadOnlyCollection<object> fromEntities, IncrementalContext incrementalContext);
 }
 
-public interface IEntityNavigation<in TInput, TSourceEntity, TTargetEntity> : IEntityNavigation
+public interface IObservedNavigation<in TInput, TSourceEntity, TTargetEntity> : IObservedNavigation
 {
-    Type IEntityMember.InputType => typeof(TInput);
-    Type IEntityNavigation.SourceEntityType => typeof(TSourceEntity);
-    Type IEntityNavigation.TargetEntityType => typeof(TTargetEntity);
+    Type IObservedMember.InputType => typeof(TInput);
+    Type IObservedNavigation.SourceEntityType => typeof(TSourceEntity);
+    Type IObservedNavigation.TargetEntityType => typeof(TTargetEntity);
 
-    new IEntityNavigation<TInput, TTargetEntity, TSourceEntity> GetInverse();
+    new IObservedNavigation<TInput, TTargetEntity, TSourceEntity> GetInverse();
 
-    IEntityNavigation IEntityNavigation.GetInverse()
+    IObservedNavigation IObservedNavigation.GetInverse()
     {
         return GetInverse();
     }
@@ -27,7 +27,7 @@ public interface IEntityNavigation<in TInput, TSourceEntity, TTargetEntity> : IE
 
     Task<IReadOnlyCollection<TTargetEntity>> LoadOriginalAsync(TInput input, IReadOnlyCollection<TSourceEntity> fromEntities, IncrementalContext incrementalContext);
 
-    async Task<IReadOnlyCollection<object>> IEntityNavigation.LoadCurrentAsync(object input, IReadOnlyCollection<object> fromEntities, IncrementalContext incrementalContext)
+    async Task<IReadOnlyCollection<object>> IObservedNavigation.LoadCurrentAsync(object input, IReadOnlyCollection<object> fromEntities, IncrementalContext incrementalContext)
     {
         if (input is not TInput inputTyped)
             throw new ArgumentException($"Param {nameof(input)} should be of type {typeof(TInput)}");
@@ -35,7 +35,7 @@ public interface IEntityNavigation<in TInput, TSourceEntity, TTargetEntity> : IE
         return (IReadOnlyCollection<object>)await LoadCurrentAsync(inputTyped, fromEntities.Cast<TSourceEntity>().ToArray(), incrementalContext);
     }
 
-    async Task<IReadOnlyCollection<object>> IEntityNavigation.LoadOriginalAsync(object input, IReadOnlyCollection<object> fromEntities, IncrementalContext incrementalContext)
+    async Task<IReadOnlyCollection<object>> IObservedNavigation.LoadOriginalAsync(object input, IReadOnlyCollection<object> fromEntities, IncrementalContext incrementalContext)
     {
         if (input is not TInput inputTyped)
             throw new ArgumentException($"Param {nameof(input)} should be of type {typeof(TInput)}");
@@ -45,7 +45,7 @@ public interface IEntityNavigation<in TInput, TSourceEntity, TTargetEntity> : IE
 
     Task<IReadOnlyCollection<TSourceEntity>> GetAffectedEntitiesAsync(TInput input, IncrementalContext incrementalContext);
 
-    async Task<IReadOnlyCollection<object>> IEntityMember.GetAffectedEntitiesAsync(object input, IncrementalContext incrementalContext)
+    async Task<IReadOnlyCollection<object>> IObservedMember.GetAffectedEntitiesAsync(object input, IncrementalContext incrementalContext)
     {
         if (input is not TInput inputTyped)
             throw new ArgumentException($"Param {nameof(input)} should be of type {typeof(TInput)}");

@@ -2,12 +2,12 @@ using System.Linq.Expressions;
 
 namespace LLL.AutoCompute;
 
-public class EntityMemberAccess<TMember>(
+public class ObservedMemberAccess<TMember>(
     Expression expression,
     Expression fromExpression,
     TMember value
-) : IEntityMemberAccess<TMember>
-    where TMember : IEntityMember<TMember>
+) : IObservedMemberAccess<TMember>
+    where TMember : IObservedMember<TMember>
 {
     public Expression Expression { get; } = expression;
     public Expression FromExpression { get; } = fromExpression;
@@ -38,14 +38,14 @@ public class EntityMemberAccess<TMember>(
     }
 }
 
-public static class EntityMemberAccess
+public static class ObserbedMemberAccess
 {
-    public static EntityMemberAccess<TMember> Create<TMember>(
+    public static ObservedMemberAccess<TMember> Create<TMember>(
         Expression expression,
         Expression fromExpression,
         TMember value)
-        where TMember : IEntityMember<TMember>
+        where TMember : IObservedMember<TMember>
     {
-        return new EntityMemberAccess<TMember>(expression, fromExpression, value);
+        return new ObservedMemberAccess<TMember>(expression, fromExpression, value);
     }
 }

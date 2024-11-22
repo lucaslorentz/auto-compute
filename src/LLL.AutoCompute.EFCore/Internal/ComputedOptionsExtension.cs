@@ -46,7 +46,7 @@ public class ComputedOptionsExtension : IDbContextOptionsExtension
                 ExpressionEqualityComparer.Instance
             )
             .AddDefaults()
-            .AddEntityMemberAccessLocator(new EFCoreEntityMemberAccessLocator(model))
+            .AddObservedMemberAccessLocator(new EFCoreObservedMemberAccessLocator(model))
             .SetEntityActionProvider(new EFCoreEntityActionProvider());
 
         foreach (var customize in AnalyzerConfigurations)

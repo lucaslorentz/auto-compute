@@ -2,81 +2,81 @@ using System.Linq.Expressions;
 
 namespace LLL.AutoCompute;
 
-public interface IEntityMember
+public interface IObservedMember
 {
     string Name { get; }
     Type InputType { get; }
     string ToDebugString();
     Expression CreateOriginalValueExpression(
-        IEntityMemberAccess<IEntityMember> memberAccess,
+        IObservedMemberAccess<IObservedMember> memberAccess,
         Expression inputExpression);
     Expression CreateCurrentValueExpression(
-        IEntityMemberAccess<IEntityMember> memberAccess,
+        IObservedMemberAccess<IObservedMember> memberAccess,
         Expression inputExpression);
     Expression CreateIncrementalOriginalValueExpression(
-        IEntityMemberAccess<IEntityMember> memberAccess,
+        IObservedMemberAccess<IObservedMember> memberAccess,
         Expression inputExpression,
         Expression incrementalContextExpression);
     Expression CreateIncrementalCurrentValueExpression(
-        IEntityMemberAccess<IEntityMember> memberAccess,
+        IObservedMemberAccess<IObservedMember> memberAccess,
         Expression inputExpression,
         Expression incrementalContextExpression);
     Task<IReadOnlyCollection<object>> GetAffectedEntitiesAsync(object input, IncrementalContext incrementalContext);
 }
 
 
-public interface IEntityMember<TMember> : IEntityMember
-    where TMember : IEntityMember
+public interface IObservedMember<TMember> : IObservedMember
+    where TMember : IObservedMember
 {
     Expression CreateOriginalValueExpression(
-        IEntityMemberAccess<TMember> memberAccess,
+        IObservedMemberAccess<TMember> memberAccess,
         Expression inputExpression);
 
     Expression CreateCurrentValueExpression(
-        IEntityMemberAccess<TMember> memberAccess,
+        IObservedMemberAccess<TMember> memberAccess,
         Expression inputExpression);
 
     Expression CreateIncrementalOriginalValueExpression(
-        IEntityMemberAccess<TMember> memberAccess,
+        IObservedMemberAccess<TMember> memberAccess,
         Expression inputExpression,
         Expression incrementalContextExpression);
 
     Expression CreateIncrementalCurrentValueExpression(
-        IEntityMemberAccess<TMember> memberAccess,
+        IObservedMemberAccess<TMember> memberAccess,
         Expression inputExpression,
         Expression incrementalContextExpression);
 
-    Expression IEntityMember.CreateOriginalValueExpression(
-        IEntityMemberAccess<IEntityMember> memberAccess,
+    Expression IObservedMember.CreateOriginalValueExpression(
+        IObservedMemberAccess<IObservedMember> memberAccess,
         Expression inputExpression)
     {
-        if (memberAccess is not IEntityMemberAccess<TMember> memberAccessTyped)
-            throw new ArgumentException($"Param {nameof(memberAccess)} should be of type {typeof(IEntityMemberAccess<TMember>)}");
+        if (memberAccess is not IObservedMemberAccess<TMember> memberAccessTyped)
+            throw new ArgumentException($"Param {nameof(memberAccess)} should be of type {typeof(IObservedMemberAccess<TMember>)}");
 
         return CreateOriginalValueExpression(
             memberAccessTyped,
             inputExpression);
     }
 
-    Expression IEntityMember.CreateCurrentValueExpression(
-        IEntityMemberAccess<IEntityMember> memberAccess,
+    Expression IObservedMember.CreateCurrentValueExpression(
+        IObservedMemberAccess<IObservedMember> memberAccess,
         Expression inputExpression)
     {
-        if (memberAccess is not IEntityMemberAccess<TMember> memberAccessTyped)
-            throw new ArgumentException($"Param {nameof(memberAccess)} should be of type {typeof(IEntityMemberAccess<TMember>)}");
+        if (memberAccess is not IObservedMemberAccess<TMember> memberAccessTyped)
+            throw new ArgumentException($"Param {nameof(memberAccess)} should be of type {typeof(IObservedMemberAccess<TMember>)}");
 
         return CreateCurrentValueExpression(
             memberAccessTyped,
             inputExpression);
     }
 
-    Expression IEntityMember.CreateIncrementalOriginalValueExpression(
-        IEntityMemberAccess<IEntityMember> memberAccess,
+    Expression IObservedMember.CreateIncrementalOriginalValueExpression(
+        IObservedMemberAccess<IObservedMember> memberAccess,
         Expression inputExpression,
         Expression incrementalContextExpression)
     {
-        if (memberAccess is not IEntityMemberAccess<TMember> memberAccessTyped)
-            throw new ArgumentException($"Param {nameof(memberAccess)} should be of type {typeof(IEntityMemberAccess<TMember>)}");
+        if (memberAccess is not IObservedMemberAccess<TMember> memberAccessTyped)
+            throw new ArgumentException($"Param {nameof(memberAccess)} should be of type {typeof(IObservedMemberAccess<TMember>)}");
 
         return CreateIncrementalOriginalValueExpression(
             memberAccessTyped,
@@ -84,13 +84,13 @@ public interface IEntityMember<TMember> : IEntityMember
             incrementalContextExpression);
     }
 
-    Expression IEntityMember.CreateIncrementalCurrentValueExpression(
-        IEntityMemberAccess<IEntityMember> memberAccess,
+    Expression IObservedMember.CreateIncrementalCurrentValueExpression(
+        IObservedMemberAccess<IObservedMember> memberAccess,
         Expression inputExpression,
         Expression incrementalContextExpression)
     {
-        if (memberAccess is not IEntityMemberAccess<TMember> memberAccessTyped)
-            throw new ArgumentException($"Param {nameof(memberAccess)} should be of type {typeof(IEntityMemberAccess<TMember>)}");
+        if (memberAccess is not IObservedMemberAccess<TMember> memberAccessTyped)
+            throw new ArgumentException($"Param {nameof(memberAccess)} should be of type {typeof(IObservedMemberAccess<TMember>)}");
 
         return CreateIncrementalCurrentValueExpression(
             memberAccessTyped,

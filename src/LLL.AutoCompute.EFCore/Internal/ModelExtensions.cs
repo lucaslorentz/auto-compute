@@ -179,28 +179,28 @@ public static class ModelExtensions
             .ToArray();
     }
 
-    public static IEntityProperty GetEntityProperty(this IProperty property)
+    public static IObservedProperty GetObservedProperty(this IProperty property)
     {
         return property.GetOrAddRuntimeAnnotationValue(
-            ComputedAnnotationNames.EntityMember,
+            ComputedAnnotationNames.ObservedMember,
             static (property) =>
             {
-                var closedType = typeof(EFCoreEntityProperty<>)
+                var closedType = typeof(EFCoreObservedProperty<>)
                     .MakeGenericType(property!.DeclaringType.ClrType);
-                return (IEntityProperty)Activator.CreateInstance(closedType, property)!;
+                return (IObservedProperty)Activator.CreateInstance(closedType, property)!;
             },
             property);
     }
 
-    public static IEntityNavigation GetEntityNavigation(this INavigationBase navigation)
+    public static IObservedNavigation GetObservedNavigation(this INavigationBase navigation)
     {
         return navigation.GetOrAddRuntimeAnnotationValue(
-            ComputedAnnotationNames.EntityMember,
+            ComputedAnnotationNames.ObservedMember,
             static (navigation) =>
             {
-                var closedType = typeof(EFCoreEntityNavigation<,>)
+                var closedType = typeof(EFCoreObservedNavigation<,>)
                     .MakeGenericType(navigation!.DeclaringType.ClrType, navigation.TargetEntityType.ClrType);
-                return (IEntityNavigation)Activator.CreateInstance(closedType, navigation)!;
+                return (IObservedNavigation)Activator.CreateInstance(closedType, navigation)!;
             },
             navigation);
     }

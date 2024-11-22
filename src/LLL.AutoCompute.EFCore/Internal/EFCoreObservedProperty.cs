@@ -5,17 +5,17 @@ using Microsoft.EntityFrameworkCore.Metadata;
 
 namespace LLL.AutoCompute.EFCore.Internal;
 
-public abstract class EFCoreEntityProperty(
+public abstract class EFCoreObservedProperty(
     IProperty property)
-    : EFCoreEntityMember
+    : EFCoreObservedMember
 {
     public override IProperty Property => property;
 }
 
-public class EFCoreEntityProperty<TEntity>(
+public class EFCoreObservedProperty<TEntity>(
     IProperty property
-) : EFCoreEntityProperty(property),
-    IEntityProperty<IEFCoreComputedInput, TEntity>
+) : EFCoreObservedProperty(property),
+    IObservedProperty<IEFCoreComputedInput, TEntity>
     where TEntity : class
 {
     public virtual string Name => Property.Name;
@@ -26,7 +26,7 @@ public class EFCoreEntityProperty<TEntity>(
     }
 
     public virtual Expression CreateOriginalValueExpression(
-        IEntityMemberAccess<IEntityProperty> memberAccess,
+        IObservedMemberAccess<IObservedProperty> memberAccess,
         Expression inputExpression)
     {
         return Expression.Convert(
@@ -41,7 +41,7 @@ public class EFCoreEntityProperty<TEntity>(
     }
 
     public virtual Expression CreateCurrentValueExpression(
-        IEntityMemberAccess<IEntityProperty> memberAccess,
+        IObservedMemberAccess<IObservedProperty> memberAccess,
         Expression inputExpression)
     {
         return Expression.Convert(
@@ -56,7 +56,7 @@ public class EFCoreEntityProperty<TEntity>(
     }
 
     public Expression CreateIncrementalOriginalValueExpression(
-        IEntityMemberAccess<IEntityProperty> memberAccess,
+        IObservedMemberAccess<IObservedProperty> memberAccess,
         Expression inputExpression,
         Expression incrementalContextExpression)
     {
@@ -64,7 +64,7 @@ public class EFCoreEntityProperty<TEntity>(
     }
 
     public Expression CreateIncrementalCurrentValueExpression(
-        IEntityMemberAccess<IEntityProperty> memberAccess,
+        IObservedMemberAccess<IObservedProperty> memberAccess,
         Expression inputExpression,
         Expression incrementalContextExpression)
     {

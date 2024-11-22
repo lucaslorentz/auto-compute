@@ -1,19 +1,19 @@
 
 namespace LLL.AutoCompute;
 
-public interface IEntityProperty : IEntityMember<IEntityProperty>
+public interface IObservedProperty : IObservedMember<IObservedProperty>
 {
     Type EntityType { get; }
 }
 
-public interface IEntityProperty<in TInput, TEntity> : IEntityProperty
+public interface IObservedProperty<in TInput, TEntity> : IObservedProperty
 {
-    Type IEntityMember.InputType => typeof(TInput);
-    Type IEntityProperty.EntityType => typeof(TEntity);
+    Type IObservedMember.InputType => typeof(TInput);
+    Type IObservedProperty.EntityType => typeof(TEntity);
 
     Task<IReadOnlyCollection<TEntity>> GetAffectedEntitiesAsync(TInput input, IncrementalContext incrementalContext);
 
-    async Task<IReadOnlyCollection<object>> IEntityMember.GetAffectedEntitiesAsync(object input, IncrementalContext incrementalContext)
+    async Task<IReadOnlyCollection<object>> IObservedMember.GetAffectedEntitiesAsync(object input, IncrementalContext incrementalContext)
     {
         if (input is not TInput inputTyped)
             throw new ArgumentException($"Param {nameof(input)} should be of type {typeof(TInput)}");

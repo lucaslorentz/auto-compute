@@ -8,7 +8,7 @@ public class ComputedExpressionAnalysis : IComputedExpressionAnalysis
 {
     private readonly ConcurrentDictionary<Expression, ConcurrentBag<Func<string, EntityContext?>>> _entityContextProviders = new();
     private readonly ConcurrentDictionary<(Expression, string), EntityContext> _entityContextCache = new();
-    private readonly ConcurrentDictionary<Expression, IEntityMemberAccess<IEntityMember>> _entityMemberAccesses = new();
+    private readonly ConcurrentDictionary<Expression, IObservedMemberAccess<IObservedMember>> _observedMemberAccesses = new();
     private readonly ConcurrentBag<Action> _incrementalActions = [];
 
     public EntityContext ResolveEntityContext(Expression node, string key)
@@ -119,9 +119,9 @@ public class ComputedExpressionAnalysis : IComputedExpressionAnalysis
         return result;
     }
 
-    public void AddMemberAccess(Expression node, IEntityMemberAccess<IEntityMember> entityMemberAccess)
+    public void AddMemberAccess(Expression node, IObservedMemberAccess<IObservedMember> observedMemberAccess)
     {
-        _entityMemberAccesses.TryAdd(node, entityMemberAccess);
+        _observedMemberAccesses.TryAdd(node, observedMemberAccess);
     }
 
     public void RunIncrementalActions()

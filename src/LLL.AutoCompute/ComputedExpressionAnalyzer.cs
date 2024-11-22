@@ -18,8 +18,8 @@ public class ComputedExpressionAnalyzer<TInput>(
     private readonly IConcurrentCreationCache _concurrentCreationCache = concurrentCreationCache;
     private readonly IEqualityComparer<Expression> _expressionEqualityComparer = expressionEqualityComparer;
     private readonly IList<IEntityContextPropagator> _entityContextPropagators = [];
-    private readonly HashSet<IEntityNavigationAccessLocator> _navigationAccessLocators = [];
-    private readonly HashSet<IEntityMemberAccessLocator> _memberAccessLocators = [];
+    private readonly HashSet<IObservedNavigationAccessLocator> _navigationAccessLocators = [];
+    private readonly HashSet<IObservedMemberAccessLocator> _memberAccessLocators = [];
     private readonly IList<Func<LambdaExpression, LambdaExpression>> _expressionModifiers = [];
     private IEntityActionProvider<TInput>? _entityActionProvider;
 
@@ -35,10 +35,10 @@ public class ComputedExpressionAnalyzer<TInput>(
             .AddEntityContextPropagator(new NavigationEntityContextPropagator(_navigationAccessLocators));
     }
 
-    public ComputedExpressionAnalyzer<TInput> AddEntityMemberAccessLocator(
-        IEntityMemberAccessLocator<TInput> memberAccessLocator)
+    public ComputedExpressionAnalyzer<TInput> AddObservedMemberAccessLocator(
+        IObservedMemberAccessLocator<TInput> memberAccessLocator)
     {
-        if (memberAccessLocator is IEntityNavigationAccessLocator nav)
+        if (memberAccessLocator is IObservedNavigationAccessLocator nav)
             _navigationAccessLocators.Add(nav);
 
         _memberAccessLocators.Add(memberAccessLocator);
@@ -133,7 +133,7 @@ public class ComputedExpressionAnalyzer<TInput>(
             analysis
         ).Visit(computedExpression);
 
-        new CollectEntityMemberAccessesVisitor(
+        new CollectObservedMemberAccessesVisitor(
             analysis,
             _memberAccessLocators
         ).Visit(computedExpression);

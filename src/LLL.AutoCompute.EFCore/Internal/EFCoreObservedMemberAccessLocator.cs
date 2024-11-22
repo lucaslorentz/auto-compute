@@ -3,11 +3,11 @@ using Microsoft.EntityFrameworkCore.Metadata;
 
 namespace LLL.AutoCompute.EFCore.Internal;
 
-public class EFCoreEntityMemberAccessLocator(IModel model) :
-    IEntityNavigationAccessLocator<IEFCoreComputedInput>,
-    IEntityPropertyAccessLocator<IEFCoreComputedInput>
+public class EFCoreObservedMemberAccessLocator(IModel model) :
+    IObservedNavigationAccessLocator<IEFCoreComputedInput>,
+    IObservedPropertyAccessLocator<IEFCoreComputedInput>
 {
-    public virtual IEntityMemberAccess<IEntityNavigation>? GetEntityNavigationAccess(Expression node)
+    public virtual IObservedMemberAccess<IObservedNavigation>? GetObservedNavigationAccess(Expression node)
     {
         if (node is MemberExpression memberExpression
             && memberExpression.Expression is not null)
@@ -22,13 +22,13 @@ public class EFCoreEntityMemberAccessLocator(IModel model) :
             var navigation = (INavigationBase?)entityType?.FindNavigation(memberExpression.Member)
                 ?? entityType?.FindSkipNavigation(memberExpression.Member);
             if (navigation != null)
-                return EntityMemberAccess.Create(node, entityExpression, GetNavigation(navigation));
+                return ObserbedMemberAccess.Create(node, entityExpression, GetNavigation(navigation));
         }
 
         return null;
     }
 
-    public virtual IEntityMemberAccess<IEntityProperty>? GetEntityPropertyAccess(Expression node)
+    public virtual IObservedMemberAccess<IObservedProperty>? GetObservedPropertyAccess(Expression node)
     {
         if (node is MemberExpression memberExpression
             && memberExpression.Expression is not null)
@@ -43,19 +43,19 @@ public class EFCoreEntityMemberAccessLocator(IModel model) :
             var entityType = model.FindEntityType(type);
             var property = entityType?.FindProperty(memberExpression.Member);
             if (property is not null)
-                return EntityMemberAccess.Create(node, entityExpression, GetProperty(property));
+                return ObserbedMemberAccess.Create(node, entityExpression, GetProperty(property));
         }
 
         return null;
     }
 
-    protected virtual IEntityNavigation GetNavigation(INavigationBase navigation)
+    protected virtual IObservedNavigation GetNavigation(INavigationBase navigation)
     {
-        return navigation.GetEntityNavigation();
+        return navigation.GetObservedNavigation();
     }
 
-    protected virtual IEntityProperty GetProperty(IProperty property)
+    protected virtual IObservedProperty GetProperty(IProperty property)
     {
-        return property.GetEntityProperty();
+        return property.GetObservedProperty();
     }
 }

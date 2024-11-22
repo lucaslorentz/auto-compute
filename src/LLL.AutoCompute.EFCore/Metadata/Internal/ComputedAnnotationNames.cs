@@ -8,6 +8,6 @@ public static class ComputedAnnotationNames
     public const string ObserversFactories = Prefix + "ObserversFactories";
     public const string Observers = Prefix + "Observers";
     public const string ExpressionAnalyzer = Prefix + "ExpressionAnalyzer";
-    public const string EntityMember = Prefix + "EntityMember";
+    public const string ObservedMember = Prefix + "ObservedMember";
     public const string SortedComputeds = Prefix + "SortedComputeds";
 }
