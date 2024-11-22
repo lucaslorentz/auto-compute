@@ -1,4 +1,6 @@
 using System.Collections;
+using System.Reflection;
+using LLL.AutoCompute.Internal;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.ChangeTracking;
 using Microsoft.EntityFrameworkCore.Infrastructure;
@@ -178,6 +180,15 @@ public static class ModelExtensions
             .ToArray();
     }
 
+    private static readonly MethodInfo _bulkLoadAsyncTMethodInfo = ((Func<DbContext, IEnumerable<object>, INavigationBase, Task>)BulkLoadAsync<object>)
+        .Method.GetGenericMethodDefinition();
+
+    public static async Task BulkLoadAsync(this DbContext dbContext, IEnumerable<object> entities, INavigationBase navigation)
+    {
+        await (Task)_bulkLoadAsyncTMethodInfo.MakeGenericMethod(navigation.DeclaringEntityType.ClrType)
+            .Invoke(null, [dbContext, entities.ToArray(navigation.DeclaringEntityType.ClrType), navigation])!;
+    }
+
     public static async Task BulkLoadAsync<TEntity>(this DbContext dbContext, IEnumerable<TEntity> entities, INavigationBase navigation)
         where TEntity : class
     {
@@ -191,9 +202,9 @@ public static class ModelExtensions
             return !navigationEntry.IsLoaded;
         }).ToArray();
 
-        if (entitiesToLoad.Any())
+        if (entitiesToLoad.Length != 0)
         {
-            await dbContext.Set<TEntity>()
+            await dbContext.Set<TEntity>(navigation.DeclaringEntityType.Name)
                 .Where(e => entitiesToLoad.Contains(e))
                 .IgnoreAutoIncludes()
                 .Include(e => EF.Property<object>(e, navigation.Name))

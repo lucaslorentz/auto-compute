@@ -5,20 +5,13 @@ using Microsoft.EntityFrameworkCore.Metadata;
 
 namespace LLL.AutoCompute.EFCore.Internal;
 
-public abstract class EFCoreObservedProperty(
+public class EFCoreObservedProperty(
     IProperty property)
-    : EFCoreObservedMember
+    : EFCoreObservedMember, IObservedProperty<IEFCoreComputedInput>
 {
     public override IProperty Property => property;
-}
-
-public class EFCoreObservedProperty<TEntity>(
-    IProperty property
-) : EFCoreObservedProperty(property),
-    IObservedProperty<IEFCoreComputedInput, TEntity>
-    where TEntity : class
-{
     public virtual string Name => Property.Name;
+    public virtual Type EntityType => Property.DeclaringType.ClrType;
 
     public virtual string ToDebugString()
     {
@@ -71,7 +64,7 @@ public class EFCoreObservedProperty<TEntity>(
         return CreateCurrentValueExpression(memberAccess, inputExpression);
     }
 
-    protected virtual object? GetOriginalValue(IEFCoreComputedInput input, TEntity ent)
+    protected virtual object? GetOriginalValue(IEFCoreComputedInput input, object ent)
     {
         var dbContext = input.DbContext;
 
@@ -83,7 +76,7 @@ public class EFCoreObservedProperty<TEntity>(
         return entityEntry.Property(Property).OriginalValue;
     }
 
-    protected virtual object? GetCurrentValue(IEFCoreComputedInput input, TEntity ent)
+    protected virtual object? GetCurrentValue(IEFCoreComputedInput input, object ent)
     {
         var dbContext = input.DbContext;
 
@@ -95,9 +88,9 @@ public class EFCoreObservedProperty<TEntity>(
         return entityEntry.Property(Property).CurrentValue;
     }
 
-    public virtual async Task<IReadOnlyCollection<TEntity>> GetAffectedEntitiesAsync(IEFCoreComputedInput input, IncrementalContext incrementalContext)
+    public virtual async Task<IReadOnlyCollection<object>> GetAffectedEntitiesAsync(IEFCoreComputedInput input, IncrementalContext incrementalContext)
     {
-        var affectedEntities = new HashSet<TEntity>();
+        var affectedEntities = new HashSet<object>();
         foreach (var entityEntry in input.EntityEntriesOfType(Property.DeclaringType))
         {
             if (entityEntry.State == EntityState.Added
@@ -109,7 +102,7 @@ public class EFCoreObservedProperty<TEntity>(
                     || entityEntry.State == EntityState.Deleted
                     || propertyEntry.IsModified)
                 {
-                    affectedEntities.Add((TEntity)entityEntry.Entity);
+                    affectedEntities.Add(entityEntry.Entity);
                 }
             }
         }

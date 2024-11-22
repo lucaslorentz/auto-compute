@@ -6,21 +6,15 @@ using Microsoft.EntityFrameworkCore.Metadata;
 
 namespace LLL.AutoCompute.EFCore.Internal;
 
-public abstract class EFCoreObservedNavigation(
+public class EFCoreObservedNavigation(
     INavigationBase navigation)
-    : EFCoreObservedMember
+    : EFCoreObservedMember, IObservedNavigation<IEFCoreComputedInput>
 {
     public override INavigationBase Property => navigation;
     public INavigationBase Navigation => navigation;
-}
 
-public class EFCoreObservedNavigation<TSourceEntity, TTargetEntity>(
-    INavigationBase navigation
-) : EFCoreObservedNavigation(navigation), IObservedNavigation<IEFCoreComputedInput, TSourceEntity, TTargetEntity>
-    where TSourceEntity : class
-    where TTargetEntity : class
-{
     public virtual string Name => Navigation.Name;
+    public virtual Type SourceEntityType => Navigation.DeclaringEntityType.ClrType;
     public virtual Type TargetEntityType => Navigation.TargetEntityType.ClrType;
     public virtual bool IsCollection => Navigation.IsCollection;
 
@@ -29,22 +23,22 @@ public class EFCoreObservedNavigation<TSourceEntity, TTargetEntity>(
         return $"{Navigation.DeclaringEntityType.ShortName()}.{Navigation.Name}";
     }
 
-    public virtual IObservedNavigation<IEFCoreComputedInput, TTargetEntity, TSourceEntity> GetInverse()
+    public IObservedNavigation GetInverse()
     {
         var inverse = Navigation.Inverse
             ?? throw new InvalidOperationException($"No inverse for navigation '{Navigation.DeclaringType.ShortName()}.{Navigation.Name}'");
 
-        return (EFCoreObservedNavigation<TTargetEntity, TSourceEntity>)inverse.GetOrCreateObservedNavigation();
+        return inverse.GetOrCreateObservedNavigation();
     }
 
-    public virtual async Task<IReadOnlyCollection<TTargetEntity>> LoadOriginalAsync(
+    public virtual async Task<IReadOnlyCollection<object>> LoadOriginalAsync(
         IEFCoreComputedInput input,
-        IReadOnlyCollection<TSourceEntity> sourceEntities,
+        IReadOnlyCollection<object> sourceEntities,
         IncrementalContext incrementalContext)
     {
         await input.DbContext.BulkLoadAsync(sourceEntities, Navigation);
 
-        var targetEntities = new HashSet<TTargetEntity>();
+        var targetEntities = new HashSet<object>();
         foreach (var sourceEntity in sourceEntities)
         {
             var entityEntry = input.DbContext.Entry(sourceEntity!);
@@ -58,7 +52,7 @@ public class EFCoreObservedNavigation<TSourceEntity, TTargetEntity>(
 
             foreach (var originalEntity in navigationEntry.GetOriginalEntities())
             {
-                targetEntities.Add((TTargetEntity)originalEntity);
+                targetEntities.Add(originalEntity);
                 incrementalContext?.AddIncrementalEntity(sourceEntity, this, originalEntity);
                 if (Navigation.Inverse is not null)
                     incrementalContext?.AddIncrementalEntity(originalEntity, GetInverse(), sourceEntity);
@@ -67,14 +61,14 @@ public class EFCoreObservedNavigation<TSourceEntity, TTargetEntity>(
         return targetEntities;
     }
 
-    public virtual async Task<IReadOnlyCollection<TTargetEntity>> LoadCurrentAsync(
+    public async Task<IReadOnlyCollection<object>> LoadCurrentAsync(
         IEFCoreComputedInput input,
-        IReadOnlyCollection<TSourceEntity> sourceEntities,
+        IReadOnlyCollection<object> sourceEntities,
         IncrementalContext incrementalContext)
     {
         await input.DbContext.BulkLoadAsync(sourceEntities, Navigation);
 
-        var targetEntities = new HashSet<TTargetEntity>();
+        var targetEntities = new HashSet<object>();
         foreach (var sourceEntity in sourceEntities)
         {
             var entityEntry = input.DbContext.Entry(sourceEntity!);
@@ -82,7 +76,7 @@ public class EFCoreObservedNavigation<TSourceEntity, TTargetEntity>(
 
             foreach (var entity in navigationEntry.GetEntities())
             {
-                targetEntities.Add((TTargetEntity)entity);
+                targetEntities.Add(entity);
                 incrementalContext?.AddIncrementalEntity(sourceEntity, this, entity);
                 if (Navigation.Inverse is not null)
                     incrementalContext?.AddIncrementalEntity(entity, GetInverse(), sourceEntity);
@@ -155,7 +149,7 @@ public class EFCoreObservedNavigation<TSourceEntity, TTargetEntity>(
         );
     }
 
-    protected virtual object? GetOriginalValue(IEFCoreComputedInput input, TSourceEntity ent)
+    protected virtual object? GetOriginalValue(IEFCoreComputedInput input, object ent)
     {
         var dbContext = input.DbContext;
 
@@ -172,7 +166,7 @@ public class EFCoreObservedNavigation<TSourceEntity, TTargetEntity>(
         return navigationEntry.GetOriginalValue();
     }
 
-    protected virtual object? GetCurrentValue(IEFCoreComputedInput input, TSourceEntity ent)
+    protected virtual object? GetCurrentValue(IEFCoreComputedInput input, object ent)
     {
         var dbContext = input.DbContext;
 
@@ -188,7 +182,7 @@ public class EFCoreObservedNavigation<TSourceEntity, TTargetEntity>(
         return navigationEntry.CurrentValue;
     }
 
-    protected virtual object? GetIncrementalOriginalValue(IEFCoreComputedInput input, TSourceEntity ent, IncrementalContext incrementalContext)
+    protected virtual object? GetIncrementalOriginalValue(IEFCoreComputedInput input, object ent, IncrementalContext incrementalContext)
     {
         var entityEntry = input.DbContext.Entry(ent);
 
@@ -236,7 +230,7 @@ public class EFCoreObservedNavigation<TSourceEntity, TTargetEntity>(
         }
     }
 
-    protected virtual object? GetIncrementalCurrentValue(IEFCoreComputedInput input, TSourceEntity ent, IncrementalContext incrementalContext)
+    protected virtual object? GetIncrementalCurrentValue(IEFCoreComputedInput input, object ent, IncrementalContext incrementalContext)
     {
         var entityEntry = input.DbContext.Entry(ent);
 
@@ -284,9 +278,9 @@ public class EFCoreObservedNavigation<TSourceEntity, TTargetEntity>(
         }
     }
 
-    public virtual async Task<IReadOnlyCollection<TSourceEntity>> GetAffectedEntitiesAsync(IEFCoreComputedInput input, IncrementalContext incrementalContext)
+    public virtual async Task<IReadOnlyCollection<object>> GetAffectedEntitiesAsync(IEFCoreComputedInput input, IncrementalContext incrementalContext)
     {
-        var affectedEntities = new HashSet<TSourceEntity>();
+        var affectedEntities = new HashSet<object>();
         foreach (var entityEntry in input.EntityEntriesOfType(Navigation.DeclaringEntityType))
         {
             if (entityEntry.State == EntityState.Added
@@ -298,7 +292,7 @@ public class EFCoreObservedNavigation<TSourceEntity, TTargetEntity>(
                     || entityEntry.State == EntityState.Deleted
                     || navigationEntry.IsModified)
                 {
-                    affectedEntities.Add((TSourceEntity)entityEntry.Entity);
+                    affectedEntities.Add(entityEntry.Entity);
 
                     var modifiedEntities = navigationEntry.GetModifiedEntities();
 
@@ -330,7 +324,7 @@ public class EFCoreObservedNavigation<TSourceEntity, TTargetEntity>(
 
                         foreach (var entity in modifiedEntities)
                         {
-                            affectedEntities.Add((TSourceEntity)entity);
+                            affectedEntities.Add(entity);
                             incrementalContext?.SetShouldLoadAll(entityEntry.Entity);
                             incrementalContext?.AddIncrementalEntity(entity, this, entityEntry.Entity);
                         }
@@ -363,7 +357,7 @@ public class EFCoreObservedNavigation<TSourceEntity, TTargetEntity>(
                         {
                             foreach (var entity in dependentToPrincipalEntry.GetOriginalEntities())
                             {
-                                affectedEntities.Add((TSourceEntity)entity);
+                                affectedEntities.Add(entity);
 
                                 foreach (var otherEntity in otherReferenceEntry.GetOriginalEntities())
                                 {
@@ -377,7 +371,7 @@ public class EFCoreObservedNavigation<TSourceEntity, TTargetEntity>(
                         {
                             foreach (var entity in dependentToPrincipalEntry.GetEntities())
                             {
-                                affectedEntities.Add((TSourceEntity)entity);
+                                affectedEntities.Add(entity);
 
                                 foreach (var otherEntity in otherReferenceEntry.GetEntities())
                                 {

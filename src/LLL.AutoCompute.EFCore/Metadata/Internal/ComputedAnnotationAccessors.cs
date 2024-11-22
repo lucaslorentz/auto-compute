@@ -9,12 +9,7 @@ public static class ComputedAnnotationAccessors
     {
         return property.GetOrAddRuntimeAnnotationValue(
             ComputedAnnotationNames.ObservedMember,
-            static (property) =>
-            {
-                var closedType = typeof(EFCoreObservedProperty<>)
-                    .MakeGenericType(property!.DeclaringType.ClrType);
-                return (EFCoreObservedProperty)Activator.CreateInstance(closedType, property)!;
-            },
+            static (property) => new EFCoreObservedProperty(property!),
             property);
     }
 
@@ -28,12 +23,7 @@ public static class ComputedAnnotationAccessors
     {
         return navigation.GetOrAddRuntimeAnnotationValue(
             ComputedAnnotationNames.ObservedMember,
-            static (navigation) =>
-            {
-                var closedType = typeof(EFCoreObservedNavigation<,>)
-                    .MakeGenericType(navigation!.DeclaringType.ClrType, navigation.TargetEntityType.ClrType);
-                return (EFCoreObservedNavigation)Activator.CreateInstance(closedType, navigation)!;
-            },
+            static (navigation) => new EFCoreObservedNavigation(navigation!),
             navigation);
     }
 
