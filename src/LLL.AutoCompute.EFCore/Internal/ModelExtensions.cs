@@ -1,5 +1,4 @@
 using System.Collections;
-using LLL.AutoCompute.EFCore.Metadata.Internal;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.ChangeTracking;
 using Microsoft.EntityFrameworkCore.Infrastructure;
@@ -177,32 +176,6 @@ public static class ModelExtensions
         return currentEntities.Except(originalEntities)
             .Concat(originalEntities.Except(currentEntities))
             .ToArray();
-    }
-
-    public static IObservedProperty GetObservedProperty(this IProperty property)
-    {
-        return property.GetOrAddRuntimeAnnotationValue(
-            ComputedAnnotationNames.ObservedMember,
-            static (property) =>
-            {
-                var closedType = typeof(EFCoreObservedProperty<>)
-                    .MakeGenericType(property!.DeclaringType.ClrType);
-                return (IObservedProperty)Activator.CreateInstance(closedType, property)!;
-            },
-            property);
-    }
-
-    public static IObservedNavigation GetObservedNavigation(this INavigationBase navigation)
-    {
-        return navigation.GetOrAddRuntimeAnnotationValue(
-            ComputedAnnotationNames.ObservedMember,
-            static (navigation) =>
-            {
-                var closedType = typeof(EFCoreObservedNavigation<,>)
-                    .MakeGenericType(navigation!.DeclaringType.ClrType, navigation.TargetEntityType.ClrType);
-                return (IObservedNavigation)Activator.CreateInstance(closedType, navigation)!;
-            },
-            navigation);
     }
 
     public static async Task BulkLoadAsync<TEntity>(this DbContext dbContext, IEnumerable<TEntity> entities, INavigationBase navigation)

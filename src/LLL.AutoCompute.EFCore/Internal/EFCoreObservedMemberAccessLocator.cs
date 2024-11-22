@@ -1,4 +1,5 @@
 ﻿using System.Linq.Expressions;
+using LLL.AutoCompute.EFCore.Metadata.Internal;
 using Microsoft.EntityFrameworkCore.Metadata;
 
 namespace LLL.AutoCompute.EFCore.Internal;
@@ -51,11 +52,11 @@ public class EFCoreObservedMemberAccessLocator(IModel model) :
 
     protected virtual IObservedNavigation GetNavigation(INavigationBase navigation)
     {
-        return navigation.GetObservedNavigation();
+        return navigation.GetOrCreateObservedNavigation();
     }
 
     protected virtual IObservedProperty GetProperty(IProperty property)
     {
-        return property.GetObservedProperty();
+        return property.GetOrCreateObservedProperty();
     }
 }

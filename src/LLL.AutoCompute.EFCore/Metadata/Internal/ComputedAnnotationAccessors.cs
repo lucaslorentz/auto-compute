@@ -5,6 +5,44 @@ namespace LLL.AutoCompute.EFCore.Metadata.Internal;
 
 public static class ComputedAnnotationAccessors
 {
+    internal static EFCoreObservedProperty GetOrCreateObservedProperty(this IProperty property)
+    {
+        return property.GetOrAddRuntimeAnnotationValue(
+            ComputedAnnotationNames.ObservedMember,
+            static (property) =>
+            {
+                var closedType = typeof(EFCoreObservedProperty<>)
+                    .MakeGenericType(property!.DeclaringType.ClrType);
+                return (EFCoreObservedProperty)Activator.CreateInstance(closedType, property)!;
+            },
+            property);
+    }
+
+    internal static EFCoreObservedProperty? GetObservedProperty(this IProperty property)
+    {
+        return property.FindRuntimeAnnotationValue(
+            ComputedAnnotationNames.ObservedMember) as EFCoreObservedProperty;
+    }
+
+    internal static EFCoreObservedNavigation GetOrCreateObservedNavigation(this INavigationBase navigation)
+    {
+        return navigation.GetOrAddRuntimeAnnotationValue(
+            ComputedAnnotationNames.ObservedMember,
+            static (navigation) =>
+            {
+                var closedType = typeof(EFCoreObservedNavigation<,>)
+                    .MakeGenericType(navigation!.DeclaringType.ClrType, navigation.TargetEntityType.ClrType);
+                return (EFCoreObservedNavigation)Activator.CreateInstance(closedType, navigation)!;
+            },
+            navigation);
+    }
+
+    internal static EFCoreObservedNavigation? GetObservedNavigation(this INavigationBase navigation)
+    {
+        return navigation.FindRuntimeAnnotationValue(
+            ComputedAnnotationNames.ObservedMember) as EFCoreObservedNavigation;
+    }
+
     internal static ComputedFactory<IProperty>? GetComputedFactory(this IReadOnlyProperty target)
     {
         return target[ComputedAnnotationNames.ComputedFactory] as ComputedFactory<IProperty>;

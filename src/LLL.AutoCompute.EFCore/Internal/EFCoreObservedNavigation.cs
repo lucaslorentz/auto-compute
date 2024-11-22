@@ -1,5 +1,6 @@
 using System.Linq.Expressions;
 using System.Reflection;
+using LLL.AutoCompute.EFCore.Metadata.Internal;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata;
 
@@ -33,7 +34,7 @@ public class EFCoreObservedNavigation<TSourceEntity, TTargetEntity>(
         var inverse = Navigation.Inverse
             ?? throw new InvalidOperationException($"No inverse for navigation '{Navigation.DeclaringType.ShortName()}.{Navigation.Name}'");
 
-        return (EFCoreObservedNavigation<TTargetEntity, TSourceEntity>)inverse.GetObservedNavigation();
+        return (EFCoreObservedNavigation<TTargetEntity, TSourceEntity>)inverse.GetOrCreateObservedNavigation();
     }
 
     public virtual async Task<IReadOnlyCollection<TTargetEntity>> LoadOriginalAsync(
