@@ -8,7 +8,6 @@ namespace LLL.AutoCompute.EFCore.Metadata.Internal;
 
 public abstract class ComputedProperty : ComputedMember
 {
-    public abstract IProperty Property { get; }
 }
 
 public class ComputedProperty<TEntity, TProperty>(
@@ -25,9 +24,9 @@ public class ComputedProperty<TEntity, TProperty>(
         return Property.ToDebugString();
     }
 
-    public override async Task<int> Update(DbContext dbContext)
+    public override async Task<IReadOnlySet<object>> Update(DbContext dbContext)
     {
-        var numberOfUpdates = 0;
+        var updatedEntities = new HashSet<object>();
         var input = dbContext.GetComputedInput();
         var changes = await changesProvider.GetChangesAsync(input, null);
         foreach (var (entity, change) in changes)
@@ -45,10 +44,10 @@ public class ComputedProperty<TEntity, TProperty>(
             if (!valueComparer.Equals(propertyEntry.CurrentValue, newValue))
             {
                 propertyEntry.CurrentValue = newValue;
-                numberOfUpdates++;
+                updatedEntities.Add(entity);
             }
         }
-        return numberOfUpdates;
+        return updatedEntities;
     }
 
     public override async Task Fix(object ent, DbContext dbContext)

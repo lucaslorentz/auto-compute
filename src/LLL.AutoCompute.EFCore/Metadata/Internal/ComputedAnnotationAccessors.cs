@@ -33,6 +33,12 @@ public static class ComputedAnnotationAccessors
             ComputedAnnotationNames.ObservedMember) as EFCoreObservedNavigation;
     }
 
+    internal static EFCoreObservedMember? GetObservedMember(this IPropertyBase member)
+    {
+        return member.FindRuntimeAnnotationValue(
+            ComputedAnnotationNames.ObservedMember) as EFCoreObservedMember;
+    }
+
     internal static ComputedFactory<IProperty>? GetComputedFactory(this IReadOnlyProperty target)
     {
         return target[ComputedAnnotationNames.ComputedFactory] as ComputedFactory<IProperty>;

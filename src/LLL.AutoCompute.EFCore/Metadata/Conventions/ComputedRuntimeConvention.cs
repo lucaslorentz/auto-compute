@@ -17,7 +17,13 @@ class ComputedRuntimeConvention(Func<IModel, IComputedExpressionAnalyzer<IEFCore
         var computeds = CreateComputeds(model, analyzer);
 
         foreach (var computed in computeds)
-            ValidateCyclicComputedDependencies(computed, computed, []);
+        {
+            // TODO: Validate if forbid cyclic dependencies is enabled
+            // ValidateCyclicComputedDependencies(computed, computed, []);
+
+            foreach (var observedMember in computed.GetObservedMembers().OfType<EFCoreObservedMember>())
+                observedMember.AddDependent(computed);
+        }
 
         var sortedComputeds = computeds.TopoSort(c => c.GetComputedDependencies());
 

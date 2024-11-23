@@ -68,14 +68,43 @@ public static class DbContextExtensions
 
             var sortedComputeds = dbContext.Model.GetSortedComputedsOrThrow();
 
-            foreach (var computed in sortedComputeds)
-            {
-                var changes = await computed.Update(dbContext);
+            var computedsAndPriority = sortedComputeds
+                .Select((computed, priority) => (computed, priority));
 
-                if (changes > 0)
+            var priorities = computedsAndPriority.ToDictionary(x => x.computed, x => x.priority);
+            var queue = new PriorityQueue<ComputedBase, int>(computedsAndPriority);
+            var queuedItems = sortedComputeds.ToHashSet();
+            var updated = new HashSet<(ComputedBase, object)>();
+
+            while (queue.TryDequeue(out var computed, out var _)
+                && queuedItems.Remove(computed))
+            {
+                var updatedEntities = await computed.Update(dbContext);
+
+                if (updatedEntities.Count == 0)
+                    continue;
+
+                totalChanges += updatedEntities.Count;
+
+                foreach (var updatedEntity in updatedEntities)
                 {
-                    totalChanges += changes;
-                    dbContext.ChangeTracker.DetectChanges();
+                    if (!updated.Add((computed, updatedEntity)))
+                        throw new Exception($"Cyclic update detected for computed: {computed.ToDebugString()}");
+                }
+
+                dbContext.ChangeTracker.DetectChanges();
+
+                if (computed is ComputedMember computedMember)
+                {
+                    var observedMember = computedMember.Property.GetObservedMember();
+                    if (observedMember is not null)
+                    {
+                        foreach (var dependent in observedMember.Dependents)
+                        {
+                            if (queuedItems.Add(dependent))
+                                queue.Enqueue(dependent, priorities[dependent]);
+                        }
+                    }
                 }
             }
 

@@ -8,31 +8,25 @@ internal static class EnumerableExtensions
         Func<T, IEnumerable<T>> getDependencies)
         where T : notnull
     {
-        var inDegrees = source.ToDictionary(x => x, x => 0);
+        var visited = new HashSet<T>();
+        var result = new List<T>(source.Count);
 
-        foreach (var item in source)
-            foreach (var edge in getDependencies(item))
-                inDegrees[edge]++;
-
-        var result = new List<T>();
-        var queue = new Queue<T>(inDegrees.Where(kv => kv.Value == 0).Select(kv => kv.Key));
-        while (queue.Count > 0)
+        // Visit item, adding their dependencies first
+        void Visit(T item)
         {
-            var item = queue.Dequeue();
+            if (!visited.Add(item))
+                return;
+
+            foreach (var v in getDependencies(item))
+                Visit(v);
+
             result.Add(item);
-            foreach (var edge in getDependencies(item))
-            {
-                inDegrees[edge]--;
-                if (inDegrees[edge] == 0)
-                    queue.Enqueue(edge);
-            }
         }
 
-        result.Reverse();
-
-        if (result.Count != source.Count)
-            throw new Exception("Cyclic dependencies found");
+        foreach (var item in source)
+            Visit(item);
 
         return result;
     }
+
 }

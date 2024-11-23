@@ -9,14 +9,14 @@ public abstract class ComputedBase
 
     public abstract IUnboundChangesProvider ChangesProvider { get; }
 
-    public IEnumerable<IObservedMember> GetDependencies()
+    public IEnumerable<IObservedMember> GetObservedMembers()
     {
         return ChangesProvider.EntityContext.AllAccessedMembers;
     }
 
     public IEnumerable<ComputedMember> GetComputedDependencies()
     {
-        return GetDependencies()
+        return GetObservedMembers()
             .OfType<EFCoreObservedMember>()
             .Select(e => e.Property.GetComputed())
             .Where(c => c is not null)
@@ -24,5 +24,5 @@ public abstract class ComputedBase
             .ToArray();
     }
 
-    public abstract Task<int> Update(DbContext dbContext);
+    public abstract Task<IReadOnlySet<object>> Update(DbContext dbContext);
 }
