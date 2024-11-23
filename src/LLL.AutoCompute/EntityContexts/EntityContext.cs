@@ -6,8 +6,8 @@ public abstract class EntityContext
     private readonly HashSet<IObservedMember> _allAccessedMembers = [];
     private readonly IList<EntityContext> _childContexts = [];
 
-    public IEnumerable<IObservedMember> AccessedMembers => _accessedMembers;
-    public IEnumerable<IObservedMember> AllAccessedMembers => _allAccessedMembers;
+    public IReadOnlySet<IObservedMember> AccessedMembers => _accessedMembers;
+    public IReadOnlySet<IObservedMember> AllAccessedMembers => _allAccessedMembers;
     public IEnumerable<EntityContext> ChildContexts => _childContexts;
 
     public abstract Type EntityType { get; }

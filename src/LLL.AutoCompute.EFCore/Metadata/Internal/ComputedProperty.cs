@@ -19,11 +19,6 @@ public class ComputedProperty<TEntity, TProperty>(
     public override IUnboundChangesProvider<IEFCoreComputedInput, TEntity, TProperty> ChangesProvider => changesProvider;
     public override IProperty Property => property;
 
-    public override string ToDebugString()
-    {
-        return Property.ToDebugString();
-    }
-
     public override async Task<IReadOnlySet<object>> Update(DbContext dbContext)
     {
         var updatedEntities = new HashSet<object>();

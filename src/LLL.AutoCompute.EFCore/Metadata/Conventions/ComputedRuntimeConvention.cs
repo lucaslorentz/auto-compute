@@ -21,6 +21,9 @@ class ComputedRuntimeConvention(Func<IModel, IComputedExpressionAnalyzer<IEFCore
             // TODO: Validate if forbid cyclic dependencies is enabled
             // ValidateCyclicComputedDependencies(computed, computed, []);
 
+            if (computed is ComputedMember computedMember)
+                ValidateSelfReferencingComputed(computedMember);
+
             foreach (var observedMember in computed.GetObservedMembers().OfType<EFCoreObservedMember>())
                 observedMember.AddDependent(computed);
         }
@@ -90,6 +93,17 @@ class ComputedRuntimeConvention(Func<IModel, IComputedExpressionAnalyzer<IEFCore
                 throw new Exception($"Cyclic computed dependency between {initial.ToDebugString()} and {current.ToDebugString()}");
 
             ValidateCyclicComputedDependencies(initial, dependency, visited);
+        }
+    }
+
+    private static void ValidateSelfReferencingComputed(ComputedMember computedMember)
+    {
+        var observedMember = computedMember.Property.GetObservedMember();
+        if (observedMember is not null
+            // TODO: Fix EFCoreObservedMember not implementing IObservedMember interface
+            && computedMember.ChangesProvider.EntityContext.AccessedMembers.Contains((IObservedMember)observedMember))
+        {
+            throw new Exception($"Clyclic computed expression in {computedMember.ToDebugString()}");
         }
     }
 }

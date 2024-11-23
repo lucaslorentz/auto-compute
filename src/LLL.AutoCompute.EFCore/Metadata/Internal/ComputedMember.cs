@@ -7,4 +7,9 @@ public abstract class ComputedMember : ComputedBase
 {
     public abstract IPropertyBase Property { get; }
     public abstract Task Fix(object ent, DbContext dbContext);
+
+    public override string ToDebugString()
+    {
+        return $"{Property.DeclaringType.Name}.{Property.Name}";
+    }
 }
