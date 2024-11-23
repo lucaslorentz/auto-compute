@@ -84,7 +84,17 @@ public static class ModelExtensions
         else if (baseNavigation is INavigation navigation)
         {
             var foreignKey = navigation.ForeignKey;
-            if (foreignKey.PrincipalEntityType == entityEntry.Metadata)
+            if (navigation.IsOnDependent)
+            {
+                var oldKeyValues = foreignKey.Properties
+                    .Select(p => entityEntry.OriginalValues[p])
+                    .ToArray();
+
+                return entityEntry.Context.Find(
+                    baseNavigation.TargetEntityType.ClrType,
+                    oldKeyValues);
+            }
+            else
             {
                 var inverseNavigation = baseNavigation.Inverse
                     ?? throw new Exception($"No inverse to compute original value for navigation '{baseNavigation}'");
@@ -115,16 +125,6 @@ public static class ModelExtensions
                 }
 
                 return null;
-            }
-            else
-            {
-                var oldKeyValues = foreignKey.Properties
-                    .Select(p => entityEntry.OriginalValues[p])
-                    .ToArray();
-
-                return entityEntry.Context.Find(
-                    baseNavigation.TargetEntityType.ClrType,
-                    oldKeyValues);
             }
         }
         else
