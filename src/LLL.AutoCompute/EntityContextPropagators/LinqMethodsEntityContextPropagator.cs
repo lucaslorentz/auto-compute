@@ -87,9 +87,6 @@ public class LinqMethodsEntityContextPropagator
 
                     case nameof(Enumerable.Where):
                         {
-                            var filterLambda = GetLambda(methodCallExpression.Arguments[1])
-                                ?? throw new Exception("Where without lambda is not supported");
-
                             analysis.PropagateEntityContext(
                                 methodCallExpression.Arguments[0],
                                 EntityContextKeys.Element,
@@ -176,6 +173,7 @@ public class LinqMethodsEntityContextPropagator
                         }
                         break;
 
+                    case nameof(Enumerable.GroupBy):
                     case nameof(Enumerable.ToLookup):
                         {
                             if (methodCallExpression.Arguments is [_, var keySelector, ..]

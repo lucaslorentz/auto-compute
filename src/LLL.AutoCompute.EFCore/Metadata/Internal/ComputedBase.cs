@@ -24,5 +24,5 @@ public abstract class ComputedBase
             .ToArray();
     }
 
-    public abstract Task<IReadOnlySet<object>> Update(DbContext dbContext);
+    public abstract Task<UpdateChanges> Update(DbContext dbContext);
 }

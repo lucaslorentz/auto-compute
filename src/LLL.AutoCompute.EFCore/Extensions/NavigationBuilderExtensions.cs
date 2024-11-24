@@ -8,17 +8,19 @@ public static class NavigationBuilderExtensions
 {
     public static NavigationBuilder<TEntity, TProperty> AutoCompute<TEntity, TProperty>(
         this NavigationBuilder<TEntity, TProperty> navigationBuilder,
-        Expression<Func<TEntity, TProperty>> computedExpression)
+        Expression<Func<TEntity, TProperty>> computedExpression,
+        Action<IComputedNavigationBuilder<TEntity, TProperty>>? configure = null)
         where TEntity : class
         where TProperty : class
     {
-        return navigationBuilder.AutoCompute(computedExpression, static c => c.CurrentValue());
+        return navigationBuilder.AutoCompute(computedExpression, static c => c.CurrentValue(), configure);
     }
 
     public static NavigationBuilder<TEntity, TProperty> AutoCompute<TEntity, TProperty>(
         this NavigationBuilder<TEntity, TProperty> navigationBuilder,
         Expression<Func<TEntity, TProperty>> computedExpression,
-        ChangeCalculationSelector<TProperty, TProperty> calculationSelector)
+        ChangeCalculationSelector<TProperty, TProperty> calculationSelector,
+        Action<IComputedNavigationBuilder<TEntity, TProperty>>? configure = null)
         where TEntity : class
         where TProperty : class
     {
@@ -27,7 +29,8 @@ public static class NavigationBuilderExtensions
         navigationBuilder.Metadata.SetComputedFactory(
             ComputedFactory.CreateComputedNavigationFactory(
                 computedExpression,
-                changeCalculation));
+                changeCalculation,
+                configure));
 
         return navigationBuilder;
     }

@@ -43,7 +43,8 @@ public class ComputedFactory
 
     public static ComputedFactory<INavigationBase> CreateComputedNavigationFactory<TEntity, TProperty>(
         Expression<Func<TEntity, TProperty>> computedExpression,
-        IChangeCalculation<TProperty, TProperty> changeCalculation)
+        IChangeCalculation<TProperty, TProperty> changeCalculation,
+        Action<IComputedNavigationBuilder<TEntity, TProperty>>? configure)
         where TEntity : class
         where TProperty : class
     {
@@ -62,9 +63,13 @@ public class ComputedFactory
                 if (!changesProvider.EntityContext.AllAccessedMembers.Any())
                     throw new Exception("Computed expression doesn't have tracked accessed members");
 
-                return new ComputedNavigation<TEntity, TProperty>(
+                var computed = new ComputedNavigation<TEntity, TProperty>(
                     navigation,
                     changesProvider);
+
+                configure?.Invoke(computed);
+
+                return computed;
             }
             catch (Exception ex)
             {

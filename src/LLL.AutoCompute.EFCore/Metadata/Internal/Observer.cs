@@ -1,4 +1,3 @@
-using System.Collections.Immutable;
 using LLL.AutoCompute.EFCore.Internal;
 using Microsoft.EntityFrameworkCore;
 
@@ -21,7 +20,7 @@ public class Observer<TEntity, TChange>(
         return "Observer";
     }
 
-    public override async Task<IReadOnlySet<object>> Update(DbContext dbContext)
+    public override async Task<UpdateChanges> Update(DbContext dbContext)
     {
         var input = dbContext.GetComputedInput();
         var changes = await changesProvider.GetChangesAsync(input, null);
@@ -31,6 +30,6 @@ public class Observer<TEntity, TChange>(
             Changes = changes
         };
         await callback(eventData);
-        return ImmutableHashSet<object>.Empty;
+        return new UpdateChanges();
     }
 }

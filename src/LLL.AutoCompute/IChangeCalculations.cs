@@ -1,5 +1,5 @@
 namespace LLL.AutoCompute;
 
-public interface IChangeCalculations<TValue>
+public interface IChangeCalculations<out TValue>
 {
 }
