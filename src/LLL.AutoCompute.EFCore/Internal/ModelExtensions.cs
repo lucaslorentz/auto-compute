@@ -133,6 +133,67 @@ public static class ModelExtensions
         }
     }
 
+    public static object? GetCurrentValue(this NavigationEntry navigationEntry)
+    {
+        var entityEntry = navigationEntry.EntityEntry;
+
+        if (!navigationEntry.IsLoaded && entityEntry.State != EntityState.Detached)
+            navigationEntry.Load();
+
+        var dbContext = navigationEntry.EntityEntry.Context;
+
+        var baseNavigation = navigationEntry.Metadata;
+
+        var input = dbContext.GetComputedInput();
+
+        if (baseNavigation.IsCollection)
+        {
+            var collectionAccessor = baseNavigation.GetCollectionAccessor()!;
+            var currentValue = collectionAccessor.Create();
+
+            if (baseNavigation is ISkipNavigation skipNavigation)
+            {
+                // Add current items that are still related (not deleted)
+                foreach (var item in navigationEntry.GetEntities())
+                {
+                    var itemEntry = dbContext.Entry(item);
+
+                    if (!skipNavigation.IsRelated(input, entityEntry, itemEntry))
+                        continue;
+
+                    collectionAccessor.AddStandalone(currentValue, item);
+                }
+            }
+            else if (baseNavigation is INavigation navigation)
+            {
+                // Add current items that are still related (not deleted)
+                foreach (var item in navigationEntry.GetEntities())
+                {
+                    var itemEntry = dbContext.Entry(item);
+
+                    if (!navigation.IsRelated(entityEntry, itemEntry))
+                        continue;
+
+                    collectionAccessor.AddStandalone(currentValue, item);
+                }
+            }
+
+            return currentValue;
+        }
+        else if (baseNavigation is INavigation navigation && navigationEntry is ReferenceEntry referenceEntry)
+        {
+            // Ignore current value if it is not related (deleted)
+            if (referenceEntry.TargetEntry is not null && !navigation.IsRelated(referenceEntry.EntityEntry, referenceEntry.TargetEntry))
+                return null;
+
+            return referenceEntry.CurrentValue;
+        }
+        else
+        {
+            throw new NotSupportedException($"Can't get current value of navigation {baseNavigation}");
+        }
+    }
+
     public static IReadOnlyCollection<object> GetOriginalEntities(this NavigationEntry navigationEntry)
     {
         var originalValue = navigationEntry.GetOriginalValue();
@@ -251,6 +312,10 @@ public static class ModelExtensions
         EntityEntry entry,
         EntityEntry relatedEntry)
     {
+        if (entry.State == EntityState.Added
+            || relatedEntry.State == EntityState.Added)
+            return false;
+
         var entityValues = entry.CurrentValues;
         var relatedEntityValues = relatedEntry.CurrentValues;
         var foreignKey = skipNavigation.ForeignKey;
@@ -276,6 +341,10 @@ public static class ModelExtensions
         EntityEntry entry,
         EntityEntry relatedEntry)
     {
+        if (entry.State == EntityState.Deleted
+            || relatedEntry.State == EntityState.Deleted)
+            return false;
+
         var entityValues = entry.CurrentValues;
         var relatedEntityValues = relatedEntry.CurrentValues;
         var foreignKey = skipNavigation.ForeignKey;

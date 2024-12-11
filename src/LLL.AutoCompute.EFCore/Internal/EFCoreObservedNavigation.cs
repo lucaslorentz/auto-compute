@@ -179,7 +179,7 @@ public class EFCoreObservedNavigation(
         if (!navigationEntry.IsLoaded && entityEntry.State != EntityState.Detached)
             navigationEntry.Load();
 
-        return navigationEntry.CurrentValue;
+        return navigationEntry.GetCurrentValue();
     }
 
     protected virtual object? GetIncrementalOriginalValue(IEFCoreComputedInput input, object ent, IncrementalContext incrementalContext)
