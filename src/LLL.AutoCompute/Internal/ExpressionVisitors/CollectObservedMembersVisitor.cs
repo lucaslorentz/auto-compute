@@ -2,7 +2,7 @@
 
 namespace LLL.AutoCompute.Internal.ExpressionVisitors;
 
-internal class CollectObservedMemberAccessesVisitor(
+internal class CollectObservedMembersVisitor(
     IComputedExpressionAnalysis analysis,
     IReadOnlyCollection<IObservedMemberAccessLocator> memberAccessLocators
 ) : ExpressionVisitor
@@ -18,7 +18,7 @@ internal class CollectObservedMemberAccessesVisitor(
                 {
                     var entityContext = analysis.ResolveEntityContext(memberAccess.FromExpression, EntityContextKeys.None);
                     if (entityContext.IsTrackingChanges)
-                        entityContext.RegisterAccessedMember(memberAccess.Member);
+                        entityContext.RegisterObservedMember(memberAccess.Member);
                 }
             }
         }

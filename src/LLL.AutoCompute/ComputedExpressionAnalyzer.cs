@@ -36,7 +36,7 @@ public class ComputedExpressionAnalyzer<TInput>(
     }
 
     public ComputedExpressionAnalyzer<TInput> AddObservedMemberAccessLocator(
-        IObservedMemberAccessLocator<TInput> memberAccessLocator)
+        IObservedMemberAccessLocator memberAccessLocator)
     {
         if (memberAccessLocator is IObservedNavigationAccessLocator nav)
             _navigationAccessLocators.Add(nav);
@@ -133,7 +133,7 @@ public class ComputedExpressionAnalyzer<TInput>(
             analysis
         ).Visit(computedExpression);
 
-        new CollectObservedMemberAccessesVisitor(
+        new CollectObservedMembersVisitor(
             analysis,
             _memberAccessLocators
         ).Visit(computedExpression);
@@ -152,7 +152,7 @@ public class ComputedExpressionAnalyzer<TInput>(
         var inputParameter = Expression.Parameter(typeof(TInput), "input");
         var incrementalContextParameter = Expression.Parameter(typeof(IncrementalContext), "incrementalContext");
 
-        var newBody = new ReplaceMemberAccessVisitor(
+        var newBody = new ReplaceObservedMemberAccessVisitor(
             _memberAccessLocators,
             memberAccess => memberAccess.CreateOriginalValueExpression(inputParameter)
         ).Visit(computedExpression.Body)!;
@@ -178,7 +178,7 @@ public class ComputedExpressionAnalyzer<TInput>(
         var inputParameter = Expression.Parameter(typeof(TInput), "input");
         var incrementalContextParameter = Expression.Parameter(typeof(IncrementalContext), "incrementalContext");
 
-        var newBody = new ReplaceMemberAccessVisitor(
+        var newBody = new ReplaceObservedMemberAccessVisitor(
             _memberAccessLocators,
             memberAccess => memberAccess.CreateCurrentValueExpression(inputParameter)
         ).Visit(computedExpression.Body)!;
@@ -204,7 +204,7 @@ public class ComputedExpressionAnalyzer<TInput>(
         var inputParameter = Expression.Parameter(typeof(TInput), "input");
         var incrementalContextParameter = Expression.Parameter(typeof(IncrementalContext), "incrementalContext");
 
-        var newBody = new ReplaceMemberAccessVisitor(
+        var newBody = new ReplaceObservedMemberAccessVisitor(
             _memberAccessLocators,
             memberAccess => memberAccess.CreateIncrementalOriginalValueExpression(inputParameter, incrementalContextParameter)
         ).Visit(computedExpression.Body)!;
@@ -230,7 +230,7 @@ public class ComputedExpressionAnalyzer<TInput>(
         var inputParameter = Expression.Parameter(typeof(TInput), "input");
         var incrementalContextParameter = Expression.Parameter(typeof(IncrementalContext), "incrementalContext");
 
-        var newBody = new ReplaceMemberAccessVisitor(
+        var newBody = new ReplaceObservedMemberAccessVisitor(
             _memberAccessLocators,
             memberAccess => memberAccess.CreateIncrementalCurrentValueExpression(inputParameter, incrementalContextParameter)
         ).Visit(computedExpression.Body)!;

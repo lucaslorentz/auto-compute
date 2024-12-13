@@ -9,6 +9,6 @@ public interface IComputedExpressionAnalysis
     void PropagateEntityContext(Expression fromNode, string fromKey, Expression toNode, string toKey, Func<EntityContext, EntityContext>? mapper = null);
     void PropagateEntityContext((Expression fromNode, string fromKey)[] fromNodesKeys, Expression toNode, string toKey, Func<EntityContext, EntityContext>? mapper = null);
     void AddEntityContextProvider(Expression node, Func<string, EntityContext?> provider);
-    void AddMemberAccess(Expression expression, IObservedMemberAccess<IObservedMember> observedMemberAccess);
+    void AddMemberAccess(Expression expression, IObservedMemberAccess observedMemberAccess);
     void AddIncrementalAction(Action action);
 }

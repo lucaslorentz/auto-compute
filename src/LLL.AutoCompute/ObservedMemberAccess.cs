@@ -2,16 +2,15 @@ using System.Linq.Expressions;
 
 namespace LLL.AutoCompute;
 
-public class ObservedMemberAccess<TMember>(
+public abstract class ObservedMemberAccess(
     Expression expression,
     Expression fromExpression,
-    TMember value
-) : IObservedMemberAccess<TMember>
-    where TMember : IObservedMember<TMember>
+    IObservedMember value
+) : IObservedMemberAccess
 {
     public Expression Expression { get; } = expression;
     public Expression FromExpression { get; } = fromExpression;
-    public TMember Member { get; } = value;
+    public IObservedMember Member { get; } = value;
 
     public Expression CreateOriginalValueExpression(Expression inputParameter)
     {
@@ -38,14 +37,20 @@ public class ObservedMemberAccess<TMember>(
     }
 }
 
-public static class ObserbedMemberAccess
+public class ObservedPropertyAccess(
+    Expression expression,
+    Expression fromExpression,
+    IObservedProperty property
+) : ObservedMemberAccess(expression, fromExpression, property), IObservedPropertyAccess
 {
-    public static ObservedMemberAccess<TMember> Create<TMember>(
-        Expression expression,
-        Expression fromExpression,
-        TMember value)
-        where TMember : IObservedMember<TMember>
-    {
-        return new ObservedMemberAccess<TMember>(expression, fromExpression, value);
-    }
+    public IObservedProperty Property => property;
+}
+
+public class ObservedNavigationAccess(
+    Expression expression,
+    Expression fromExpression,
+    IObservedNavigation navigation
+) : ObservedMemberAccess(expression, fromExpression, navigation), IObservedNavigationAccess
+{
+    public IObservedNavigation Navigation => navigation;
 }

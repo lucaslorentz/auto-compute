@@ -5,10 +5,10 @@ using Microsoft.EntityFrameworkCore.Metadata;
 namespace LLL.AutoCompute.EFCore.Internal;
 
 public class EFCoreObservedMemberAccessLocator(IModel model) :
-    IObservedNavigationAccessLocator<IEFCoreComputedInput>,
-    IObservedPropertyAccessLocator<IEFCoreComputedInput>
+    IObservedNavigationAccessLocator,
+    IObservedPropertyAccessLocator
 {
-    public virtual IObservedMemberAccess<IObservedNavigation>? GetObservedNavigationAccess(Expression node)
+    public virtual IObservedNavigationAccess? GetObservedNavigationAccess(Expression node)
     {
         if (node is MemberExpression memberExpression
             && memberExpression.Expression is not null)
@@ -23,13 +23,13 @@ public class EFCoreObservedMemberAccessLocator(IModel model) :
             var navigation = (INavigationBase?)entityType?.FindNavigation(memberExpression.Member)
                 ?? entityType?.FindSkipNavigation(memberExpression.Member);
             if (navigation != null)
-                return ObserbedMemberAccess.Create(node, entityExpression, GetNavigation(navigation));
+                return new ObservedNavigationAccess(node, entityExpression, GetNavigation(navigation));
         }
 
         return null;
     }
 
-    public virtual IObservedMemberAccess<IObservedProperty>? GetObservedPropertyAccess(Expression node)
+    public virtual IObservedPropertyAccess? GetObservedPropertyAccess(Expression node)
     {
         if (node is MemberExpression memberExpression
             && memberExpression.Expression is not null)
@@ -44,7 +44,7 @@ public class EFCoreObservedMemberAccessLocator(IModel model) :
             var entityType = model.FindEntityType(type);
             var property = entityType?.FindProperty(memberExpression.Member);
             if (property is not null)
-                return ObserbedMemberAccess.Create(node, entityExpression, GetProperty(property));
+                return new ObservedPropertyAccess(node, entityExpression, GetProperty(property));
         }
 
         return null;

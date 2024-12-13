@@ -100,8 +100,7 @@ class ComputedRuntimeConvention(Func<IModel, IComputedExpressionAnalyzer<IEFCore
     {
         var observedMember = computedMember.Property.GetObservedMember();
         if (observedMember is not null
-            // TODO: Fix EFCoreObservedMember not implementing IObservedMember interface
-            && computedMember.ChangesProvider.EntityContext.AccessedMembers.Contains((IObservedMember)observedMember))
+            && computedMember.ChangesProvider.EntityContext.ObservedMembers.Contains(observedMember))
         {
             throw new Exception($"Clyclic computed expression in {computedMember.ToDebugString()}");
         }

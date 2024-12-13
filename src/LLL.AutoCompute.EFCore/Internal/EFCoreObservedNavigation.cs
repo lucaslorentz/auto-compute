@@ -13,12 +13,12 @@ public class EFCoreObservedNavigation(
     public override INavigationBase Property => navigation;
     public INavigationBase Navigation => navigation;
 
-    public virtual string Name => Navigation.Name;
+    public override string Name => Navigation.Name;
     public virtual Type SourceEntityType => Navigation.DeclaringEntityType.ClrType;
     public virtual Type TargetEntityType => Navigation.TargetEntityType.ClrType;
     public virtual bool IsCollection => Navigation.IsCollection;
 
-    public virtual string ToDebugString()
+    public override string ToDebugString()
     {
         return $"{Navigation.DeclaringEntityType.ShortName()}.{Navigation.Name}";
     }
@@ -85,8 +85,8 @@ public class EFCoreObservedNavigation(
         return targetEntities;
     }
 
-    public virtual Expression CreateOriginalValueExpression(
-        IObservedMemberAccess<IObservedNavigation> memberAccess,
+    public override Expression CreateOriginalValueExpression(
+        IObservedMemberAccess memberAccess,
         Expression inputExpression)
     {
         return Expression.Convert(
@@ -100,8 +100,8 @@ public class EFCoreObservedNavigation(
         );
     }
 
-    public virtual Expression CreateCurrentValueExpression(
-        IObservedMemberAccess<IObservedNavigation> memberAccess,
+    public override Expression CreateCurrentValueExpression(
+        IObservedMemberAccess memberAccess,
         Expression inputExpression)
     {
         return Expression.Convert(
@@ -115,8 +115,8 @@ public class EFCoreObservedNavigation(
         );
     }
 
-    public virtual Expression CreateIncrementalOriginalValueExpression(
-        IObservedMemberAccess<IObservedNavigation> memberAccess,
+    public override Expression CreateIncrementalOriginalValueExpression(
+        IObservedMemberAccess memberAccess,
         Expression inputExpression,
         Expression incrementalContextExpression)
     {
@@ -132,8 +132,8 @@ public class EFCoreObservedNavigation(
         );
     }
 
-    public virtual Expression CreateIncrementalCurrentValueExpression(
-        IObservedMemberAccess<IObservedNavigation> memberAccess,
+    public override Expression CreateIncrementalCurrentValueExpression(
+        IObservedMemberAccess memberAccess,
         Expression inputExpression,
         Expression incrementalContextExpression)
     {
@@ -278,7 +278,7 @@ public class EFCoreObservedNavigation(
         }
     }
 
-    public virtual async Task<IReadOnlyCollection<object>> GetAffectedEntitiesAsync(IEFCoreComputedInput input, IncrementalContext incrementalContext)
+    public override async Task<IReadOnlyCollection<object>> GetAffectedEntitiesAsync(IEFCoreComputedInput input, IncrementalContext incrementalContext)
     {
         var affectedEntities = new HashSet<object>();
         foreach (var entityEntry in input.EntityEntriesOfType(Navigation.DeclaringEntityType))

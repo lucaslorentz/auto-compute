@@ -10,16 +10,16 @@ public class EFCoreObservedProperty(
     : EFCoreObservedMember, IObservedProperty<IEFCoreComputedInput>
 {
     public override IProperty Property => property;
-    public virtual string Name => Property.Name;
+    public override string Name => Property.Name;
     public virtual Type EntityType => Property.DeclaringType.ClrType;
 
-    public virtual string ToDebugString()
+    public override string ToDebugString()
     {
         return $"{Property.DeclaringType.ShortName()}.{Property.Name}";
     }
 
-    public virtual Expression CreateOriginalValueExpression(
-        IObservedMemberAccess<IObservedProperty> memberAccess,
+    public override Expression CreateOriginalValueExpression(
+        IObservedMemberAccess memberAccess,
         Expression inputExpression)
     {
         return Expression.Convert(
@@ -33,8 +33,8 @@ public class EFCoreObservedProperty(
         );
     }
 
-    public virtual Expression CreateCurrentValueExpression(
-        IObservedMemberAccess<IObservedProperty> memberAccess,
+    public override Expression CreateCurrentValueExpression(
+        IObservedMemberAccess memberAccess,
         Expression inputExpression)
     {
         return Expression.Convert(
@@ -48,16 +48,16 @@ public class EFCoreObservedProperty(
         );
     }
 
-    public Expression CreateIncrementalOriginalValueExpression(
-        IObservedMemberAccess<IObservedProperty> memberAccess,
+    public override Expression CreateIncrementalOriginalValueExpression(
+        IObservedMemberAccess memberAccess,
         Expression inputExpression,
         Expression incrementalContextExpression)
     {
         return CreateOriginalValueExpression(memberAccess, inputExpression);
     }
 
-    public Expression CreateIncrementalCurrentValueExpression(
-        IObservedMemberAccess<IObservedProperty> memberAccess,
+    public override Expression CreateIncrementalCurrentValueExpression(
+        IObservedMemberAccess memberAccess,
         Expression inputExpression,
         Expression incrementalContextExpression)
     {
@@ -88,7 +88,7 @@ public class EFCoreObservedProperty(
         return entityEntry.Property(Property).CurrentValue;
     }
 
-    public virtual async Task<IReadOnlyCollection<object>> GetAffectedEntitiesAsync(IEFCoreComputedInput input, IncrementalContext incrementalContext)
+    public override async Task<IReadOnlyCollection<object>> GetAffectedEntitiesAsync(IEFCoreComputedInput input, IncrementalContext incrementalContext)
     {
         var affectedEntities = new HashSet<object>();
         foreach (var entityEntry in input.EntityEntriesOfType(Property.DeclaringType))

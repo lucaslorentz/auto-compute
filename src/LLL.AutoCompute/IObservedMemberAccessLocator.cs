@@ -4,7 +4,7 @@ namespace LLL.AutoCompute;
 
 public interface IObservedMemberAccessLocator
 {
-    public IObservedMemberAccess<IObservedMember>? GetObservedMemberAccess(Expression node)
+    public IObservedMemberAccess? GetObservedMemberAccess(Expression node)
     {
         if (this is IObservedNavigationAccessLocator nav)
         {
@@ -22,29 +22,4 @@ public interface IObservedMemberAccessLocator
 
         return null;
     }
-}
-
-public interface IObservedMemberAccessLocator<in TInput> : IObservedMemberAccessLocator
-{
-}
-
-public interface IObservedPropertyAccessLocator : IObservedMemberAccessLocator
-{
-    IObservedMemberAccess<IObservedProperty>? GetObservedPropertyAccess(Expression node);
-}
-
-public interface IObservedPropertyAccessLocator<in TInput>
-    : IObservedPropertyAccessLocator, IObservedMemberAccessLocator<TInput>
-{
-}
-
-
-public interface IObservedNavigationAccessLocator : IObservedMemberAccessLocator
-{
-    IObservedMemberAccess<IObservedNavigation>? GetObservedNavigationAccess(Expression node);
-}
-
-public interface IObservedNavigationAccessLocator<in TInput>
-    : IObservedNavigationAccessLocator, IObservedMemberAccessLocator<TInput>
-{
 }

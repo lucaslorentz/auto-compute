@@ -25,8 +25,8 @@ public class ObserverFactory
                     default,
                     changeCalculation);
 
-                if (!changesProvider.EntityContext.AllAccessedMembers.Any())
-                    throw new Exception("Computed expression doesn't have tracked accessed members");
+                if (!changesProvider.EntityContext.GetAllObservedMembers().Any())
+                    throw new Exception("Computed expression doesn't have observed members");
 
                 return new Observer<TEntity, TChange>(
                     changesProvider,

@@ -1,6 +1,6 @@
 ﻿namespace LLL.AutoCompute;
 
-public interface IObservedNavigation : IObservedMember<IObservedNavigation>
+public interface IObservedNavigation : IObservedMember
 {
     Type SourceEntityType { get; }
     Type TargetEntityType { get; }
@@ -10,10 +10,8 @@ public interface IObservedNavigation : IObservedMember<IObservedNavigation>
     Task<IReadOnlyCollection<object>> LoadOriginalAsync(object input, IReadOnlyCollection<object> fromEntities, IncrementalContext incrementalContext);
 }
 
-public interface IObservedNavigation<in TInput> : IObservedNavigation
+public interface IObservedNavigation<in TInput> : IObservedNavigation, IObservedMember<TInput>
 {
-    Type IObservedMember.InputType => typeof(TInput);
-
     Task<IReadOnlyCollection<object>> LoadCurrentAsync(TInput input, IReadOnlyCollection<object> fromEntities, IncrementalContext incrementalContext);
 
     Task<IReadOnlyCollection<object>> LoadOriginalAsync(TInput input, IReadOnlyCollection<object> fromEntities, IncrementalContext incrementalContext);
@@ -32,15 +30,5 @@ public interface IObservedNavigation<in TInput> : IObservedNavigation
             throw new ArgumentException($"Param {nameof(input)} should be of type {typeof(TInput)}");
 
         return await LoadOriginalAsync(inputTyped, fromEntities, incrementalContext);
-    }
-
-    Task<IReadOnlyCollection<object>> GetAffectedEntitiesAsync(TInput input, IncrementalContext incrementalContext);
-
-    async Task<IReadOnlyCollection<object>> IObservedMember.GetAffectedEntitiesAsync(object input, IncrementalContext incrementalContext)
-    {
-        if (input is not TInput inputTyped)
-            throw new ArgumentException($"Param {nameof(input)} should be of type {typeof(TInput)}");
-
-        return await GetAffectedEntitiesAsync(inputTyped, incrementalContext);
     }
 }

@@ -27,8 +27,8 @@ public class ComputedFactory
                     default,
                     changeCalculation);
 
-                if (!changesProvider.EntityContext.AllAccessedMembers.Any())
-                    throw new Exception("Computed expression doesn't have tracked accessed members");
+                if (!changesProvider.EntityContext.GetAllObservedMembers().Any())
+                    throw new Exception("Computed expression doesn't have observed members");
 
                 return new ComputedProperty<TEntity, TProperty>(
                     property,
@@ -60,8 +60,8 @@ public class ComputedFactory
                     default,
                     changeCalculation);
 
-                if (!changesProvider.EntityContext.AllAccessedMembers.Any())
-                    throw new Exception("Computed expression doesn't have tracked accessed members");
+                if (!changesProvider.EntityContext.GetAllObservedMembers().Any())
+                    throw new Exception("Computed expression doesn't have observed members");
 
                 var computed = new ComputedNavigation<TEntity, TProperty>(
                     navigation,

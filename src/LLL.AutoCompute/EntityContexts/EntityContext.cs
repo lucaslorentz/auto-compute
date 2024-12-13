@@ -2,30 +2,33 @@ namespace LLL.AutoCompute.EntityContexts;
 
 public abstract class EntityContext
 {
-    private readonly HashSet<IObservedMember> _accessedMembers = [];
-    private readonly HashSet<IObservedMember> _allAccessedMembers = [];
+    private readonly HashSet<IObservedMember> _observedMembers = [];
     private readonly IList<EntityContext> _childContexts = [];
 
-    public IReadOnlySet<IObservedMember> AccessedMembers => _accessedMembers;
-    public IReadOnlySet<IObservedMember> AllAccessedMembers => _allAccessedMembers;
+    public IReadOnlySet<IObservedMember> ObservedMembers => _observedMembers;
     public IEnumerable<EntityContext> ChildContexts => _childContexts;
 
     public abstract Type EntityType { get; }
     public abstract bool IsTrackingChanges { get; }
 
-    public void RegisterAccessedMember(IObservedMember member)
+    public void RegisterObservedMember(IObservedMember member)
     {
-        _accessedMembers.Add(member);
-        OnAccessedMember(member);
+        _observedMembers.Add(member);
     }
 
-    public void OnAccessedMember(IObservedMember member)
+    public IEnumerable<IObservedMember> GetAllObservedMembers()
     {
-        _allAccessedMembers.Add(member);
-        NotifyParentsOfAccessedMember(member);
-    }
+        foreach (var om in _observedMembers)
+            yield return om;
 
-    protected abstract void NotifyParentsOfAccessedMember(IObservedMember member);
+        foreach (var cc in _childContexts)
+        {
+            foreach (var om in cc.GetAllObservedMembers())
+            {
+                yield return om;
+            }
+        }
+    }
 
     public virtual void RegisterChildContext(EntityContext context)
     {
@@ -36,7 +39,7 @@ public abstract class EntityContext
     {
         var entities = new HashSet<object>();
 
-        foreach (var member in _accessedMembers)
+        foreach (var member in _observedMembers)
         {
             var ents = await member.GetAffectedEntitiesAsync(input, incrementalContext);
             foreach (var ent in ents)

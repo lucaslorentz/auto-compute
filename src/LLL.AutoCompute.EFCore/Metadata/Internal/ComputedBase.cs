@@ -11,7 +11,7 @@ public abstract class ComputedBase
 
     public IEnumerable<IObservedMember> GetObservedMembers()
     {
-        return ChangesProvider.EntityContext.AllAccessedMembers;
+        return ChangesProvider.EntityContext.GetAllObservedMembers();
     }
 
     public IEnumerable<ComputedMember> GetComputedDependencies()

@@ -2,9 +2,9 @@ using System.Linq.Expressions;
 
 namespace LLL.AutoCompute.Internal.ExpressionVisitors;
 
-internal class ReplaceMemberAccessVisitor(
+internal class ReplaceObservedMemberAccessVisitor(
     IReadOnlyCollection<IObservedMemberAccessLocator> memberAccessLocators,
-    Func<IObservedMemberAccess<IObservedMember>, Expression> expressionModifier
+    Func<IObservedMemberAccess, Expression> expressionModifier
 ) : ExpressionVisitor
 {
     public override Expression? Visit(Expression? node)

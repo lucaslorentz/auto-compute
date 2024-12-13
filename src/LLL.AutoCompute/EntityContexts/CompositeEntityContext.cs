@@ -34,10 +34,4 @@ public class CompositeEntityContext : EntityContext
         foreach (var parent in _parents)
             parent.MarkNavigationToLoadAll();
     }
-
-    protected override void NotifyParentsOfAccessedMember(IObservedMember member)
-    {
-        foreach (var parent in _parents)
-            parent.OnAccessedMember(member);
-    }
 }

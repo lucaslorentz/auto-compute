@@ -14,7 +14,7 @@ public class NavigationEntityContextPropagator(
             var navigationAccess = navigationAccessLocator.GetObservedNavigationAccess(node);
             if (navigationAccess != null)
             {
-                var toKey = navigationAccess.Member.IsCollection
+                var toKey = navigationAccess.Navigation.IsCollection
                     ? EntityContextKeys.Element
                     : EntityContextKeys.None;
 
@@ -23,7 +23,7 @@ public class NavigationEntityContextPropagator(
                     EntityContextKeys.None,
                     node,
                     toKey,
-                    entityContext => new NavigationEntityContext(entityContext, navigationAccess.Member));
+                    entityContext => new NavigationEntityContext(entityContext, navigationAccess.Navigation));
             }
         }
     }
