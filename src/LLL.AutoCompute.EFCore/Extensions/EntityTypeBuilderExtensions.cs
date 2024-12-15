@@ -58,6 +58,7 @@ public static class EntityTypeBuilderExtensions
     public static void ComputedObserver<TEntity, TValue, TChange>(
         this EntityTypeBuilder<TEntity> entityTypeBuilder,
         Expression<Func<TEntity, TValue>> computedExpression,
+        Expression<Func<TEntity, bool>>? filterExpression,
         ChangeCalculationSelector<TValue, TChange> calculationSelector,
         Func<TEntity, TChange?, Task> callback)
         where TEntity : class
@@ -65,6 +66,7 @@ public static class EntityTypeBuilderExtensions
         entityTypeBuilder
             .ComputedObserver(
                 computedExpression,
+                filterExpression,
                 calculationSelector,
                 async (ComputedChangeEventData<TEntity, TChange> eventData) =>
                 {
@@ -79,6 +81,7 @@ public static class EntityTypeBuilderExtensions
     public static void ComputedObserver<TEntity, TValue, TChange>(
         this EntityTypeBuilder<TEntity> entityTypeBuilder,
         Expression<Func<TEntity, TValue>> computedExpression,
+        Expression<Func<TEntity, bool>>? filterExpression,
         ChangeCalculationSelector<TValue, TChange> calculationSelector,
         Func<ComputedChangeEventData<TEntity, TChange>, Task> callback)
         where TEntity : class
@@ -88,6 +91,7 @@ public static class EntityTypeBuilderExtensions
         entityTypeBuilder.Metadata.AddObserverFactory(
             ObserverFactory.CreateObserverFactory(
                 computedExpression,
+                filterExpression,
                 changeCalculation,
                 callback));
     }

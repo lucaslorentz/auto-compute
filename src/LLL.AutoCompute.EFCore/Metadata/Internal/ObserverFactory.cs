@@ -12,6 +12,7 @@ public class ObserverFactory
 {
     public static ObserverFactory<IEntityType> CreateObserverFactory<TEntity, TValue, TChange>(
         Expression<Func<TEntity, TValue>> computedExpression,
+        Expression<Func<TEntity, bool>>? filterExpression,
         IChangeCalculation<TValue, TChange> changeCalculation,
         Func<ComputedChangeEventData<TEntity, TChange>, Task> callback)
         where TEntity : class
@@ -22,7 +23,7 @@ public class ObserverFactory
             {
                 var changesProvider = analyzer.GetChangesProvider(
                     computedExpression,
-                    default,
+                    filterExpression,
                     changeCalculation);
 
                 if (!changesProvider.EntityContext.GetAllObservedMembers().Any())
