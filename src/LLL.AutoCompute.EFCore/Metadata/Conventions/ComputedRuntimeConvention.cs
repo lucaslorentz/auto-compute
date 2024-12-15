@@ -48,7 +48,7 @@ class ComputedRuntimeConvention(Func<IModel, IComputedExpressionAnalyzer<IEFCore
             {
                 var observers = observersFactories
                     .Select(f => f(analyzer, entityType))
-                    .OfType<Observer>()
+                    .OfType<ComputedObserver>()
                     .ToArray();
                 entityType.SetObservers(observers);
                 computeds.AddRange(observers);

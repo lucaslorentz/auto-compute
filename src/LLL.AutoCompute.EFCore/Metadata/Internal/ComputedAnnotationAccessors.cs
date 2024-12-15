@@ -85,12 +85,12 @@ public static class ComputedAnnotationAccessors
         propertyBase.SetRuntimeAnnotation(ComputedAnnotationNames.Computed, computeds);
     }
 
-    public static IReadOnlyList<Observer>? GetObservers(this IEntityType target)
+    public static IReadOnlyList<ComputedObserver>? GetObservers(this IEntityType target)
     {
-        return target.FindRuntimeAnnotationValue(ComputedAnnotationNames.Observers) as IReadOnlyList<Observer>;
+        return target.FindRuntimeAnnotationValue(ComputedAnnotationNames.Observers) as IReadOnlyList<ComputedObserver>;
     }
 
-    internal static void SetObservers(this IEntityType target, IReadOnlyList<Observer>? observers)
+    internal static void SetObservers(this IEntityType target, IReadOnlyList<ComputedObserver>? observers)
     {
         target.SetRuntimeAnnotation(ComputedAnnotationNames.Observers, observers);
     }

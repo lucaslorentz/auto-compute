@@ -1,4 +1,6 @@
-﻿using System.Linq.Expressions;
+﻿using System.Collections.Concurrent;
+using System.Diagnostics.CodeAnalysis;
+using System.Linq.Expressions;
 using System.Runtime.CompilerServices;
 using LLL.AutoCompute.ChangesProviders;
 using LLL.AutoCompute.EFCore.Internal;
@@ -64,6 +66,7 @@ public static class DbContextExtensions
         {
             dbContext.ChangeTracker.DetectChanges();
 
+            // TODO: Separate computeds from observers
             var sortedComputeds = dbContext.Model.GetSortedComputedsOrThrow();
 
             var computedsAndPriority = sortedComputeds
@@ -101,6 +104,11 @@ public static class DbContextExtensions
     internal static IEFCoreComputedInput GetComputedInput(this DbContext dbContext)
     {
         return _inputs.GetValue(dbContext, static k => new EFCoreComputedInput(k));
+    }
+
+    private static readonly ConditionalWeakTable<DbContext, ConcurrentQueue<Func<Task>>> _postSaveActionsQueues = [];
+    internal static ConcurrentQueue<Func<Task>> GetComputedPostSaveActionQueue(this DbContext context) {
+        return _postSaveActionsQueues.GetValue(context, k => []);
     }
 
     internal static async Task<T> WithoutAutoDetectChangesAsync<T>(

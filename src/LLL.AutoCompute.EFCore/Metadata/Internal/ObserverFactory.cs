@@ -4,7 +4,7 @@ using Microsoft.EntityFrameworkCore.Metadata;
 
 namespace LLL.AutoCompute.EFCore.Metadata.Internal;
 
-public delegate Observer ObserverFactory<in TTarget>(
+public delegate ComputedObserver ObserverFactory<in TTarget>(
     IComputedExpressionAnalyzer<IEFCoreComputedInput> analyzer,
     TTarget target);
 
@@ -29,7 +29,7 @@ public class ObserverFactory
                 if (!changesProvider.EntityContext.GetAllObservedMembers().Any())
                     throw new Exception("Computed expression doesn't have observed members");
 
-                return new Observer<TEntity, TChange>(
+                return new ComputedObserver<TEntity, TChange>(
                     changesProvider,
                     callback);
             }

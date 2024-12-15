@@ -38,9 +38,7 @@ public class ComputedOptionsBuilder
 
     internal ComputedOptionsExtension Build()
     {
-        if (_enableUpdateComputedsOnSave)
-            _optionsBuilder.AddInterceptors(new ComputedInterceptor());
-
+        _optionsBuilder.AddInterceptors(new ComputedInterceptor(_enableUpdateComputedsOnSave));
         return _extension;
     }
 }
