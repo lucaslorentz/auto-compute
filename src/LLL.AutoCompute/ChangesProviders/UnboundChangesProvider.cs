@@ -28,7 +28,7 @@ public class UnboundChangesProvider<TInput, TEntity, TValue, TChange>(
             .Cast<TEntity>()
             .ToArray();
 
-        await filterEntityContext.PreLoadNavigationsAsync(input!, affectedEntities, incrementalContext);
+        await filterEntityContext.PreLoadNavigationsAsync(input!, affectedEntities);
 
         affectedEntities = affectedEntities
             .Where(e => entityContext.EntityType.GetEntityState(input!, e) != ObservedEntityState.Removed
@@ -38,7 +38,7 @@ public class UnboundChangesProvider<TInput, TEntity, TValue, TChange>(
         if (changeCalculation.IsIncremental)
             await entityContext.EnrichIncrementalContextAsync(input!, affectedEntities, incrementalContext);
         else if (changeCalculation.PreLoadEntities)
-            await entityContext.PreLoadNavigationsAsync(input!, affectedEntities, incrementalContext);
+            await entityContext.PreLoadNavigationsAsync(input!, affectedEntities);
 
         var changes = new Dictionary<TEntity, TChange>();
 

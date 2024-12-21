@@ -41,9 +41,30 @@ public abstract class EntityContext
 
         foreach (var member in _observedMembers)
         {
-            var ents = await member.GetAffectedEntitiesAsync(input, incrementalContext);
-            foreach (var ent in ents)
-                entities.Add(ent);
+            if (member is IObservedProperty observedProperty)
+            {
+                var ents = await observedProperty.GetAffectedEntitiesAsync(input);
+                foreach (var ent in ents)
+                    entities.Add(ent);
+            }
+            else if (member is IObservedNavigation observedNavigation)
+            {
+                var navigationChanges = await observedNavigation.GetChangesAsync(input);
+                foreach (var (entity, changes) in navigationChanges.GetEntityChanges())
+                {
+                    entities.Add(entity);
+                    foreach (var addedEntity in changes.Added)
+                    {
+                        incrementalContext?.SetShouldLoadAll(addedEntity);
+                        incrementalContext?.AddCurrentEntity(entity, observedNavigation, addedEntity);
+                    }
+                    foreach (var removedEntity in changes.Removed)
+                    {
+                        incrementalContext?.SetShouldLoadAll(removedEntity);
+                        incrementalContext?.AddOriginalEntity(entity, observedNavigation, removedEntity);
+                    }
+                }
+            }
         }
 
         foreach (var childContext in _childContexts)
@@ -71,15 +92,15 @@ public abstract class EntityContext
 
     public abstract Task EnrichIncrementalContextTowardsRootAsync(object input, IReadOnlyCollection<object> entities, IncrementalContext incrementalContext);
 
-    public virtual async Task PreLoadNavigationsAsync(object input, IReadOnlyCollection<object> entities, IncrementalContext incrementalContext)
+    public virtual async Task PreLoadNavigationsAsync(object input, IReadOnlyCollection<object> entities)
     {
         foreach (var childContext in _childContexts)
-            await childContext.PreLoadNavigationsFromParentAsync(input, entities, incrementalContext);
+            await childContext.PreLoadNavigationsFromParentAsync(input, entities);
     }
 
-    public virtual async Task PreLoadNavigationsFromParentAsync(object input, IReadOnlyCollection<object> parentEntities, IncrementalContext incrementalContext)
+    public virtual async Task PreLoadNavigationsFromParentAsync(object input, IReadOnlyCollection<object> parentEntities)
     {
-        await PreLoadNavigationsAsync(input, parentEntities, incrementalContext);
+        await PreLoadNavigationsAsync(input, parentEntities);
     }
 
     public abstract void MarkNavigationToLoadAll();

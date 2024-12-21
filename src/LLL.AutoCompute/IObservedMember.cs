@@ -21,20 +21,9 @@ public interface IObservedMember
         IObservedMemberAccess memberAccess,
         Expression inputExpression,
         Expression incrementalContextExpression);
-    Task<IReadOnlyCollection<object>> GetAffectedEntitiesAsync(object input, IncrementalContext incrementalContext);
 }
 
 public interface IObservedMember<in TInput> : IObservedMember
 {
     Type IObservedMember.InputType => typeof(TInput);
-
-    Task<IReadOnlyCollection<object>> GetAffectedEntitiesAsync(TInput input, IncrementalContext incrementalContext);
-
-    async Task<IReadOnlyCollection<object>> IObservedMember.GetAffectedEntitiesAsync(object input, IncrementalContext incrementalContext)
-    {
-        if (input is not TInput inputTyped)
-            throw new ArgumentException($"Param {nameof(input)} should be of type {typeof(TInput)}");
-
-        return await GetAffectedEntitiesAsync(inputTyped, incrementalContext);
-    }
 }

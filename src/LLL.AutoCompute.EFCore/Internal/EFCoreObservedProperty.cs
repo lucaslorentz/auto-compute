@@ -87,7 +87,7 @@ public class EFCoreObservedProperty(
         return entityEntry.Property(Property).CurrentValue;
     }
 
-    public override async Task<IReadOnlyCollection<object>> GetAffectedEntitiesAsync(IEFCoreComputedInput input, IncrementalContext incrementalContext)
+    public async Task<IReadOnlyCollection<object>> GetAffectedEntitiesAsync(IEFCoreComputedInput input)
     {
         var affectedEntities = new HashSet<object>();
         foreach (var entityEntry in input.EntityEntriesOfType(Property.DeclaringType))

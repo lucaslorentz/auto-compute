@@ -23,5 +23,4 @@ public abstract class EFCoreObservedMember : IObservedMember<IEFCoreComputedInpu
     public abstract Expression CreateIncrementalCurrentValueExpression(IObservedMemberAccess memberAccess, Expression inputExpression, Expression incrementalContextExpression);
     public abstract Expression CreateIncrementalOriginalValueExpression(IObservedMemberAccess memberAccess, Expression inputExpression, Expression incrementalContextExpression);
     public abstract Expression CreateOriginalValueExpression(IObservedMemberAccess memberAccess, Expression inputExpression);
-    public abstract Task<IReadOnlyCollection<object>> GetAffectedEntitiesAsync(IEFCoreComputedInput input, IncrementalContext incrementalContext);
 }

@@ -30,10 +30,22 @@ public class NavigationEntityContext : EntityContext
         var entities = await GetAffectedEntitiesAsync(input, incrementalContext);
 
         var parentEntities = new HashSet<object>();
-        foreach (var ent in await inverseNavigation.LoadOriginalAsync(input, entities, incrementalContext))
-            parentEntities.Add(ent);
-        foreach (var ent in await inverseNavigation.LoadCurrentAsync(input, entities, incrementalContext))
-            parentEntities.Add(ent);
+        foreach (var (ent, parents) in await inverseNavigation.LoadOriginalAsync(input, entities))
+        {
+            foreach (var parent in parents)
+            {
+                parentEntities.Add(parent);
+                incrementalContext?.AddOriginalEntity(parent, _navigation, ent);
+            }
+        }
+        foreach (var (ent, parents) in await inverseNavigation.LoadCurrentAsync(input, entities))
+        {
+            foreach (var parent in parents)
+            {
+                parentEntities.Add(parent);
+                incrementalContext?.AddCurrentEntity(parent, _navigation, ent);
+            }
+        }
         return parentEntities;
     }
 
@@ -45,17 +57,30 @@ public class NavigationEntityContext : EntityContext
             .ToLookup(e => _shouldLoadAll || incrementalContext.ShouldLoadAll(e));
 
         var parentEntitiesToLoadAll = parentEntitiesByLoadAll[true].ToArray();
-        var original = await _navigation.LoadOriginalAsync(input, parentEntitiesToLoadAll, incrementalContext);
-        var current = await _navigation.LoadCurrentAsync(input, parentEntitiesToLoadAll, incrementalContext);
-        foreach (var entity in original.Concat(current))
+
+        foreach (var (parent, ents) in await _navigation.LoadOriginalAsync(input, parentEntitiesToLoadAll))
         {
-            incrementalContext.SetShouldLoadAll(entity);
-            entities.Add(entity);
+            foreach (var ent in ents)
+            {
+                entities.Add(ent);
+                incrementalContext.SetShouldLoadAll(ent);
+                incrementalContext.AddOriginalEntity(parent, _navigation, ent);
+            }
+        }
+
+        foreach (var (parent, ents) in await _navigation.LoadCurrentAsync(input, parentEntitiesToLoadAll))
+        {
+            foreach (var ent in ents)
+            {
+                entities.Add(ent);
+                incrementalContext.SetShouldLoadAll(ent);
+                incrementalContext.AddCurrentEntity(parent, _navigation, ent);
+            }
         }
 
         foreach (var parentEntity in parentEntitiesByLoadAll[false])
         {
-            foreach (var entity in incrementalContext.GetIncrementalEntities(parentEntity, _navigation))
+            foreach (var entity in incrementalContext.GetEntities(parentEntity, _navigation))
             {
                 entities.Add(entity);
             }
@@ -70,27 +95,44 @@ public class NavigationEntityContext : EntityContext
 
         var parentEntities = new HashSet<object>();
 
-        foreach (var parent in await inverse.LoadOriginalAsync(input, entities, incrementalContext))
-            parentEntities.Add(parent);
+        foreach (var (ent, parents) in await inverse.LoadOriginalAsync(input, entities))
+        {
+            foreach (var parent in parents)
+            {
+                parentEntities.Add(parent);
+                incrementalContext.AddOriginalEntity(parent, _navigation, ent);
+            }
+        }
 
-        foreach (var parent in await inverse.LoadCurrentAsync(input, entities, incrementalContext))
-            parentEntities.Add(parent);
+        foreach (var (ent, parents) in await inverse.LoadCurrentAsync(input, entities))
+        {
+            foreach (var parent in parents)
+            {
+                parentEntities.Add(parent);
+                incrementalContext.AddCurrentEntity(parent, _navigation, ent);
+            }
+        }
 
         await _parent.EnrichIncrementalContextTowardsRootAsync(input, parentEntities, incrementalContext);
     }
 
-    public override async Task PreLoadNavigationsFromParentAsync(object input, IReadOnlyCollection<object> parentEntities, IncrementalContext incrementalContext)
+    public override async Task PreLoadNavigationsFromParentAsync(object input, IReadOnlyCollection<object> parentEntities)
     {
         var entities = new HashSet<object>();
 
-        var original = await _navigation.LoadOriginalAsync(input, parentEntities, incrementalContext);
-        var current = await _navigation.LoadCurrentAsync(input, parentEntities, incrementalContext);
-        foreach (var entity in original.Concat(current))
+        foreach (var (parent, ents) in await _navigation.LoadOriginalAsync(input, parentEntities))
         {
-            entities.Add(entity);
+            foreach (var ent in ents)
+                entities.Add(ent);
         }
 
-        await PreLoadNavigationsAsync(input, entities, incrementalContext);
+        foreach (var (parent, ents) in await _navigation.LoadCurrentAsync(input, parentEntities))
+        {
+            foreach (var ent in ents)
+                entities.Add(ent);
+        }
+
+        await PreLoadNavigationsAsync(input, entities);
     }
 
     public override void MarkNavigationToLoadAll()
