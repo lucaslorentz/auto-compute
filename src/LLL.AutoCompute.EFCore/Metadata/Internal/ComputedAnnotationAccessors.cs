@@ -5,6 +5,20 @@ namespace LLL.AutoCompute.EFCore.Metadata.Internal;
 
 public static class ComputedAnnotationAccessors
 {
+    internal static EFCoreObservedEntityType GetOrCreateObservedEntityType(this IEntityType entityType)
+    {
+        return entityType.GetOrAddRuntimeAnnotationValue(
+            ComputedAnnotationNames.ObservedEntityType,
+            static (entityType) => new EFCoreObservedEntityType(entityType!),
+            entityType);
+    }
+
+    internal static EFCoreObservedEntityType? GetObservedEntityType(this IEntityType entityType)
+    {
+        return entityType.FindRuntimeAnnotationValue(
+            ComputedAnnotationNames.ObservedEntityType) as EFCoreObservedEntityType;
+    }
+
     internal static EFCoreObservedProperty GetOrCreateObservedProperty(this IProperty property)
     {
         return property.GetOrAddRuntimeAnnotationValue(

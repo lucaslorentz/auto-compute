@@ -1,7 +1,6 @@
 using System.Linq.Expressions;
 using System.Reflection;
 using LLL.AutoCompute.EFCore.Metadata.Internal;
-using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata;
 
 namespace LLL.AutoCompute.EFCore.Internal;
@@ -14,8 +13,8 @@ public class EFCoreObservedNavigation(
     public INavigationBase Navigation => navigation;
 
     public override string Name => Navigation.Name;
-    public virtual Type SourceEntityType => Navigation.DeclaringEntityType.ClrType;
-    public virtual Type TargetEntityType => Navigation.TargetEntityType.ClrType;
+    public virtual IObservedEntityType SourceEntityType => Navigation.DeclaringEntityType.GetOrCreateObservedEntityType();
+    public virtual IObservedEntityType TargetEntityType => Navigation.TargetEntityType.GetOrCreateObservedEntityType();
     public virtual bool IsCollection => Navigation.IsCollection;
 
     public override string ToDebugString()
@@ -42,12 +41,12 @@ public class EFCoreObservedNavigation(
         foreach (var sourceEntity in sourceEntities)
         {
             var entityEntry = input.DbContext.Entry(sourceEntity!);
-            if (entityEntry.State == EntityState.Added)
+            if (entityEntry.State == Microsoft.EntityFrameworkCore.EntityState.Added)
                 continue;
 
             var navigationEntry = entityEntry.Navigation(Navigation);
 
-            if (!navigationEntry.IsLoaded && entityEntry.State != EntityState.Detached)
+            if (!navigationEntry.IsLoaded && entityEntry.State != Microsoft.EntityFrameworkCore.EntityState.Detached)
                 await navigationEntry.LoadAsync();
 
             foreach (var originalEntity in navigationEntry.GetOriginalEntities())
@@ -155,12 +154,12 @@ public class EFCoreObservedNavigation(
 
         var entityEntry = dbContext.Entry(ent!);
 
-        if (entityEntry.State == EntityState.Added)
+        if (entityEntry.State == Microsoft.EntityFrameworkCore.EntityState.Added)
             throw new Exception($"Cannot access navigation '{Navigation.DeclaringType.ShortName()}.{Navigation.Name}' original value for an added entity");
 
         var navigationEntry = entityEntry.Navigation(Navigation);
 
-        if (!navigationEntry.IsLoaded && entityEntry.State != EntityState.Detached)
+        if (!navigationEntry.IsLoaded && entityEntry.State != Microsoft.EntityFrameworkCore.EntityState.Detached)
             navigationEntry.Load();
 
         return navigationEntry.GetOriginalValue();
@@ -172,11 +171,11 @@ public class EFCoreObservedNavigation(
 
         var entityEntry = dbContext.Entry(ent!);
 
-        if (entityEntry.State == EntityState.Deleted)
+        if (entityEntry.State == Microsoft.EntityFrameworkCore.EntityState.Deleted)
             throw new Exception($"Cannot access navigation '{Navigation.DeclaringType.ShortName()}.{Navigation.Name}' current value for a deleted entity");
 
         var navigationEntry = entityEntry.Navigation(Navigation);
-        if (!navigationEntry.IsLoaded && entityEntry.State != EntityState.Detached)
+        if (!navigationEntry.IsLoaded && entityEntry.State != Microsoft.EntityFrameworkCore.EntityState.Detached)
             navigationEntry.Load();
 
         return navigationEntry.GetCurrentValue();
@@ -186,7 +185,7 @@ public class EFCoreObservedNavigation(
     {
         var entityEntry = input.DbContext.Entry(ent);
 
-        if (entityEntry.State == EntityState.Added)
+        if (entityEntry.State == Microsoft.EntityFrameworkCore.EntityState.Added)
             throw new Exception($"Cannot access navigation '{Navigation.DeclaringType.ShortName()}.{Navigation.Name}' original value for an added entity");
 
         var incrementalEntities = incrementalContext!.GetIncrementalEntities(ent, this);
@@ -234,7 +233,7 @@ public class EFCoreObservedNavigation(
     {
         var entityEntry = input.DbContext.Entry(ent);
 
-        if (entityEntry.State == EntityState.Deleted)
+        if (entityEntry.State == Microsoft.EntityFrameworkCore.EntityState.Deleted)
             throw new Exception($"Cannot access navigation '{Navigation.DeclaringType.ShortName()}.{Navigation.Name}' current value for a deleted entity");
 
         var incrementalEntities = incrementalContext!.GetIncrementalEntities(ent, this);
@@ -283,13 +282,13 @@ public class EFCoreObservedNavigation(
         var affectedEntities = new HashSet<object>();
         foreach (var entityEntry in input.EntityEntriesOfType(Navigation.DeclaringEntityType))
         {
-            if (entityEntry.State == EntityState.Added
-                || entityEntry.State == EntityState.Deleted
-                || entityEntry.State == EntityState.Modified)
+            if (entityEntry.State == Microsoft.EntityFrameworkCore.EntityState.Added
+                || entityEntry.State == Microsoft.EntityFrameworkCore.EntityState.Deleted
+                || entityEntry.State == Microsoft.EntityFrameworkCore.EntityState.Modified)
             {
                 var navigationEntry = entityEntry.Navigation(Navigation);
-                if (entityEntry.State == EntityState.Added
-                    || entityEntry.State == EntityState.Deleted
+                if (entityEntry.State == Microsoft.EntityFrameworkCore.EntityState.Added
+                    || entityEntry.State == Microsoft.EntityFrameworkCore.EntityState.Deleted
                     || navigationEntry.IsModified)
                 {
                     affectedEntities.Add(entityEntry.Entity);
@@ -308,16 +307,16 @@ public class EFCoreObservedNavigation(
         {
             foreach (var entityEntry in input.EntityEntriesOfType(Navigation.Inverse.DeclaringEntityType))
             {
-                if (entityEntry.State == EntityState.Added
-                    || entityEntry.State == EntityState.Deleted
-                    || entityEntry.State == EntityState.Modified)
+                if (entityEntry.State == Microsoft.EntityFrameworkCore.EntityState.Added
+                    || entityEntry.State == Microsoft.EntityFrameworkCore.EntityState.Deleted
+                    || entityEntry.State == Microsoft.EntityFrameworkCore.EntityState.Modified)
                 {
                     var inverseNavigationEntry = entityEntry.Navigation(Navigation.Inverse);
-                    if (entityEntry.State == EntityState.Added
-                        || entityEntry.State == EntityState.Deleted
+                    if (entityEntry.State == Microsoft.EntityFrameworkCore.EntityState.Added
+                        || entityEntry.State == Microsoft.EntityFrameworkCore.EntityState.Deleted
                         || inverseNavigationEntry.IsModified)
                     {
-                        if (!inverseNavigationEntry.IsLoaded && entityEntry.State != EntityState.Detached)
+                        if (!inverseNavigationEntry.IsLoaded && entityEntry.State != Microsoft.EntityFrameworkCore.EntityState.Detached)
                             await inverseNavigationEntry.LoadAsync();
 
                         var modifiedEntities = inverseNavigationEntry.GetModifiedEntities();
@@ -339,21 +338,21 @@ public class EFCoreObservedNavigation(
 
             foreach (var joinEntry in input.EntityEntriesOfType(skipNavigation.JoinEntityType))
             {
-                if (joinEntry.State == EntityState.Added
-                    || joinEntry.State == EntityState.Deleted
-                    || joinEntry.State == EntityState.Modified)
+                if (joinEntry.State == Microsoft.EntityFrameworkCore.EntityState.Added
+                    || joinEntry.State == Microsoft.EntityFrameworkCore.EntityState.Deleted
+                    || joinEntry.State == Microsoft.EntityFrameworkCore.EntityState.Modified)
                 {
                     var dependentToPrincipalEntry = joinEntry.Navigation(dependentToPrincipal);
                     var otherReferenceEntry = joinEntry.Reference(joinReferenceToOther!);
 
-                    if (joinEntry.State == EntityState.Added
-                        || joinEntry.State == EntityState.Deleted
+                    if (joinEntry.State == Microsoft.EntityFrameworkCore.EntityState.Added
+                        || joinEntry.State == Microsoft.EntityFrameworkCore.EntityState.Deleted
                         || dependentToPrincipalEntry.IsModified)
                     {
-                        if (!dependentToPrincipalEntry.IsLoaded && joinEntry.State != EntityState.Detached)
+                        if (!dependentToPrincipalEntry.IsLoaded && joinEntry.State != Microsoft.EntityFrameworkCore.EntityState.Detached)
                             await dependentToPrincipalEntry.LoadAsync();
 
-                        if (joinEntry.State != EntityState.Added)
+                        if (joinEntry.State != Microsoft.EntityFrameworkCore.EntityState.Added)
                         {
                             foreach (var entity in dependentToPrincipalEntry.GetOriginalEntities())
                             {
@@ -367,7 +366,7 @@ public class EFCoreObservedNavigation(
                             }
                         }
 
-                        if (joinEntry.State != EntityState.Deleted)
+                        if (joinEntry.State != Microsoft.EntityFrameworkCore.EntityState.Deleted)
                         {
                             foreach (var entity in dependentToPrincipalEntry.GetEntities())
                             {

@@ -14,7 +14,7 @@ public static class ModelExtensions
     {
         var entityEntry = navigationEntry.EntityEntry;
 
-        if (!navigationEntry.IsLoaded && entityEntry.State != EntityState.Detached)
+        if (!navigationEntry.IsLoaded && entityEntry.State != Microsoft.EntityFrameworkCore.EntityState.Detached)
             navigationEntry.Load();
 
         var dbContext = navigationEntry.EntityEntry.Context;
@@ -47,8 +47,8 @@ public static class ModelExtensions
                 {
                     var selfReferenceEntry = joinEntry.Reference(skipNavigation.ForeignKey.DependentToPrincipal!);
                     var otherReferenceEntry = joinEntry.Reference(joinReferenceToOther!);
-                    if ((joinEntry.State == EntityState.Deleted || selfReferenceEntry.IsModified || otherReferenceEntry.IsModified)
-                        && joinEntry.State != EntityState.Added
+                    if ((joinEntry.State == Microsoft.EntityFrameworkCore.EntityState.Deleted || selfReferenceEntry.IsModified || otherReferenceEntry.IsModified)
+                        && joinEntry.State != Microsoft.EntityFrameworkCore.EntityState.Added
                         && skipNavigation.ForeignKey.IsConnected(entityEntry.OriginalValues, joinEntry.OriginalValues))
                     {
                         collectionAccessor.AddStandalone(originalValue, otherReferenceEntry.GetOriginalValue()!);
@@ -99,14 +99,14 @@ public static class ModelExtensions
                 var inverseNavigation = baseNavigation.Inverse
                     ?? throw new Exception($"No inverse to compute original value for navigation '{baseNavigation}'");
 
-                if (entityEntry.State != EntityState.Added)
+                if (entityEntry.State != Microsoft.EntityFrameworkCore.EntityState.Added)
                 {
                     var entityOriginalValues = entityEntry.OriginalValues;
 
                     // Original value is the current value
                     if (navigationEntry is ReferenceEntry referenceEntry
                         && referenceEntry.TargetEntry is not null
-                        && referenceEntry.TargetEntry.State != EntityState.Added
+                        && referenceEntry.TargetEntry.State != Microsoft.EntityFrameworkCore.EntityState.Added
                         && foreignKey.IsConnected(entityOriginalValues, referenceEntry.TargetEntry.OriginalValues))
                     {
                         return navigationEntry.CurrentValue;
@@ -137,7 +137,7 @@ public static class ModelExtensions
     {
         var entityEntry = navigationEntry.EntityEntry;
 
-        if (!navigationEntry.IsLoaded && entityEntry.State != EntityState.Detached)
+        if (!navigationEntry.IsLoaded && entityEntry.State != Microsoft.EntityFrameworkCore.EntityState.Detached)
             navigationEntry.Load();
 
         var dbContext = navigationEntry.EntityEntry.Context;
@@ -228,11 +228,11 @@ public static class ModelExtensions
 
     public static IReadOnlyCollection<object> GetModifiedEntities(this NavigationEntry navigationEntry)
     {
-        var originalEntities = navigationEntry.EntityEntry.State == EntityState.Added
+        var originalEntities = navigationEntry.EntityEntry.State == Microsoft.EntityFrameworkCore.EntityState.Added
             ? []
             : navigationEntry.GetOriginalEntities().ToArray();
 
-        var currentEntities = navigationEntry.EntityEntry.State == EntityState.Deleted
+        var currentEntities = navigationEntry.EntityEntry.State == Microsoft.EntityFrameworkCore.EntityState.Deleted
             ? []
             : navigationEntry.GetEntities().ToArray();
 
@@ -256,7 +256,7 @@ public static class ModelExtensions
         var entitiesToLoad = entities.Where(e =>
         {
             var entityEntry = dbContext.Entry(e);
-            if (entityEntry.State == EntityState.Detached)
+            if (entityEntry.State == Microsoft.EntityFrameworkCore.EntityState.Deleted)
                 return false;
 
             var navigationEntry = entityEntry.Navigation(navigation);
@@ -279,8 +279,8 @@ public static class ModelExtensions
         EntityEntry entry,
         EntityEntry relatedEntry)
     {
-        if (entry.State == EntityState.Added
-            || relatedEntry.State == EntityState.Added)
+        if (entry.State == Microsoft.EntityFrameworkCore.EntityState.Added
+            || relatedEntry.State == Microsoft.EntityFrameworkCore.EntityState.Added)
             return false;
 
         var (principalEntry, dependantEntry) = navigation.IsOnDependent
@@ -295,8 +295,8 @@ public static class ModelExtensions
         EntityEntry entry,
         EntityEntry relatedEntry)
     {
-        if (entry.State == EntityState.Deleted
-            || relatedEntry.State == EntityState.Deleted)
+        if (entry.State == Microsoft.EntityFrameworkCore.EntityState.Deleted
+            || relatedEntry.State == Microsoft.EntityFrameworkCore.EntityState.Deleted)
             return false;
 
         var (principalEntry, dependantEntry) = navigation.IsOnDependent
@@ -312,8 +312,8 @@ public static class ModelExtensions
         EntityEntry entry,
         EntityEntry relatedEntry)
     {
-        if (entry.State == EntityState.Added
-            || relatedEntry.State == EntityState.Added)
+        if (entry.State == Microsoft.EntityFrameworkCore.EntityState.Added
+            || relatedEntry.State == Microsoft.EntityFrameworkCore.EntityState.Added)
             return false;
 
         var entityValues = entry.CurrentValues;
@@ -322,7 +322,7 @@ public static class ModelExtensions
         var relatedForeignKey = skipNavigation.Inverse!.ForeignKey;
         foreach (var joinEntry in input.EntityEntriesOfType(skipNavigation.JoinEntityType))
         {
-            if (joinEntry.State == EntityState.Added)
+            if (joinEntry.State == Microsoft.EntityFrameworkCore.EntityState.Added)
                 continue;
 
             var wasRelated = foreignKey.IsConnected(entityValues, joinEntry.OriginalValues)
@@ -341,8 +341,8 @@ public static class ModelExtensions
         EntityEntry entry,
         EntityEntry relatedEntry)
     {
-        if (entry.State == EntityState.Deleted
-            || relatedEntry.State == EntityState.Deleted)
+        if (entry.State == Microsoft.EntityFrameworkCore.EntityState.Deleted
+            || relatedEntry.State == Microsoft.EntityFrameworkCore.EntityState.Deleted)
             return false;
 
         var entityValues = entry.CurrentValues;
@@ -351,7 +351,7 @@ public static class ModelExtensions
         var relatedForeignKey = skipNavigation.Inverse!.ForeignKey;
         foreach (var joinEntry in input.EntityEntriesOfType(skipNavigation.JoinEntityType))
         {
-            if (joinEntry.State == EntityState.Deleted)
+            if (joinEntry.State == Microsoft.EntityFrameworkCore.EntityState.Deleted)
                 continue;
 
             var isRelated = foreignKey.IsConnected(entityValues, joinEntry.CurrentValues)

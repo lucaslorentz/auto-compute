@@ -8,7 +8,7 @@ public abstract class EntityContext
     public IReadOnlySet<IObservedMember> ObservedMembers => _observedMembers;
     public IEnumerable<EntityContext> ChildContexts => _childContexts;
 
-    public abstract Type EntityType { get; }
+    public abstract IObservedEntityType EntityType { get; }
     public abstract bool IsTrackingChanges { get; }
 
     public void RegisterObservedMember(IObservedMember member)

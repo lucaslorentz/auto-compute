@@ -22,6 +22,7 @@ public class ObserverFactory
             try
             {
                 var changesProvider = analyzer.CreateChangesProvider(
+                    entityType.GetOrCreateObservedEntityType(),
                     computedExpression,
                     filterExpression ?? (static x => true),
                     changeCalculation);

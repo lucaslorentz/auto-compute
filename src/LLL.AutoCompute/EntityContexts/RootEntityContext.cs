@@ -1,8 +1,8 @@
 ﻿namespace LLL.AutoCompute.EntityContexts;
 
-public class RootEntityContext(Type entityType) : EntityContext
+public class RootEntityContext(IObservedEntityType entityType) : EntityContext
 {
-    public override Type EntityType => entityType;
+    public override IObservedEntityType EntityType => entityType;
     public override bool IsTrackingChanges => true;
 
     public override async Task<IReadOnlyCollection<object>> GetParentAffectedEntities(object input, IncrementalContext incrementalContext)

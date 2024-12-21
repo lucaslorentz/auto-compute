@@ -3,7 +3,7 @@ using LLL.AutoCompute.EntityContexts;
 
 namespace LLL.AutoCompute.EntityContextPropagators;
 
-public class LinqMethodsEntityContextPropagator
+public class LinqMethodsEntityContextPropagator(Lazy<IObservedEntityTypeResolver?> entityTypeResolver)
     : IEntityContextPropagator
 {
     public void PropagateEntityContext(
@@ -240,12 +240,17 @@ public class LinqMethodsEntityContextPropagator
                         break;
 
                     case nameof(Enumerable.Empty):
-                        analysis.AddEntityContextProvider(
-                            node,
-                            (key) => key == EntityContextKeys.Element
-                                ? new ChangeTrackingEntityContext(methodCallExpression.Method.GetGenericArguments().First(), false, null)
-                                : null
-                        );
+                        var elementType = methodCallExpression.Method.GetGenericArguments().First();
+                        var observedEntityType = entityTypeResolver.Value?.Resolve(elementType);
+                        if (observedEntityType is not null)
+                        {
+                            analysis.AddEntityContextProvider(
+                                node,
+                                (key) => key == EntityContextKeys.Element
+                                    ? new ChangeTrackingEntityContext(observedEntityType, false, null)
+                                    : null
+                            );
+                        }
                         break;
                 }
             }

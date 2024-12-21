@@ -1,6 +1,5 @@
 using System.Linq.Expressions;
 using System.Reflection;
-using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata;
 
 namespace LLL.AutoCompute.EFCore.Internal;
@@ -70,7 +69,7 @@ public class EFCoreObservedProperty(
 
         var entityEntry = dbContext.Entry(ent!);
 
-        if (entityEntry.State == EntityState.Added)
+        if (entityEntry.State == Microsoft.EntityFrameworkCore.EntityState.Added)
             throw new Exception($"Cannot access property '{Property.DeclaringType.ShortName()}.{Property.Name}' original value for an added entity");
 
         return entityEntry.Property(Property).OriginalValue;
@@ -82,7 +81,7 @@ public class EFCoreObservedProperty(
 
         var entityEntry = dbContext.Entry(ent!);
 
-        if (entityEntry.State == EntityState.Deleted)
+        if (entityEntry.State == Microsoft.EntityFrameworkCore.EntityState.Deleted)
             throw new Exception($"Cannot access property '{Property.DeclaringType.ShortName()}.{Property.Name}' current value for a deleted entity");
 
         return entityEntry.Property(Property).CurrentValue;
@@ -93,13 +92,13 @@ public class EFCoreObservedProperty(
         var affectedEntities = new HashSet<object>();
         foreach (var entityEntry in input.EntityEntriesOfType(Property.DeclaringType))
         {
-            if (entityEntry.State == EntityState.Added
-                || entityEntry.State == EntityState.Deleted
-                || entityEntry.State == EntityState.Modified)
+            if (entityEntry.State == Microsoft.EntityFrameworkCore.EntityState.Added
+                || entityEntry.State == Microsoft.EntityFrameworkCore.EntityState.Deleted
+                || entityEntry.State == Microsoft.EntityFrameworkCore.EntityState.Modified)
             {
                 var propertyEntry = entityEntry.Property(Property);
-                if (entityEntry.State == EntityState.Added
-                    || entityEntry.State == EntityState.Deleted
+                if (entityEntry.State == Microsoft.EntityFrameworkCore.EntityState.Added
+                    || entityEntry.State == Microsoft.EntityFrameworkCore.EntityState.Deleted
                     || propertyEntry.IsModified)
                 {
                     affectedEntities.Add(entityEntry.Entity);

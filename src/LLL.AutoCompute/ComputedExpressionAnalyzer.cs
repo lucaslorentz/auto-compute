@@ -15,7 +15,7 @@ public class ComputedExpressionAnalyzer<TInput> : IComputedExpressionAnalyzer<TI
     private readonly HashSet<IObservedNavigationAccessLocator> _navigationAccessLocators = [];
     private readonly HashSet<IObservedMemberAccessLocator> _memberAccessLocators = [];
     private readonly IList<Func<LambdaExpression, LambdaExpression>> _expressionModifiers = [];
-    private IEntityActionProvider<TInput>? _entityActionProvider;
+    private IObservedEntityTypeResolver? _entityTypeResolver;
 
     public ComputedExpressionAnalyzer<TInput> AddDefaults()
     {
@@ -23,7 +23,7 @@ public class ComputedExpressionAnalyzer<TInput> : IComputedExpressionAnalyzer<TI
             .AddEntityContextPropagator(new ConditionalEntityContextPropagator())
             .AddEntityContextPropagator(new ArrayEntityContextPropagator())
             .AddEntityContextPropagator(new ConvertEntityContextPropagator())
-            .AddEntityContextPropagator(new LinqMethodsEntityContextPropagator())
+            .AddEntityContextPropagator(new LinqMethodsEntityContextPropagator(new Lazy<IObservedEntityTypeResolver?>(() => _entityTypeResolver)))
             .AddEntityContextPropagator(new KeyValuePairEntityContextPropagator())
             .AddEntityContextPropagator(new GroupingEntityContextPropagator())
             .AddEntityContextPropagator(new NavigationEntityContextPropagator(_navigationAccessLocators));
@@ -52,54 +52,56 @@ public class ComputedExpressionAnalyzer<TInput> : IComputedExpressionAnalyzer<TI
         return this;
     }
 
-    public ComputedExpressionAnalyzer<TInput> SetEntityActionProvider(
-        IEntityActionProvider<TInput> entityActionProvider)
+    public ComputedExpressionAnalyzer<TInput> SetObservedEntityTypeResolver(
+        IObservedEntityTypeResolver entityTypeResolver)
     {
-        _entityActionProvider = entityActionProvider;
+        _entityTypeResolver = entityTypeResolver;
         return this;
     }
 
     public IUnboundChangesProvider<TInput, TEntity, TChange> CreateChangesProvider<TEntity, TValue, TChange>(
+        IObservedEntityType<TInput> entityType,
         Expression<Func<TEntity, TValue>> computedExpression,
         Expression<Func<TEntity, bool>>? filterExpression,
         IChangeCalculation<TValue, TChange> changeCalculation)
         where TEntity : class
     {
+        filterExpression ??= static x => true;
+
         computedExpression = PrepareComputedExpression(computedExpression);
 
-        var computedEntityContext = GetEntityContext(computedExpression, changeCalculation.IsIncremental);
+        var computedEntityContext = GetEntityContext(entityType, computedExpression, changeCalculation.IsIncremental);
 
         var computedValueAccessors = new ComputedValueAccessors<TInput, TEntity, TValue>(
             changeCalculation.IsIncremental
-                ? GetIncrementalOriginalValueExpression(computedExpression).Compile()
-                : GetOriginalValueExpression(computedExpression).Compile(),
+                ? GetIncrementalOriginalValueExpression(entityType, computedExpression).Compile()
+                : GetOriginalValueExpression(entityType, computedExpression).Compile(),
             changeCalculation.IsIncremental
-                ? GetIncrementalCurrentValueExpression(computedExpression).Compile()
-                : GetCurrentValueExpression(computedExpression).Compile()
+                ? GetIncrementalCurrentValueExpression(entityType, computedExpression).Compile()
+                : GetCurrentValueExpression(entityType, computedExpression).Compile()
         );
 
-        var filterEntityContext = GetEntityContext(filterExpression, false);
+        var filterEntityContext = GetEntityContext(entityType, filterExpression, false);
 
         return new UnboundChangesProvider<TInput, TEntity, TValue, TChange>(
             computedExpression,
             computedEntityContext,
             filterExpression.Compile(),
             filterEntityContext,
-            RequireEntityActionProvider(),
             changeCalculation,
             computedValueAccessors
         );
     }
 
     private RootEntityContext GetEntityContext<TEntity, TValue>(
+        IObservedEntityType entityType,
         Expression<Func<TEntity, TValue>> computedExpression,
         bool isIncremental)
         where TEntity : class
     {
         var analysis = new ComputedExpressionAnalysis();
 
-        var rootEntityType = computedExpression.Parameters[0].Type;
-        var entityContext = new RootEntityContext(rootEntityType);
+        var entityContext = new RootEntityContext(entityType);
         analysis.AddEntityContextProvider(computedExpression.Parameters[0], (key) => key == EntityContextKeys.None ? entityContext : null);
 
         new PropagateEntityContextsVisitor(
@@ -121,6 +123,7 @@ public class ComputedExpressionAnalyzer<TInput> : IComputedExpressionAnalyzer<TI
     }
 
     private Expression<Func<TInput, IncrementalContext, TEntity, TValue>> GetOriginalValueExpression<TEntity, TValue>(
+        IObservedEntityType<TInput> entityType,
         Expression<Func<TEntity, TValue>> computedExpression)
     {
         var inputParameter = Expression.Parameter(typeof(TInput), "input");
@@ -133,11 +136,12 @@ public class ComputedExpressionAnalyzer<TInput> : IComputedExpressionAnalyzer<TI
 
         newBody = PrepareComputedOutputExpression(computedExpression.ReturnType, newBody);
 
-        newBody = ReturnDefaultIfEntityActionExpression(
+        newBody = ReturnDefaultIfEntityStateExpression(
+            entityType,
             inputParameter,
             computedExpression.Parameters.First(),
             newBody,
-            EntityAction.Create);
+            ObservedEntityState.Added);
 
         return (Expression<Func<TInput, IncrementalContext, TEntity, TValue>>)Expression.Lambda(newBody, [
             inputParameter,
@@ -147,6 +151,7 @@ public class ComputedExpressionAnalyzer<TInput> : IComputedExpressionAnalyzer<TI
     }
 
     private Expression<Func<TInput, IncrementalContext, TEntity, TValue>> GetCurrentValueExpression<TEntity, TValue>(
+        IObservedEntityType<TInput> entityType,
         Expression<Func<TEntity, TValue>> computedExpression)
     {
         var inputParameter = Expression.Parameter(typeof(TInput), "input");
@@ -159,11 +164,12 @@ public class ComputedExpressionAnalyzer<TInput> : IComputedExpressionAnalyzer<TI
 
         newBody = PrepareComputedOutputExpression(computedExpression.ReturnType, newBody);
 
-        newBody = ReturnDefaultIfEntityActionExpression(
+        newBody = ReturnDefaultIfEntityStateExpression(
+            entityType,
             inputParameter,
             computedExpression.Parameters.First(),
             newBody,
-            EntityAction.Delete);
+            ObservedEntityState.Removed);
 
         return (Expression<Func<TInput, IncrementalContext, TEntity, TValue>>)Expression.Lambda(newBody, [
             inputParameter,
@@ -173,6 +179,7 @@ public class ComputedExpressionAnalyzer<TInput> : IComputedExpressionAnalyzer<TI
     }
 
     private Expression<Func<TInput, IncrementalContext, TEntity, TValue>> GetIncrementalOriginalValueExpression<TEntity, TValue>(
+        IObservedEntityType<TInput> entityType,
         Expression<Func<TEntity, TValue>> computedExpression)
     {
         var inputParameter = Expression.Parameter(typeof(TInput), "input");
@@ -185,11 +192,12 @@ public class ComputedExpressionAnalyzer<TInput> : IComputedExpressionAnalyzer<TI
 
         newBody = PrepareComputedOutputExpression(computedExpression.ReturnType, newBody);
 
-        newBody = ReturnDefaultIfEntityActionExpression(
+        newBody = ReturnDefaultIfEntityStateExpression(
+            entityType,
             inputParameter,
             computedExpression.Parameters.First(),
             newBody,
-            EntityAction.Create);
+            ObservedEntityState.Added);
 
         return (Expression<Func<TInput, IncrementalContext, TEntity, TValue>>)Expression.Lambda(newBody, [
             inputParameter,
@@ -199,6 +207,7 @@ public class ComputedExpressionAnalyzer<TInput> : IComputedExpressionAnalyzer<TI
     }
 
     private Expression<Func<TInput, IncrementalContext, TEntity, TValue>> GetIncrementalCurrentValueExpression<TEntity, TValue>(
+        IObservedEntityType<TInput> entityType,
         Expression<Func<TEntity, TValue>> computedExpression)
     {
         var inputParameter = Expression.Parameter(typeof(TInput), "input");
@@ -211,11 +220,12 @@ public class ComputedExpressionAnalyzer<TInput> : IComputedExpressionAnalyzer<TI
 
         newBody = PrepareComputedOutputExpression(computedExpression.ReturnType, newBody);
 
-        newBody = ReturnDefaultIfEntityActionExpression(
+        newBody = ReturnDefaultIfEntityStateExpression(
+            entityType,
             inputParameter,
             computedExpression.Parameters.First(),
             newBody,
-            EntityAction.Delete);
+            ObservedEntityState.Removed);
 
         return (Expression<Func<TInput, IncrementalContext, TEntity, TValue>>)Expression.Lambda(newBody, [
             inputParameter,
@@ -224,11 +234,6 @@ public class ComputedExpressionAnalyzer<TInput> : IComputedExpressionAnalyzer<TI
         ]);
     }
 
-    private IEntityActionProvider<TInput> RequireEntityActionProvider()
-    {
-        return _entityActionProvider
-            ?? throw new Exception("Entity Action Provider not configured");
-    }
     private Expression<Func<TEntity, TValue>> PrepareComputedExpression<TEntity, TValue>(Expression<Func<TEntity, TValue>> computedExpression) where TEntity : class
     {
         foreach (var modifier in _expressionModifiers)
@@ -249,24 +254,23 @@ public class ComputedExpressionAnalyzer<TInput> : IComputedExpressionAnalyzer<TI
             body);
     }
 
-    private Expression ReturnDefaultIfEntityActionExpression(
+    private Expression ReturnDefaultIfEntityStateExpression(
+        IObservedEntityType<TInput> entityType,
         ParameterExpression inputParameter,
         ParameterExpression entityParameter,
         Expression expression,
-        EntityAction entityAction)
+        ObservedEntityState entityState)
     {
-        var entityActionProvider = RequireEntityActionProvider();
-
         return Expression.Condition(
             Expression.Equal(
                 Expression.Call(
-                    Expression.Constant(entityActionProvider),
-                    "GetEntityAction",
+                    Expression.Constant(entityType),
+                    "GetEntityState",
                     [],
                     inputParameter,
                     entityParameter
                 ),
-                Expression.Constant(entityAction)
+                Expression.Constant(entityState)
             ),
             Expression.Default(expression.Type),
             expression

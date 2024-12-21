@@ -48,7 +48,7 @@ public class ComputedNavigation<TEntity, TProperty>(
                     change)
                 : change;
 
-            if (!navigationEntry.IsLoaded && entityEntry.State != EntityState.Detached)
+            if (!navigationEntry.IsLoaded && entityEntry.State != Microsoft.EntityFrameworkCore.EntityState.Detached)
                 await navigationEntry.LoadAsync();
 
             MaybeUpdateNavigation(navigationEntry, newValue, updateChanges);
@@ -61,7 +61,7 @@ public class ComputedNavigation<TEntity, TProperty>(
         var entityEntry = dbContext.Entry(entity);
         var navigationEntry = entityEntry.Navigation(navigation);
 
-        if (!navigationEntry.IsLoaded && entityEntry.State != EntityState.Detached)
+        if (!navigationEntry.IsLoaded && entityEntry.State != Microsoft.EntityFrameworkCore.EntityState.Detached)
             await navigationEntry.LoadAsync();
 
         var newValue = _compiledExpression((TEntity)entity);
@@ -71,7 +71,7 @@ public class ComputedNavigation<TEntity, TProperty>(
 
     private static TProperty GetOriginalValue(NavigationEntry navigationEntry)
     {
-        if (navigationEntry.EntityEntry.State == EntityState.Added)
+        if (navigationEntry.EntityEntry.State == Microsoft.EntityFrameworkCore.EntityState.Added)
             return default!;
 
         return (TProperty)navigationEntry.GetOriginalValue()!;
@@ -106,7 +106,7 @@ public class ComputedNavigation<TEntity, TProperty>(
                 if (updateChanges is not null)
                 {
                     updateChanges.AddMemberChange(navigation, entity);
-                    if (dbContext.Entry(newItem).State == EntityState.Detached)
+                    if (dbContext.Entry(newItem).State == Microsoft.EntityFrameworkCore.EntityState.Detached)
                         updateChanges.AddCreatedEntity(navigation.TargetEntityType, newItem);
                 }
                 continue;
@@ -152,7 +152,7 @@ public class ComputedNavigation<TEntity, TProperty>(
         if (updateChanges is not null)
         {
             updateChanges.AddMemberChange(navigation, entity);
-            if (newValue is not null && dbContext.Entry(newValue).State == EntityState.Detached)
+            if (newValue is not null && dbContext.Entry(newValue).State == Microsoft.EntityFrameworkCore.EntityState.Detached)
                 updateChanges.AddCreatedEntity(navigation.TargetEntityType, newValue);
         }
     }

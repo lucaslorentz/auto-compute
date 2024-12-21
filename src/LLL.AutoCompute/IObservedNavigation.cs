@@ -2,8 +2,8 @@
 
 public interface IObservedNavigation : IObservedMember
 {
-    Type SourceEntityType { get; }
-    Type TargetEntityType { get; }
+    IObservedEntityType SourceEntityType { get; }
+    IObservedEntityType TargetEntityType { get; }
     bool IsCollection { get; }
     IObservedNavigation GetInverse();
     Task<IReadOnlyCollection<object>> LoadCurrentAsync(object input, IReadOnlyCollection<object> fromEntities, IncrementalContext incrementalContext);

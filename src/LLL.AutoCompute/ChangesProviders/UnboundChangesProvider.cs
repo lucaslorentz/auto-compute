@@ -8,7 +8,6 @@ public class UnboundChangesProvider<TInput, TEntity, TValue, TChange>(
     EntityContext entityContext,
     Func<TEntity, bool> filter,
     EntityContext filterEntityContext,
-    IEntityActionProvider entityActionProvider,
     IChangeCalculation<TValue, TChange> changeCalculation,
     ComputedValueAccessors<TInput, TEntity, TValue> computedValueAccessors
 ) : IUnboundChangesProvider<TInput, TEntity, TChange>
@@ -32,7 +31,7 @@ public class UnboundChangesProvider<TInput, TEntity, TValue, TChange>(
         await filterEntityContext.PreLoadNavigationsAsync(input!, affectedEntities, incrementalContext);
 
         affectedEntities = affectedEntities
-            .Where(e => entityActionProvider.GetEntityAction(input!, e) != EntityAction.Delete
+            .Where(e => entityContext.EntityType.GetEntityState(input!, e) != ObservedEntityState.Removed
                 && filter(e))
             .ToArray();
 
@@ -98,6 +97,4 @@ public class UnboundChangesProvider<TInput, TEntity, TValue, TChange>(
             entity,
             computedValueAccessors);
     }
-
-    public record class ValueWrapper(TChange Value);
 }

@@ -59,9 +59,13 @@ public static class DbContextExtensions
 
         var analyzer = dbContext.Model.GetComputedExpressionAnalyzerOrThrow();
 
+        var entityType = dbContext.Model.FindEntityType(typeof(TEntity))
+            ?? throw new Exception($"No EntityType found for {typeof(TEntity)}");
+
         var unboundChangesProvider = concurrentCreationCache.GetOrCreate(
             key,
             k => analyzer.CreateChangesProvider(
+                entityType.GetOrCreateObservedEntityType(),
                 computedExpression,
                 filterExpression ?? (x => true),
                 changeCalculation)

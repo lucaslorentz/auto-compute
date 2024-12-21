@@ -41,7 +41,7 @@ public class ComputedOptionsExtension : IDbContextOptionsExtension
         var analyzer = new ComputedExpressionAnalyzer<IEFCoreComputedInput>()
             .AddDefaults()
             .AddObservedMemberAccessLocator(new EFCoreObservedMemberAccessLocator(model))
-            .SetEntityActionProvider(new EFCoreEntityActionProvider());
+            .SetObservedEntityTypeResolver(new EFCoreObservedEntityTypeResolver(model));
 
         foreach (var customize in AnalyzerConfigurations)
             customize(service, model, analyzer);

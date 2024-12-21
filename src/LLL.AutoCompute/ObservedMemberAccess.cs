@@ -36,21 +36,3 @@ public abstract class ObservedMemberAccess(
         return Member.CreateIncrementalCurrentValueExpression(this, inputParameter, incrementalContextExpression);
     }
 }
-
-public class ObservedPropertyAccess(
-    Expression expression,
-    Expression fromExpression,
-    IObservedProperty property
-) : ObservedMemberAccess(expression, fromExpression, property), IObservedPropertyAccess
-{
-    public IObservedProperty Property => property;
-}
-
-public class ObservedNavigationAccess(
-    Expression expression,
-    Expression fromExpression,
-    IObservedNavigation navigation
-) : ObservedMemberAccess(expression, fromExpression, navigation), IObservedNavigationAccess
-{
-    public IObservedNavigation Navigation => navigation;
-}

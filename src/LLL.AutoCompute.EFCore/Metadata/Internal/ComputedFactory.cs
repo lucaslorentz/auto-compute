@@ -23,6 +23,7 @@ public class ComputedFactory
                     throw new Exception($"Expected entity type {property.DeclaringType.ClrType} but got {typeof(TEntity)}");
 
                 var changesProvider = analyzer.CreateChangesProvider(
+                    property.DeclaringType.ContainingEntityType.GetOrCreateObservedEntityType(),
                     computedExpression,
                     static x => true,
                     changeCalculation);
@@ -56,6 +57,7 @@ public class ComputedFactory
                     throw new Exception($"Expected entity type {navigation.DeclaringType.ClrType} but got {typeof(TEntity)}");
 
                 var changesProvider = analyzer.CreateChangesProvider(
+                    navigation.DeclaringType.ContainingEntityType.GetOrCreateObservedEntityType(),
                     computedExpression,
                     static x => true,
                     changeCalculation);

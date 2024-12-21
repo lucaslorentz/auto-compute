@@ -13,7 +13,7 @@ public class DistinctEntityContext : EntityContext
         parent.RegisterChildContext(this);
     }
 
-    public override Type EntityType { get; }
+    public override IObservedEntityType EntityType { get; }
     public override bool IsTrackingChanges { get; }
 
     public override async Task<IReadOnlyCollection<object>> GetParentAffectedEntities(object input, IncrementalContext incrementalContext)

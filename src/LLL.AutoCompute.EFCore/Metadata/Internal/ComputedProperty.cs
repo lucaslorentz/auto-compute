@@ -54,7 +54,7 @@ public class ComputedProperty<TEntity, TProperty>(
 
     private static TProperty GetOriginalValue(PropertyEntry propertyEntry)
     {
-        if (propertyEntry.EntityEntry.State == EntityState.Added)
+        if (propertyEntry.EntityEntry.State == Microsoft.EntityFrameworkCore.EntityState.Added)
             return default!;
 
         return (TProperty)propertyEntry.OriginalValue!;

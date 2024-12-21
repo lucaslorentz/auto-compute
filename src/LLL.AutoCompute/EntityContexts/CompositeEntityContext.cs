@@ -4,7 +4,7 @@ public class CompositeEntityContext : EntityContext
 {
     private readonly IList<EntityContext> _parents;
 
-    public override Type EntityType { get; }
+    public override IObservedEntityType EntityType { get; }
     public override bool IsTrackingChanges { get; }
 
     public CompositeEntityContext(IList<EntityContext> parents)
