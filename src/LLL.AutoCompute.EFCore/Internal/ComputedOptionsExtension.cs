@@ -1,10 +1,9 @@
 ﻿using System.Linq.Expressions;
-using LLL.AutoCompute.Caching;
+using LLL.AutoCompute.EFCore.Caching;
 using LLL.AutoCompute.EFCore.Metadata.Conventions;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
 using Microsoft.EntityFrameworkCore.Metadata.Conventions.Infrastructure;
-using Microsoft.EntityFrameworkCore.Query;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace LLL.AutoCompute.EFCore.Internal;
@@ -39,12 +38,7 @@ public class ComputedOptionsExtension : IDbContextOptionsExtension
     private IComputedExpressionAnalyzer<IEFCoreComputedInput> DefaultAnalyzerFactory(
         IServiceProvider service, IModel model)
     {
-        var concurrentCreationCache = service.GetRequiredService<IConcurrentCreationCache>();
-
-        var analyzer = new ComputedExpressionAnalyzer<IEFCoreComputedInput>(
-                concurrentCreationCache,
-                ExpressionEqualityComparer.Instance
-            )
+        var analyzer = new ComputedExpressionAnalyzer<IEFCoreComputedInput>()
             .AddDefaults()
             .AddObservedMemberAccessLocator(new EFCoreObservedMemberAccessLocator(model))
             .SetEntityActionProvider(new EFCoreEntityActionProvider());

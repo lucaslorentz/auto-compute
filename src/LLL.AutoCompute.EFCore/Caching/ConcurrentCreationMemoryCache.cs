@@ -1,7 +1,7 @@
 ﻿using System.Collections.Concurrent;
 using Microsoft.Extensions.Caching.Memory;
 
-namespace LLL.AutoCompute.Caching;
+namespace LLL.AutoCompute.EFCore.Caching;
 
 public class ConcurrentCreationMemoryCache : IConcurrentCreationCache
 {

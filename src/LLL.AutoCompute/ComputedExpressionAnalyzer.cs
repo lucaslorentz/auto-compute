@@ -1,7 +1,6 @@
 ﻿using System.Collections;
 using System.Linq.Expressions;
 using System.Reflection;
-using LLL.AutoCompute.Caching;
 using LLL.AutoCompute.ChangesProviders;
 using LLL.AutoCompute.EntityContextPropagators;
 using LLL.AutoCompute.EntityContexts;
@@ -10,13 +9,8 @@ using LLL.AutoCompute.Internal.ExpressionVisitors;
 
 namespace LLL.AutoCompute;
 
-public class ComputedExpressionAnalyzer<TInput>(
-    IConcurrentCreationCache concurrentCreationCache,
-    IEqualityComparer<Expression> expressionEqualityComparer
-) : IComputedExpressionAnalyzer<TInput>
+public class ComputedExpressionAnalyzer<TInput> : IComputedExpressionAnalyzer<TInput>
 {
-    private readonly IConcurrentCreationCache _concurrentCreationCache = concurrentCreationCache;
-    private readonly IEqualityComparer<Expression> _expressionEqualityComparer = expressionEqualityComparer;
     private readonly IList<IEntityContextPropagator> _entityContextPropagators = [];
     private readonly HashSet<IObservedNavigationAccessLocator> _navigationAccessLocators = [];
     private readonly HashSet<IObservedMemberAccessLocator> _memberAccessLocators = [];
@@ -65,29 +59,9 @@ public class ComputedExpressionAnalyzer<TInput>(
         return this;
     }
 
-    public IUnboundChangesProvider<TInput, TEntity, TChange> GetChangesProvider<TEntity, TValue, TChange>(
+    public IUnboundChangesProvider<TInput, TEntity, TChange> CreateChangesProvider<TEntity, TValue, TChange>(
         Expression<Func<TEntity, TValue>> computedExpression,
         Expression<Func<TEntity, bool>>? filterExpression,
-        IChangeCalculation<TValue, TChange> changeCalculation)
-        where TEntity : class
-    {
-        filterExpression ??= static e => true;
-
-        var key = (
-            ComputedExpression: new ExpressionCacheKey(computedExpression, _expressionEqualityComparer),
-            filterExpression: new ExpressionCacheKey(filterExpression, _expressionEqualityComparer),
-            ChangeCalculation: changeCalculation
-        );
-
-        return _concurrentCreationCache.GetOrCreate(
-            key,
-            k => CreateChangesProvider(computedExpression, filterExpression, changeCalculation)
-        );
-    }
-
-    private IUnboundChangesProvider<TInput, TEntity, TChange> CreateChangesProvider<TEntity, TValue, TChange>(
-        Expression<Func<TEntity, TValue>> computedExpression,
-        Expression<Func<TEntity, bool>> filterExpression,
         IChangeCalculation<TValue, TChange> changeCalculation)
         where TEntity : class
     {

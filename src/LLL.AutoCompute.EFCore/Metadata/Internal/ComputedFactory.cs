@@ -22,9 +22,9 @@ public class ComputedFactory
                 if (property.DeclaringType.ClrType != typeof(TEntity))
                     throw new Exception($"Expected entity type {property.DeclaringType.ClrType} but got {typeof(TEntity)}");
 
-                var changesProvider = analyzer.GetChangesProvider(
+                var changesProvider = analyzer.CreateChangesProvider(
                     computedExpression,
-                    default,
+                    static x => true,
                     changeCalculation);
 
                 if (!changesProvider.EntityContext.GetAllObservedMembers().Any())
@@ -55,9 +55,9 @@ public class ComputedFactory
                 if (navigation.DeclaringType.ClrType != typeof(TEntity))
                     throw new Exception($"Expected entity type {navigation.DeclaringType.ClrType} but got {typeof(TEntity)}");
 
-                var changesProvider = analyzer.GetChangesProvider(
+                var changesProvider = analyzer.CreateChangesProvider(
                     computedExpression,
-                    default,
+                    static x => true,
                     changeCalculation);
 
                 if (!changesProvider.EntityContext.GetAllObservedMembers().Any())

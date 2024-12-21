@@ -21,9 +21,9 @@ public class ObserverFactory
         {
             try
             {
-                var changesProvider = analyzer.GetChangesProvider(
+                var changesProvider = analyzer.CreateChangesProvider(
                     computedExpression,
-                    filterExpression,
+                    filterExpression ?? (static x => true),
                     changeCalculation);
 
                 if (!changesProvider.EntityContext.GetAllObservedMembers().Any())

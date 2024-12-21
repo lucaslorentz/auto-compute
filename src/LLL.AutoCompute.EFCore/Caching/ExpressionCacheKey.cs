@@ -1,6 +1,6 @@
 ﻿using System.Linq.Expressions;
 
-namespace LLL.AutoCompute;
+namespace LLL.AutoCompute.EFCore.Caching;
 
 public readonly struct ExpressionCacheKey(
     Expression expression,

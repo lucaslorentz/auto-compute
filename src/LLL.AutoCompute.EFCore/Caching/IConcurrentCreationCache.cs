@@ -1,4 +1,4 @@
-﻿namespace LLL.AutoCompute.Caching;
+﻿namespace LLL.AutoCompute.EFCore.Caching;
 
 public interface IConcurrentCreationCache
 {

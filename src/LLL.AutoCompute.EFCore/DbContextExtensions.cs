@@ -1,12 +1,13 @@
 ﻿using System.Collections.Concurrent;
-using System.Diagnostics.CodeAnalysis;
 using System.Linq.Expressions;
 using System.Runtime.CompilerServices;
 using LLL.AutoCompute.ChangesProviders;
+using LLL.AutoCompute.EFCore.Caching;
 using LLL.AutoCompute.EFCore.Internal;
 using LLL.AutoCompute.EFCore.Metadata.Internal;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Query;
 
 namespace LLL.AutoCompute.EFCore;
 
@@ -44,14 +45,27 @@ public static class DbContextExtensions
         ChangeCalculationSelector<TValue, TChange> calculationSelector)
         where TEntity : class
     {
-        var analyzer = dbContext.Model.GetComputedExpressionAnalyzerOrThrow();
+        filterExpression ??= static e => true;
 
         var changeCalculation = calculationSelector(ChangeCalculations<TValue>.Instance);
 
-        var unboundChangesProvider = analyzer.GetChangesProvider(
-            computedExpression,
-            filterExpression,
-            changeCalculation);
+        var key = (
+            ComputedExpression: new ExpressionCacheKey(computedExpression, ExpressionEqualityComparer.Instance),
+            filterExpression: new ExpressionCacheKey(filterExpression, ExpressionEqualityComparer.Instance),
+            ChangeCalculation: changeCalculation
+        );
+
+        var concurrentCreationCache = dbContext.GetService<IConcurrentCreationCache>();
+
+        var analyzer = dbContext.Model.GetComputedExpressionAnalyzerOrThrow();
+
+        var unboundChangesProvider = concurrentCreationCache.GetOrCreate(
+            key,
+            k => analyzer.CreateChangesProvider(
+                computedExpression,
+                filterExpression ?? (x => true),
+                changeCalculation)
+        );
 
         return new ChangesProvider<IEFCoreComputedInput, TEntity, TChange>(
             unboundChangesProvider,
@@ -107,7 +121,8 @@ public static class DbContextExtensions
     }
 
     private static readonly ConditionalWeakTable<DbContext, ConcurrentQueue<Func<Task>>> _postSaveActionsQueues = [];
-    internal static ConcurrentQueue<Func<Task>> GetComputedPostSaveActionQueue(this DbContext context) {
+    internal static ConcurrentQueue<Func<Task>> GetComputedPostSaveActionQueue(this DbContext context)
+    {
         return _postSaveActionsQueues.GetValue(context, k => []);
     }
 
