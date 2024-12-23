@@ -27,7 +27,7 @@ public static class ChangeCalculationsExtensions
         this IChangeCalculations<TValue> _,
         IEqualityComparer<TValue>? comparer = null)
     {
-        return new ValueChangeCalculation<TValue>(comparer);
+        return new ValueChangeCalculation<TValue>(comparer ?? EqualityComparer<TValue>.Default);
     }
 
     public static NumberChangeCalculation<TValue> NumberIncremental<TValue>(
@@ -41,6 +41,6 @@ public static class ChangeCalculationsExtensions
         this IChangeCalculations<IEnumerable<TElement>> _,
         IEqualityComparer<TElement>? comparer = null)
     {
-        return new SetChangeCalculation<TElement>(true, comparer);
+        return new SetChangeCalculation<TElement>(true, comparer ?? EqualityComparer<TElement>.Default);
     }
 }

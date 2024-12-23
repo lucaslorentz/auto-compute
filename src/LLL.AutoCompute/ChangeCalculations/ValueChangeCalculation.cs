@@ -1,26 +1,18 @@
 
 namespace LLL.AutoCompute.ChangeCalculations;
 
-public record class ValueChangeCalculation<TValue>(IEqualityComparer<TValue>? comparer = null)
+public record class ValueChangeCalculation<TValue>(
+    IEqualityComparer<TValue> Comparer)
     : IChangeCalculation<TValue, ValueChange<TValue>>
 {
     public bool IsIncremental => false;
     public bool PreLoadEntities => true;
-    public IEqualityComparer<TValue> Comparer { get; } = comparer ?? EqualityComparer<TValue>.Default;
 
     public ValueChange<TValue> GetChange(IComputedValues<TValue> computedValues)
     {
         return new ValueChange<TValue>(
             computedValues.GetOriginalValue(),
             computedValues.GetCurrentValue()
-        );
-    }
-
-    public ValueChange<TValue> CalculateChange(TValue original, TValue current)
-    {
-        return new ValueChange<TValue>(
-            original,
-            current
         );
     }
 

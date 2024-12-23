@@ -2,11 +2,10 @@ using System.Numerics;
 
 namespace LLL.AutoCompute.ChangeCalculations;
 
-public record class NumberChangeCalculation<TValue>(bool incremental)
+public record class NumberChangeCalculation<TValue>(bool IsIncremental)
     : IChangeCalculation<TValue, TValue>
     where TValue : INumber<TValue>
 {
-    public bool IsIncremental => incremental;
     public bool PreLoadEntities => true;
 
     public TValue GetChange(IComputedValues<TValue> computedValues)

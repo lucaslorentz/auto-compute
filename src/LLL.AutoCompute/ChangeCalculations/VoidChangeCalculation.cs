@@ -12,11 +12,6 @@ public record class VoidChangeCalculation<TValue>
         return default;
     }
 
-    public VoidChange CalculateChange(TValue original, TValue current)
-    {
-        return default;
-    }
-
     public bool IsNoChange(VoidChange result)
     {
         return false;

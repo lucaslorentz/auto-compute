@@ -2,13 +2,11 @@
 namespace LLL.AutoCompute.ChangeCalculations;
 
 public record class SetChangeCalculation<TElement>(
-    bool incremental,
-    IEqualityComparer<TElement>? comparer = null)
+    bool IsIncremental,
+    IEqualityComparer<TElement> Comparer)
     : IChangeCalculation<IEnumerable<TElement>, SetChange<TElement>>
 {
-    public bool IsIncremental => incremental;
     public bool PreLoadEntities => true;
-    public IEqualityComparer<TElement> Comparer {get;} = comparer ?? EqualityComparer<TElement>.Default;
 
     public SetChange<TElement> GetChange(IComputedValues<IEnumerable<TElement>> computedValues)
     {
@@ -17,8 +15,8 @@ public record class SetChangeCalculation<TElement>(
 
         return new SetChange<TElement>
         {
-            Removed = (original ?? []).Except(current ?? [], comparer).ToArray(),
-            Added = (current ?? []).Except(original ?? [], comparer).ToArray()
+            Removed = (original ?? []).Except(current ?? [], Comparer).ToArray(),
+            Added = (current ?? []).Except(original ?? [], Comparer).ToArray()
         };
     }
 
@@ -31,11 +29,11 @@ public record class SetChangeCalculation<TElement>(
     {
         return new SetChange<TElement>
         {
-            Removed = (current.Removed ?? []).Except(previous.Removed ?? [], comparer)
-                    .Concat((previous.Added ?? []).Except(current.Added ?? [], comparer))
+            Removed = (current.Removed ?? []).Except(previous.Removed ?? [], Comparer)
+                    .Concat((previous.Added ?? []).Except(current.Added ?? [], Comparer))
                     .ToArray(),
-            Added = (current.Added ?? []).Except(previous.Added ?? [], comparer)
-                    .Concat((previous.Removed ?? []).Except(current.Removed ?? [], comparer))
+            Added = (current.Added ?? []).Except(previous.Added ?? [], Comparer)
+                    .Concat((previous.Removed ?? []).Except(current.Removed ?? [], Comparer))
                     .ToArray()
         };
     }
