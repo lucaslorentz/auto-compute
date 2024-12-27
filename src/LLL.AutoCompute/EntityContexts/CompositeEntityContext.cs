@@ -18,6 +18,11 @@ public class CompositeEntityContext : EntityContext
         _parents = parents;
     }
 
+    public void AddParent(EntityContext parent)
+    {
+        _parents.Add(parent);
+    }
+
     public override async Task<IReadOnlyCollection<object>> GetParentAffectedEntities(object input, IncrementalContext incrementalContext)
     {
         return await GetAffectedEntitiesAsync(input, incrementalContext);

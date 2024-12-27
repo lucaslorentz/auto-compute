@@ -102,20 +102,21 @@ public class ComputedExpressionAnalyzer<TInput> : IComputedExpressionAnalyzer<TI
         var analysis = new ComputedExpressionAnalysis();
 
         var entityContext = new RootEntityContext(entityType);
-        analysis.AddEntityContextProvider(computedExpression.Parameters[0], (key) => key == EntityContextKeys.None ? entityContext : null);
+        analysis.AddContext(computedExpression.Parameters[0], EntityContextKeys.None, entityContext);
 
         new PropagateEntityContextsVisitor(
             _entityContextPropagators,
             analysis
         ).Visit(computedExpression);
 
+        analysis.RunPropagations();
+
         new CollectObservedMembersVisitor(
             analysis,
             _memberAccessLocators
         ).Visit(computedExpression);
 
-        if (isIncremental)
-            analysis.RunIncrementalActions();
+        analysis.RunActions();
 
         entityContext.ValidateAll();
 

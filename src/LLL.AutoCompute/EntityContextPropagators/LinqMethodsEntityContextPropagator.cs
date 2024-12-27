@@ -36,7 +36,7 @@ public class LinqMethodsEntityContextPropagator(Lazy<IObservedEntityTypeResolver
                     case nameof(Enumerable.All):
                     case nameof(Enumerable.Any):
                     case nameof(Enumerable.Contains):
-                        analysis.AddIncrementalAction(() =>
+                        analysis.AddAction(() =>
                         {
                             var entityContext = analysis.ResolveEntityContext(methodCallExpression.Arguments[0], EntityContextKeys.Element);
                             entityContext.MarkNavigationToLoadAll();
@@ -47,7 +47,7 @@ public class LinqMethodsEntityContextPropagator(Lazy<IObservedEntityTypeResolver
                     case nameof(Enumerable.Cast):
                     case nameof(Enumerable.DefaultIfEmpty):
                     case nameof(Enumerable.OfType):
-                    case /*nameof(Enumerable.Order)*/ "Order":
+                    case nameof(Enumerable.Order):
                     case nameof(Enumerable.OrderBy):
                     case nameof(Enumerable.OrderByDescending):
                     case nameof(Enumerable.Reverse):
@@ -79,10 +79,6 @@ public class LinqMethodsEntityContextPropagator(Lazy<IObservedEntityTypeResolver
                             EntityContextKeys.Element,
                             e => new DistinctEntityContext(e)
                         );
-                        analysis.AddIncrementalAction(() =>
-                        {
-                            analysis.ResolveEntityContext(node, EntityContextKeys.Element);
-                        });
                         break;
 
                     case nameof(Enumerable.Where):
@@ -244,11 +240,10 @@ public class LinqMethodsEntityContextPropagator(Lazy<IObservedEntityTypeResolver
                         var observedEntityType = entityTypeResolver.Value?.Resolve(elementType);
                         if (observedEntityType is not null)
                         {
-                            analysis.AddEntityContextProvider(
+                            analysis.AddContext(
                                 node,
-                                (key) => key == EntityContextKeys.Element
-                                    ? new ChangeTrackingEntityContext(observedEntityType, false, null)
-                                    : null
+                                EntityContextKeys.Element,
+                                new ChangeTrackingEntityContext(observedEntityType, false, null)
                             );
                         }
                         break;
