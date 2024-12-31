@@ -8,7 +8,8 @@ public static class TestDbContext
 {
     public static async Task<TDbContext> Create<TDbContext>(
         Action<ModelBuilder>? customizeModel = null,
-        Func<DbContext, Task>? seedData = null
+        Func<DbContext, Task>? seedData = null,
+        bool useLazyLoadingProxies = true
     ) where TDbContext : DbContext, ITestDbContext<TDbContext>
     {
         var connection = new SqliteConnection("Filename=:memory:");
@@ -16,6 +17,7 @@ public static class TestDbContext
 
         var contextOptions = new DbContextOptionsBuilder<TDbContext>()
             .UseSqlite(connection)
+            .UseLazyLoadingProxies(useLazyLoadingProxies)
             .UseAutoCompute()
             .ReplaceService<IModelCacheKeyFactory, CustomizedModelCacheKeyFactory>()
             .Options;
@@ -24,6 +26,7 @@ public static class TestDbContext
         {
             await context.Database.EnsureCreatedAsync();
             TDbContext.SeedData(context);
+            await context.SaveChangesAsync();
             if (seedData is not null)
                 await seedData(context);
             await context.SaveChangesAsync();
@@ -37,7 +40,7 @@ public static class TestDbContext
         public object Create(DbContext context, bool designTime)
         {
             return context is ITestDbContext testContext
-            ? (testContext.CustomizeModel, designTime)
+            ? (context.GetType(), testContext.CustomizeModel, designTime)
             : (object)context.GetType();
         }
     }

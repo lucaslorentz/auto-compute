@@ -8,14 +8,16 @@ public class ObservedNavigationChanges
 
     public IReadOnlyDictionary<object, EntityChanges> GetEntityChanges() => _entityChanges;
 
-    public void RegisterAdded(object entity, object relatedEntity)
+    public bool HasEntityChange(object entity) => _entityChanges.ContainsKey(entity);
+
+    public bool RegisterAdded(object entity, object relatedEntity)
     {
-        GetOrCrateEntityChanges(entity).RegisterAdded(relatedEntity);
+        return GetOrCrateEntityChanges(entity).RegisterAdded(relatedEntity);
     }
 
-    public void RegisterRemoved(object entity, object relatedEntity)
+    public bool RegisterRemoved(object entity, object relatedEntity)
     {
-        GetOrCrateEntityChanges(entity).RegisterRemoved(relatedEntity);
+        return GetOrCrateEntityChanges(entity).RegisterRemoved(relatedEntity);
     }
 
     private EntityChanges GetOrCrateEntityChanges(object entity)
@@ -33,14 +35,14 @@ public class ObservedNavigationChanges
         public IReadOnlyCollection<object> Added => _added;
         public IReadOnlyCollection<object> Removed => _removed;
 
-        public void RegisterAdded(object relatedEntity)
+        public bool RegisterAdded(object relatedEntity)
         {
-            _added.Add(relatedEntity);
+            return _added.Add(relatedEntity);
         }
 
-        public void RegisterRemoved(object relatedEntity)
+        public bool RegisterRemoved(object relatedEntity)
         {
-            _removed.Add(relatedEntity);
+            return _removed.Add(relatedEntity);
         }
     }
 }

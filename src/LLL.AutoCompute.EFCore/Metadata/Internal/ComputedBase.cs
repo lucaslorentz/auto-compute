@@ -1,5 +1,4 @@
 using LLL.AutoCompute.EFCore.Internal;
-using Microsoft.EntityFrameworkCore;
 
 namespace LLL.AutoCompute.EFCore.Metadata.Internal;
 
@@ -9,20 +8,19 @@ public abstract class ComputedBase
 
     public abstract IUnboundChangesProvider ChangesProvider { get; }
 
-    public IEnumerable<IObservedMember> GetObservedMembers()
+    public IEnumerable<EFCoreObservedMember> GetObservedMembers()
     {
-        return ChangesProvider.EntityContext.GetAllObservedMembers();
+        return ChangesProvider.EntityContext.GetAllObservedMembers().OfType<EFCoreObservedMember>();
     }
 
     public IEnumerable<ComputedMember> GetComputedDependencies()
     {
         return GetObservedMembers()
-            .OfType<EFCoreObservedMember>()
             .Select(e => e.Property.GetComputed())
             .Where(c => c is not null)
             .Select(c => c!)
             .ToArray();
     }
 
-    public abstract Task<UpdateChanges> Update(DbContext dbContext);
+    public abstract Task<EFCoreChangeset> Update(IEFCoreComputedInput input);
 }

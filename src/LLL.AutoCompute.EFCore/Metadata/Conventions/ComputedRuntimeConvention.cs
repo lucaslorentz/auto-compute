@@ -24,7 +24,7 @@ class ComputedRuntimeConvention(Func<IModel, IComputedExpressionAnalyzer<IEFCore
             if (computed is ComputedMember computedMember)
                 ValidateSelfReferencingComputed(computedMember);
 
-            foreach (var observedMember in computed.GetObservedMembers().OfType<EFCoreObservedMember>())
+            foreach (var observedMember in computed.GetObservedMembers())
                 observedMember.AddDependent(computed);
         }
 
@@ -65,7 +65,11 @@ class ComputedRuntimeConvention(Func<IModel, IComputedExpressionAnalyzer<IEFCore
                 }
             }
 
-            foreach (var navigation in entityType.GetDeclaredNavigations())
+            var navigations = entityType.GetDeclaredNavigations()
+                .OfType<INavigationBase>()
+                .Concat(entityType.GetDeclaredSkipNavigations());
+
+            foreach (var navigation in navigations)
             {
                 var computedFactory = navigation.GetComputedFactory();
                 if (computedFactory is not null)

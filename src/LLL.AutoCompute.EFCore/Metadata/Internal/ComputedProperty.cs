@@ -21,14 +21,13 @@ public class ComputedProperty<TEntity, TProperty>(
     public override IUnboundChangesProvider<IEFCoreComputedInput, TEntity, TProperty> ChangesProvider => changesProvider;
     public override IProperty Property => property;
 
-    public override async Task<UpdateChanges> Update(DbContext dbContext)
+    public override async Task<EFCoreChangeset> Update(IEFCoreComputedInput input)
     {
-        var updateChanges = new UpdateChanges();
-        var input = dbContext.GetComputedInput();
+        var updateChanges = new EFCoreChangeset();
         var changes = await changesProvider.GetChangesAsync(input, null);
         foreach (var (entity, change) in changes)
         {
-            var entityEntry = dbContext.Entry(entity);
+            var entityEntry = input.DbContext.Entry(entity);
             var propertyEntry = entityEntry.Property(Property);
 
             var newValue = ChangesProvider.ChangeCalculation.IsIncremental
@@ -54,19 +53,9 @@ public class ComputedProperty<TEntity, TProperty>(
 
     private static TProperty GetOriginalValue(PropertyEntry propertyEntry)
     {
-        if (propertyEntry.EntityEntry.State == Microsoft.EntityFrameworkCore.EntityState.Added)
+        if (propertyEntry.EntityEntry.State == EntityState.Added)
             return default!;
 
         return (TProperty)propertyEntry.OriginalValue!;
-    }
-
-    private void MaybeUpdateProperty(PropertyEntry propertyEntry, TProperty? newValue, UpdateChanges? updateChanges)
-    {
-        var valueComparer = Property.GetValueComparer();
-        if (!valueComparer.Equals(propertyEntry.CurrentValue, newValue))
-        {
-            propertyEntry.CurrentValue = newValue;
-            updateChanges?.AddMemberChange(property, propertyEntry.EntityEntry.Entity);
-        }
     }
 }

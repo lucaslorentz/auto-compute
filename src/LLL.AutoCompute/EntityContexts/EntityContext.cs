@@ -43,8 +43,8 @@ public abstract class EntityContext
         {
             if (member is IObservedProperty observedProperty)
             {
-                var ents = await observedProperty.GetAffectedEntitiesAsync(input);
-                foreach (var ent in ents)
+                var propertyChanges = await observedProperty.GetChangesAsync(input);
+                foreach (var ent in propertyChanges.GetEntityChanges())
                     entities.Add(ent);
             }
             else if (member is IObservedNavigation observedNavigation)

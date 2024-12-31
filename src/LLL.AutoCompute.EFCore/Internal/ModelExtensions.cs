@@ -3,7 +3,6 @@ using System.Reflection;
 using LLL.AutoCompute.Internal;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.ChangeTracking;
-using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
 
 namespace LLL.AutoCompute.EFCore.Internal;
@@ -21,8 +20,6 @@ public static class ModelExtensions
 
         var baseNavigation = navigationEntry.Metadata;
 
-        var input = dbContext.GetComputedInput();
-
         if (navigationEntry is CollectionEntry collectionEntry)
         {
             var collectionAccessor = baseNavigation.GetCollectionAccessor()!;
@@ -37,7 +34,7 @@ public static class ModelExtensions
                     {
                         var itemEntry = dbContext.Entry(item);
 
-                        if (skipNavigation.IsRelationshipNew(input, entityEntry, itemEntry))
+                        if (skipNavigation.IsRelationshipNew(entityEntry, itemEntry))
                             continue;
 
                         collectionAccessor.AddStandalone(originalValue, item);
@@ -46,7 +43,7 @@ public static class ModelExtensions
 
                 // Add items that were in the collection but were removed
                 var joinReferenceToOther = skipNavigation.Inverse.ForeignKey.DependentToPrincipal;
-                foreach (var joinEntry in input.EntityEntriesOfType(skipNavigation.JoinEntityType))
+                foreach (var joinEntry in entityEntry.Context.EntityEntriesOfType(skipNavigation.JoinEntityType))
                 {
                     var selfReferenceEntry = joinEntry.Reference(skipNavigation.ForeignKey.DependentToPrincipal!);
                     var otherReferenceEntry = joinEntry.Reference(joinReferenceToOther!);
@@ -75,7 +72,7 @@ public static class ModelExtensions
                 }
 
                 // Add items that were in the collection but were removed
-                foreach (var itemEntry in input.EntityEntriesOfType(baseNavigation.TargetEntityType))
+                foreach (var itemEntry in entityEntry.Context.EntityEntriesOfType(baseNavigation.TargetEntityType))
                 {
                     if (!navigation.IsRelated(entityEntry, itemEntry)
                         && navigation.WasRelated(entityEntry, itemEntry))
@@ -102,9 +99,6 @@ public static class ModelExtensions
             }
             else
             {
-                var inverseNavigation = baseNavigation.Inverse
-                    ?? throw new Exception($"No inverse to compute original value for navigation '{baseNavigation}'");
-
                 if (entityEntry.State != EntityState.Added)
                 {
                     var entityOriginalValues = entityEntry.OriginalValues;
@@ -119,13 +113,17 @@ public static class ModelExtensions
                     }
 
                     // Original value was another value
-                    foreach (var itemEntry in input.EntityEntriesOfType(baseNavigation.TargetEntityType))
+                    var inverseNavigation = baseNavigation.Inverse;
+                    if (inverseNavigation is not null)
                     {
-                        var inverseReferenceEntry = itemEntry.Reference(inverseNavigation);
-                        if (inverseReferenceEntry.IsModified
-                            && foreignKey.IsConnected(entityOriginalValues, itemEntry.OriginalValues))
+                        foreach (var itemEntry in entityEntry.Context.EntityEntriesOfType(baseNavigation.TargetEntityType))
                         {
-                            return itemEntry.Entity;
+                            var inverseReferenceEntry = itemEntry.Reference(inverseNavigation);
+                            if (inverseReferenceEntry.IsModified
+                                && foreignKey.IsConnected(entityOriginalValues, itemEntry.OriginalValues))
+                            {
+                                return itemEntry.Entity;
+                            }
                         }
                     }
                 }
@@ -150,8 +148,6 @@ public static class ModelExtensions
 
         var baseNavigation = navigationEntry.Metadata;
 
-        var input = dbContext.GetComputedInput();
-
         if (baseNavigation.IsCollection)
         {
             var collectionAccessor = baseNavigation.GetCollectionAccessor()!;
@@ -164,7 +160,7 @@ public static class ModelExtensions
                 {
                     var itemEntry = dbContext.Entry(item);
 
-                    if (!skipNavigation.IsRelated(input, entityEntry, itemEntry))
+                    if (!skipNavigation.IsRelated(entityEntry, itemEntry))
                         continue;
 
                     collectionAccessor.AddStandalone(currentValue, item);
@@ -331,7 +327,6 @@ public static class ModelExtensions
 
     public static bool WasRelated(
         this ISkipNavigation skipNavigation,
-        IEFCoreComputedInput input,
         EntityEntry entry,
         EntityEntry relatedEntry)
     {
@@ -343,7 +338,7 @@ public static class ModelExtensions
         var relatedEntityValues = relatedEntry.CurrentValues;
         var foreignKey = skipNavigation.ForeignKey;
         var relatedForeignKey = skipNavigation.Inverse!.ForeignKey;
-        foreach (var joinEntry in input.EntityEntriesOfType(skipNavigation.JoinEntityType))
+        foreach (var joinEntry in entry.Context.EntityEntriesOfType(skipNavigation.JoinEntityType))
         {
             if (joinEntry.State == EntityState.Added)
                 continue;
@@ -360,7 +355,6 @@ public static class ModelExtensions
 
     public static bool IsRelated(
         this ISkipNavigation skipNavigation,
-        IEFCoreComputedInput input,
         EntityEntry entry,
         EntityEntry relatedEntry)
     {
@@ -372,7 +366,7 @@ public static class ModelExtensions
         var relatedEntityValues = relatedEntry.CurrentValues;
         var foreignKey = skipNavigation.ForeignKey;
         var relatedForeignKey = skipNavigation.Inverse!.ForeignKey;
-        foreach (var joinEntry in input.EntityEntriesOfType(skipNavigation.JoinEntityType))
+        foreach (var joinEntry in entry.Context.EntityEntriesOfType(skipNavigation.JoinEntityType))
         {
             if (joinEntry.State == EntityState.Deleted)
                 continue;
@@ -399,12 +393,11 @@ public static class ModelExtensions
 
     private static bool IsRelationshipNew(
         this ISkipNavigation skipNavigation,
-        IEFCoreComputedInput input,
         EntityEntry entry,
         EntityEntry relatedEntry)
     {
-        return !skipNavigation.WasRelated(input, entry, relatedEntry)
-            && skipNavigation.IsRelated(input, entry, relatedEntry);
+        return !skipNavigation.WasRelated(entry, relatedEntry)
+            && skipNavigation.IsRelated(entry, relatedEntry);
     }
 
     private static bool IsConnected(

@@ -1,5 +1,6 @@
 using System.Linq.Expressions;
 using LLL.AutoCompute.EFCore.Internal;
+using LLL.AutoCompute.EFCore.Metadata.Internal.ExpressionVisitors;
 using Microsoft.EntityFrameworkCore.Metadata;
 
 namespace LLL.AutoCompute.EFCore.Metadata.Internal;
@@ -65,9 +66,12 @@ public class ComputedFactory
                 if (!changesProvider.EntityContext.GetAllObservedMembers().Any())
                     throw new Exception("Computed expression doesn't have observed members");
 
+                var controlledMembers = GetControlledMembers(navigation.TargetEntityType, changesProvider.Expression);
+
                 var computed = new ComputedNavigation<TEntity, TProperty>(
                     navigation,
-                    changesProvider);
+                    changesProvider,
+                    controlledMembers);
 
                 configure?.Invoke(computed);
 
@@ -78,5 +82,28 @@ public class ComputedFactory
                 throw new InvalidOperationException($"Invalid computed expression for '{navigation.DeclaringType.ShortName()}.{navigation.Name}': {ex.Message}", ex);
             }
         };
+    }
+
+
+    private static IReadOnlySet<IPropertyBase> GetControlledMembers(
+        IEntityType entityType,
+        LambdaExpression expression)
+    {
+        var clrMembers = CollectControlledMembersExpressionVisitor.Collect(
+            expression, entityType.ClrType);
+
+        var members = new HashSet<IPropertyBase>();
+
+        foreach (var clrMember in clrMembers)
+        {
+            var member = entityType.FindProperty(clrMember) as IPropertyBase
+                ?? entityType.FindNavigation(clrMember) as IPropertyBase
+                ?? entityType.FindSkipNavigation(clrMember) as IPropertyBase
+                ?? throw new Exception($"Property not found for member {clrMember}");
+
+            members.Add(member);
+        }
+
+        return members;
     }
 }

@@ -2,6 +2,7 @@ using System.Linq.Expressions;
 using System.Reflection;
 using LLL.AutoCompute.EFCore.Metadata.Internal;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.ChangeTracking;
 using Microsoft.EntityFrameworkCore.Metadata;
 
 namespace LLL.AutoCompute.EFCore.Internal;
@@ -27,6 +28,9 @@ public class EFCoreObservedNavigation(
     {
         var inverse = Navigation.Inverse
             ?? throw new InvalidOperationException($"No inverse for navigation '{Navigation.DeclaringType.ShortName()}.{Navigation.Name}'");
+
+        if (inverse.IsShadowProperty())
+            throw new InvalidOperationException($"Inverse for navigation '{Navigation.DeclaringType.ShortName()}.{Navigation.Name}' cannot be a shadow property");
 
         return inverse.GetOrCreateObservedNavigation();
     }
@@ -217,101 +221,118 @@ public class EFCoreObservedNavigation(
         }
     }
 
-    public async Task<ObservedNavigationChanges> GetChangesAsync(IEFCoreComputedInput input)
+    public override async Task CollectChangesAsync(DbContext dbContext, EFCoreChangeset changes)
     {
-        var changes = new ObservedNavigationChanges();
-        foreach (var entityEntry in input.EntityEntriesOfType(Navigation.DeclaringEntityType))
+        foreach (var entityEntry in dbContext.EntityEntriesOfType(Navigation.DeclaringEntityType))
         {
-            if (entityEntry.State == EntityState.Added
-                || entityEntry.State == EntityState.Deleted
-                || entityEntry.State == EntityState.Modified)
-            {
-                var navigationEntry = entityEntry.Navigation(Navigation);
-                if (entityEntry.State == EntityState.Added
-                    || entityEntry.State == EntityState.Deleted
-                    || navigationEntry.IsModified)
-                {
-                    var modifiedEntities = navigationEntry.GetModifiedEntities();
-
-                    foreach (var ent in modifiedEntities.added)
-                        changes.RegisterAdded(entityEntry.Entity, ent);
-
-                    foreach (var ent in modifiedEntities.removed)
-                        changes.RegisterRemoved(entityEntry.Entity, ent);
-                }
-            }
+            await CollectChangesAsync(entityEntry, changes);
         }
         if (Navigation.Inverse is not null)
         {
-            foreach (var entityEntry in input.EntityEntriesOfType(Navigation.Inverse.DeclaringEntityType))
+            foreach (var entityEntry in dbContext.EntityEntriesOfType(Navigation.Inverse.DeclaringEntityType))
             {
-                if (entityEntry.State == EntityState.Added
-                    || entityEntry.State == EntityState.Deleted
-                    || entityEntry.State == EntityState.Modified)
-                {
-                    var inverseNavigationEntry = entityEntry.Navigation(Navigation.Inverse);
-                    if (entityEntry.State == EntityState.Added
-                        || entityEntry.State == EntityState.Deleted
-                        || inverseNavigationEntry.IsModified)
-                    {
-                        if (!inverseNavigationEntry.IsLoaded && entityEntry.State != EntityState.Detached)
-                            await inverseNavigationEntry.LoadAsync();
-
-                        var modifiedEntities = inverseNavigationEntry.GetModifiedEntities();
-
-                        foreach (var entity in modifiedEntities.added)
-                            changes.RegisterAdded(entity, entityEntry.Entity);
-
-                        foreach (var entity in modifiedEntities.removed)
-                            changes.RegisterRemoved(entity, entityEntry.Entity);
-                    }
-                }
+                await CollectChangesAsync(entityEntry, changes);
             }
         }
         if (Navigation is ISkipNavigation skipNavigation)
         {
+            foreach (var joinEntry in dbContext.EntityEntriesOfType(skipNavigation.JoinEntityType))
+            {
+                await CollectChangesAsync(joinEntry, changes);
+            }
+        }
+    }
+
+    public override async Task CollectChangesAsync(EntityEntry entityEntry, EFCoreChangeset changes)
+    {
+        if (entityEntry.State != EntityState.Added
+            && entityEntry.State != EntityState.Deleted
+            && entityEntry.State != EntityState.Modified)
+        {
+            return;
+        }
+
+        if (entityEntry.Metadata == Navigation.DeclaringEntityType)
+        {
+            var navigationEntry = entityEntry.Navigation(Navigation);
+            if (entityEntry.State == EntityState.Added
+                || entityEntry.State == EntityState.Deleted
+                || navigationEntry.IsModified)
+            {
+                var modifiedEntities = navigationEntry.GetModifiedEntities();
+
+                foreach (var ent in modifiedEntities.added)
+                    changes.RegisterNavigationAdded(Navigation, entityEntry.Entity, ent);
+
+                foreach (var ent in modifiedEntities.removed)
+                    changes.RegisterNavigationRemoved(Navigation, entityEntry.Entity, ent);
+            }
+        }
+
+        if (Navigation.Inverse is not null && entityEntry.Metadata == Navigation.Inverse.DeclaringEntityType)
+        {
+            if (entityEntry.State == EntityState.Added
+                                || entityEntry.State == EntityState.Deleted
+                                || entityEntry.State == EntityState.Modified)
+            {
+                var inverseNavigationEntry = entityEntry.Navigation(Navigation.Inverse);
+                if (entityEntry.State == EntityState.Added
+                    || entityEntry.State == EntityState.Deleted
+                    || inverseNavigationEntry.IsModified)
+                {
+                    if (!inverseNavigationEntry.IsLoaded && entityEntry.State != EntityState.Detached)
+                        await inverseNavigationEntry.LoadAsync();
+
+                    var modifiedEntities = inverseNavigationEntry.GetModifiedEntities();
+
+                    foreach (var entity in modifiedEntities.added)
+                        changes.RegisterNavigationAdded(Navigation, entity, entityEntry.Entity);
+
+                    foreach (var entity in modifiedEntities.removed)
+                        changes.RegisterNavigationRemoved(Navigation, entity, entityEntry.Entity);
+                }
+            }
+        }
+
+        if (Navigation is ISkipNavigation skipNavigation && entityEntry.Metadata == skipNavigation.JoinEntityType)
+        {
             var dependentToPrincipal = skipNavigation.ForeignKey.DependentToPrincipal!;
             var joinReferenceToOther = skipNavigation.Inverse.ForeignKey.DependentToPrincipal;
+            var dependentToPrincipalEntry = entityEntry.Navigation(dependentToPrincipal);
+            var otherReferenceEntry = entityEntry.Reference(joinReferenceToOther!);
 
-            foreach (var joinEntry in input.EntityEntriesOfType(skipNavigation.JoinEntityType))
+            if (entityEntry.State == EntityState.Added
+                || entityEntry.State == EntityState.Deleted
+                || dependentToPrincipalEntry.IsModified)
             {
-                if (joinEntry.State == EntityState.Added
-                    || joinEntry.State == EntityState.Deleted
-                    || joinEntry.State == EntityState.Modified)
+                if (!dependentToPrincipalEntry.IsLoaded && entityEntry.State != EntityState.Detached)
+                    await dependentToPrincipalEntry.LoadAsync();
+
+                if (entityEntry.State == EntityState.Added
+                    || dependentToPrincipalEntry.IsModified)
                 {
-                    var dependentToPrincipalEntry = joinEntry.Navigation(dependentToPrincipal);
-                    var otherReferenceEntry = joinEntry.Reference(joinReferenceToOther!);
-
-                    if (joinEntry.State == EntityState.Added
-                        || joinEntry.State == EntityState.Deleted
-                        || dependentToPrincipalEntry.IsModified)
+                    foreach (var entity in dependentToPrincipalEntry.GetCurrentEntities())
                     {
-                        if (!dependentToPrincipalEntry.IsLoaded && joinEntry.State != EntityState.Detached)
-                            await dependentToPrincipalEntry.LoadAsync();
+                        foreach (var otherEntity in otherReferenceEntry.GetCurrentEntities())
+                            changes.RegisterNavigationAdded(Navigation, entity, otherEntity);
+                    }
+                }
 
-                        if (joinEntry.State == EntityState.Added
-                            || dependentToPrincipalEntry.IsModified)
-                        {
-                            foreach (var entity in dependentToPrincipalEntry.GetCurrentEntities())
-                            {
-                                foreach (var otherEntity in otherReferenceEntry.GetCurrentEntities())
-                                    changes.RegisterAdded(entity, otherEntity);
-                            }
-                        }
-
-                        if (joinEntry.State == EntityState.Deleted
-                            || dependentToPrincipalEntry.IsModified)
-                        {
-                            foreach (var entity in dependentToPrincipalEntry.GetOriginalEntities())
-                            {
-                                foreach (var otherEntity in otherReferenceEntry.GetOriginalEntities())
-                                    changes.RegisterRemoved(entity, otherEntity);
-                            }
-                        }
+                if (entityEntry.State == EntityState.Deleted
+                    || dependentToPrincipalEntry.IsModified)
+                {
+                    foreach (var entity in dependentToPrincipalEntry.GetOriginalEntities())
+                    {
+                        foreach (var otherEntity in otherReferenceEntry.GetOriginalEntities())
+                            changes.RegisterNavigationRemoved(Navigation, entity, otherEntity);
                     }
                 }
             }
         }
-        return changes;
+    }
+
+    public async Task<ObservedNavigationChanges> GetChangesAsync(IEFCoreComputedInput input)
+    {
+        return input.ChangesToProcess.GetOrCreateNavigationChanges(Navigation);
     }
 }

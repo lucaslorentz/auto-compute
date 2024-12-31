@@ -2,7 +2,7 @@
 
 namespace LLL.AutoCompute.EFCore.Tests.Computeds;
 
-public class ComputedsTests
+public class ComputedPropertyTests
 {
     [Fact]
     public async Task TestProperty()

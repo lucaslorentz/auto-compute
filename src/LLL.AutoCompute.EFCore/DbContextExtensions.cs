@@ -1,4 +1,5 @@
 ﻿using System.Collections.Concurrent;
+using System.Diagnostics.CodeAnalysis;
 using System.Linq.Expressions;
 using System.Runtime.CompilerServices;
 using LLL.AutoCompute.ChangesProviders;
@@ -6,7 +7,10 @@ using LLL.AutoCompute.EFCore.Caching;
 using LLL.AutoCompute.EFCore.Internal;
 using LLL.AutoCompute.EFCore.Metadata.Internal;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.ChangeTracking;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Internal;
+using Microsoft.EntityFrameworkCore.Metadata;
 using Microsoft.EntityFrameworkCore.Query;
 
 namespace LLL.AutoCompute.EFCore;
@@ -71,9 +75,9 @@ public static class DbContextExtensions
                 changeCalculation)
         );
 
-        return new ChangesProvider<IEFCoreComputedInput, TEntity, TChange>(
+        return new EFCoreChangesProvider<TEntity, TChange>(
             unboundChangesProvider,
-            dbContext.GetComputedInput(),
+            dbContext,
             new ChangeMemory<TEntity, TChange>()
         );
     }
@@ -84,44 +88,69 @@ public static class DbContextExtensions
         {
             dbContext.ChangeTracker.DetectChanges();
 
-            // TODO: Separate computeds from observers
             var sortedComputeds = dbContext.Model.GetSortedComputedsOrThrow();
 
-            var computedsAndPriority = sortedComputeds
-                .Select((computed, priority) => (computed, priority));
+            var changesToProcess = new EFCoreChangeset();
 
-            var priorities = computedsAndPriority.ToDictionary(x => x.computed, x => x.priority);
-            var queue = new PriorityQueue<ComputedBase, int>(computedsAndPriority);
-            var queuedItems = sortedComputeds.ToHashSet();
-            var allChanges = new UpdateChanges();
+            var observedMembers = sortedComputeds.SelectMany(x => x.GetObservedMembers()).ToHashSet();
+            foreach (var observedMember in observedMembers)
+                await observedMember.CollectChangesAsync(dbContext, changesToProcess);
 
-            while (queue.TryDequeue(out var computed, out var _)
-                && queuedItems.Remove(computed))
+            var updates = new EFCoreChangeset();
+
+            var visitedComputeds = new HashSet<ComputedBase>();
+
+            await UpdateComputedsAsync(sortedComputeds.ToHashSet(), changesToProcess);
+
+            return updates.Count;
+
+            async Task UpdateComputedsAsync(
+                IReadOnlySet<ComputedBase> targetComputeds,
+                EFCoreChangeset changesToProcess)
             {
-                var changes = await computed.Update(dbContext);
-
-                if (changes.Count == 0)
-                    continue;
-
-                changes.MergeIntoAndDetectCycles(allChanges);
-
-                foreach (var affectedComputed in changes.GetAffectedComputeds())
+                foreach (var computed in sortedComputeds)
                 {
-                    if (queuedItems.Add(affectedComputed))
-                        queue.Enqueue(affectedComputed, priorities[affectedComputed]);
+                    if (!targetComputeds.Contains(computed))
+                        continue;
+
+                    visitedComputeds.Add(computed);
+
+                    var input = new EFCoreComputedInput(dbContext, changesToProcess);
+
+                    var newChanges = await computed.Update(input);
+
+                    if (newChanges.Count == 0)
+                        continue;
+
+                    // Detect new changes
+                    dbContext.ChangeTracker.DetectChanges();
+
+                    // Register changes in updates, tracking for cyclic updates
+                    newChanges.MergeInto(updates, true);
+
+                    // Re-update affected computeds that were already updated
+                    var computedsToReUpdate = newChanges.GetAffectedComputeds(visitedComputeds);
+                    if (computedsToReUpdate.Count != 0)
+                        await UpdateComputedsAsync(computedsToReUpdate, newChanges);
+
+                    // Merge new changes into changesToProcess, to make next computeds in the loop aware of the new changes
+                    newChanges.MergeInto(changesToProcess, false);
                 }
-
-                dbContext.ChangeTracker.DetectChanges();
             }
-
-            return allChanges.Count;
         });
     }
 
-    private static readonly ConditionalWeakTable<DbContext, IEFCoreComputedInput> _inputs = [];
-    internal static IEFCoreComputedInput GetComputedInput(this DbContext dbContext)
+    [SuppressMessage("Usage", "EF1001:Internal EF Core API usage.", Justification = "Optimisation to not create unecessary EntityEntry")]
+    internal static IEnumerable<EntityEntry> EntityEntriesOfType(this DbContext dbContext, ITypeBase entityType)
     {
-        return _inputs.GetValue(dbContext, static k => new EFCoreComputedInput(k));
+        if (dbContext.ChangeTracker.AutoDetectChangesEnabled)
+            dbContext.ChangeTracker.DetectChanges();
+
+        var dependencies = dbContext.GetDependencies();
+        return dependencies.StateManager
+            .Entries
+            .Where(e => e.EntityType == entityType)
+            .Select(e => new EntityEntry(e));
     }
 
     private static readonly ConditionalWeakTable<DbContext, ConcurrentQueue<Func<Task>>> _postSaveActionsQueues = [];

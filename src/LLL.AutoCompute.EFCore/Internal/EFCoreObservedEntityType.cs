@@ -1,3 +1,4 @@
+using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata;
 
 namespace LLL.AutoCompute.EFCore.Internal;
@@ -11,9 +12,9 @@ public class EFCoreObservedEntityType(IEntityType entityType)
     {
         return input.DbContext.Entry(entity).State switch
         {
-            Microsoft.EntityFrameworkCore.EntityState.Added => ObservedEntityState.Added,
-            Microsoft.EntityFrameworkCore.EntityState.Deleted => ObservedEntityState.Removed,
-            Microsoft.EntityFrameworkCore.EntityState.Detached => ObservedEntityState.Removed,
+            EntityState.Added => ObservedEntityState.Added,
+            EntityState.Deleted => ObservedEntityState.Removed,
+            EntityState.Detached => ObservedEntityState.Removed,
             _ => ObservedEntityState.None
         };
     }

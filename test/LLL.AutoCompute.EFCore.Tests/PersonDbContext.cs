@@ -4,7 +4,7 @@ namespace LLL.AutoCompute.EFCore.Tests;
 
 public class Person
 {
-    public virtual int Id { get; set; }
+    public virtual int Id { get; protected set; }
     public virtual string? FirstName { get; set; }
     public virtual string? LastName { get; set; }
     public virtual string? FullName { get; protected set; }
@@ -25,7 +25,7 @@ public class Person
 
 public class Pet
 {
-    public virtual int Id { get; set; }
+    public virtual int Id { get; protected set; }
     public virtual string? Color { get; set; }
     public virtual string? Type { get; set; }
     public virtual Person? Owner { get; set; }
@@ -34,14 +34,14 @@ public class Pet
 
 public class RelativesJoin
 {
-    public required Person FromPerson { get; init; }
-    public required Person ToPerson { get; init; }
+    public virtual required Person FromPerson { get; init; }
+    public virtual required Person ToPerson { get; init; }
 }
 
 public class FriendsJoin
 {
-    public required Person FromPerson { get; init; }
-    public required Person ToPerson { get; init; }
+    public virtual required Person FromPerson { get; init; }
+    public virtual required Person ToPerson { get; init; }
 }
 
 class PersonDbContext(
@@ -56,6 +56,8 @@ class PersonDbContext(
         base.OnModelCreating(modelBuilder);
 
         var personBuilder = modelBuilder.Entity<Person>();
+
+        personBuilder.Property(e => e.Id).ValueGeneratedOnAdd();
 
         personBuilder.HasOne(e => e.FavoritePet)
             .WithOne(e => e.FavoritePetInverse)
@@ -75,7 +77,9 @@ class PersonDbContext(
                 r => r.HasOne<Person>(x => x.FromPerson).WithMany(x => x.RelativesJoin)
             );
 
-        modelBuilder.Entity<Pet>();
+        var petBuilder = modelBuilder.Entity<Pet>();
+
+        petBuilder.Property(e => e.Id).ValueGeneratedOnAdd();
 
         customizeModel?.Invoke(modelBuilder);
     }
@@ -84,18 +88,16 @@ class PersonDbContext(
     {
         var person1 = new Person
         {
-            Id = 1,
             FirstName = "John",
             LastName = "Doe",
             Pets = {
-                new Pet { Id = 1, Type = "Cat" }
+                new Pet { Type = "Cat" }
             },
         };
         dbContext.Add(person1);
 
         dbContext.Add(new Person
         {
-            Id = 2,
             FirstName = "Jane",
             LastName = "Doe",
             Friends = {

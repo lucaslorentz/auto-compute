@@ -97,14 +97,16 @@ public class IncrementalCollectionTests
 
     private static async Task<DbContext> GetDbContextAsync()
     {
-        return await TestDbContext.Create<PersonDbContext>(modelBuilder =>
-        {
-            var personBuilder = modelBuilder.Entity<Person>();
-            personBuilder.ComputedProperty(
-                p => p.Total,
-                p => p.Pets.Count,
-                static c => c.NumberIncremental()
-            );
-        });
+        return await TestDbContext.Create<PersonDbContext>(
+            customizeModel: modelBuilder =>
+            {
+                var personBuilder = modelBuilder.Entity<Person>();
+                personBuilder.ComputedProperty(
+                    p => p.Total,
+                    p => p.Pets.Count,
+                    static c => c.NumberIncremental()
+                );
+            },
+            useLazyLoadingProxies: false);
     }
 }

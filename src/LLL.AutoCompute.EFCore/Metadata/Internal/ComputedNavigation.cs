@@ -1,4 +1,3 @@
-using System.Collections;
 using System.Linq.Expressions;
 using LLL.AutoCompute.EFCore.Internal;
 using Microsoft.EntityFrameworkCore;
@@ -13,7 +12,8 @@ public abstract class ComputedNavigation : ComputedMember
 
 public class ComputedNavigation<TEntity, TProperty>(
     INavigationBase navigation,
-    IUnboundChangesProvider<IEFCoreComputedInput, TEntity, TProperty> changesProvider
+    IUnboundChangesProvider<IEFCoreComputedInput, TEntity, TProperty> changesProvider,
+    IReadOnlySet<IPropertyBase> controlledMembers
 ) : ComputedNavigation, IComputedNavigationBuilder<TEntity, TProperty>
     where TEntity : class
 {
@@ -21,23 +21,21 @@ public class ComputedNavigation<TEntity, TProperty>(
 
     public override IUnboundChangesProvider<IEFCoreComputedInput, TEntity, TProperty> ChangesProvider => changesProvider;
     public override INavigationBase Property => navigation;
-
+    public IReadOnlySet<IPropertyBase> ControlledMembers => controlledMembers;
     public Delegate? ReuseKeySelector { get; set; }
-    public IList<IProperty> ReuseUpdateProperties { get; } = [];
 
     public override string ToDebugString()
     {
         return navigation.ToString()!;
     }
 
-    public override async Task<UpdateChanges> Update(DbContext dbContext)
+    public override async Task<EFCoreChangeset> Update(IEFCoreComputedInput input)
     {
-        var updateChanges = new UpdateChanges();
-        var input = dbContext.GetComputedInput();
+        var updateChanges = new EFCoreChangeset();
         var changes = await changesProvider.GetChangesAsync(input, null);
         foreach (var (entity, change) in changes)
         {
-            var entityEntry = dbContext.Entry(entity);
+            var entityEntry = input.DbContext.Entry(entity);
             var navigationEntry = entityEntry.Navigation(navigation);
 
             var originalValue = GetOriginalValue(navigationEntry);
@@ -48,10 +46,10 @@ public class ComputedNavigation<TEntity, TProperty>(
                     change)
                 : change;
 
-            if (!navigationEntry.IsLoaded && entityEntry.State != Microsoft.EntityFrameworkCore.EntityState.Detached)
+            if (!navigationEntry.IsLoaded && entityEntry.State != EntityState.Detached)
                 await navigationEntry.LoadAsync();
 
-            MaybeUpdateNavigation(navigationEntry, newValue, updateChanges);
+            await MaybeUpdateNavigation(navigationEntry, newValue, updateChanges, ControlledMembers, ReuseKeySelector);
         }
         return updateChanges;
     }
@@ -61,108 +59,19 @@ public class ComputedNavigation<TEntity, TProperty>(
         var entityEntry = dbContext.Entry(entity);
         var navigationEntry = entityEntry.Navigation(navigation);
 
-        if (!navigationEntry.IsLoaded && entityEntry.State != Microsoft.EntityFrameworkCore.EntityState.Detached)
+        if (!navigationEntry.IsLoaded && entityEntry.State != EntityState.Detached)
             await navigationEntry.LoadAsync();
 
         var newValue = _compiledExpression((TEntity)entity);
 
-        MaybeUpdateNavigation(navigationEntry, newValue, null);
+        await MaybeUpdateNavigation(navigationEntry, newValue, null, ControlledMembers, ReuseKeySelector);
     }
 
     private static TProperty GetOriginalValue(NavigationEntry navigationEntry)
     {
-        if (navigationEntry.EntityEntry.State == Microsoft.EntityFrameworkCore.EntityState.Added)
+        if (navigationEntry.EntityEntry.State == EntityState.Added)
             return default!;
 
         return (TProperty)navigationEntry.GetOriginalValue()!;
-    }
-
-    private void MaybeUpdateNavigation(
-        NavigationEntry navigationEntry,
-        TProperty? newValue,
-        UpdateChanges? updateChanges)
-    {
-        if (navigation.IsCollection)
-            MaybeUpdateCollection(navigationEntry, newValue, updateChanges);
-        else
-            MaybeUpdateReference(navigationEntry, newValue, updateChanges);
-    }
-
-    private void MaybeUpdateCollection(
-        NavigationEntry navigationEntry,
-        TProperty? newValue,
-        UpdateChanges? updateChanges)
-    {
-        var dbContext = navigationEntry.EntityEntry.Context;
-        var entity = navigationEntry.EntityEntry.Entity;
-        var collectionAccessor = navigation.GetCollectionAccessor()!;
-        var itemsToRemove = navigationEntry.GetOriginalEntities().ToHashSet();
-        foreach (var newItem in (newValue as IEnumerable)!)
-        {
-            var existingItem = FindEntityToReuse(itemsToRemove, newItem);
-            if (existingItem is null)
-            {
-                collectionAccessor.Add(entity, newItem, false);
-                if (updateChanges is not null)
-                {
-                    updateChanges.AddMemberChange(navigation, entity);
-                    if (dbContext.Entry(newItem).State == Microsoft.EntityFrameworkCore.EntityState.Detached)
-                        updateChanges.AddCreatedEntity(navigation.TargetEntityType, newItem);
-                }
-                continue;
-            }
-
-            itemsToRemove.Remove(existingItem);
-
-            foreach (var propertyToUpdate in ReuseUpdateProperties)
-            {
-                var valueComparer = propertyToUpdate.GetValueComparer();
-                var getter = propertyToUpdate.GetGetter();
-                var currentEntityEntry = dbContext.Entry(existingItem);
-                var currentPropertyEntry = currentEntityEntry.Property(propertyToUpdate);
-                var newPropertyValue = getter.GetClrValueUsingContainingEntity(newItem);
-                if (!valueComparer.Equals(currentPropertyEntry.CurrentValue, newPropertyValue))
-                {
-                    currentPropertyEntry.CurrentValue = newPropertyValue;
-                    updateChanges?.AddMemberChange(propertyToUpdate, entity);
-                }
-            }
-        }
-
-        foreach (var entityToRemove in itemsToRemove)
-        {
-            collectionAccessor.Remove(entity, entityToRemove);
-            updateChanges?.AddMemberChange(navigation, entity);
-        }
-    }
-
-    private void MaybeUpdateReference(
-        NavigationEntry navigationEntry,
-        TProperty? newValue,
-        UpdateChanges? updateChanges)
-    {
-        if (Equals(navigationEntry.CurrentValue, newValue))
-            return;
-
-        var dbContext = navigationEntry.EntityEntry.Context;
-        var entity = navigationEntry.EntityEntry.Entity;
-
-        navigationEntry.CurrentValue = newValue;
-
-        if (updateChanges is not null)
-        {
-            updateChanges.AddMemberChange(navigation, entity);
-            if (newValue is not null && dbContext.Entry(newValue).State == Microsoft.EntityFrameworkCore.EntityState.Detached)
-                updateChanges.AddCreatedEntity(navigation.TargetEntityType, newValue);
-        }
-    }
-
-    private object? FindEntityToReuse(IEnumerable<object> availableEntities, object newEntity)
-    {
-        if (ReuseKeySelector is null)
-            return null;
-
-        var reuseKey = ReuseKeySelector.DynamicInvoke(newEntity);
-        return availableEntities.FirstOrDefault(x => Equals(ReuseKeySelector.DynamicInvoke(x), reuseKey));
     }
 }

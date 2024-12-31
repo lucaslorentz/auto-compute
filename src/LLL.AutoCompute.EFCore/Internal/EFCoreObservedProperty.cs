@@ -1,5 +1,7 @@
 using System.Linq.Expressions;
 using System.Reflection;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.ChangeTracking;
 using Microsoft.EntityFrameworkCore.Metadata;
 
 namespace LLL.AutoCompute.EFCore.Internal;
@@ -69,7 +71,7 @@ public class EFCoreObservedProperty(
 
         var entityEntry = dbContext.Entry(ent!);
 
-        if (entityEntry.State == Microsoft.EntityFrameworkCore.EntityState.Added)
+        if (entityEntry.State == EntityState.Added)
             throw new Exception($"Cannot access property '{Property.DeclaringType.ShortName()}.{Property.Name}' original value for an added entity");
 
         return entityEntry.Property(Property).OriginalValue;
@@ -81,30 +83,38 @@ public class EFCoreObservedProperty(
 
         var entityEntry = dbContext.Entry(ent!);
 
-        if (entityEntry.State == Microsoft.EntityFrameworkCore.EntityState.Deleted)
+        if (entityEntry.State == EntityState.Deleted)
             throw new Exception($"Cannot access property '{Property.DeclaringType.ShortName()}.{Property.Name}' current value for a deleted entity");
 
         return entityEntry.Property(Property).CurrentValue;
     }
 
-    public async Task<IReadOnlyCollection<object>> GetAffectedEntitiesAsync(IEFCoreComputedInput input)
+    public override async Task CollectChangesAsync(DbContext dbContext, EFCoreChangeset changes)
     {
-        var affectedEntities = new HashSet<object>();
-        foreach (var entityEntry in input.EntityEntriesOfType(Property.DeclaringType))
+        foreach (var entityEntry in dbContext.EntityEntriesOfType(Property.DeclaringType))
         {
-            if (entityEntry.State == Microsoft.EntityFrameworkCore.EntityState.Added
-                || entityEntry.State == Microsoft.EntityFrameworkCore.EntityState.Deleted
-                || entityEntry.State == Microsoft.EntityFrameworkCore.EntityState.Modified)
+            await CollectChangesAsync(entityEntry, changes);
+        }
+    }
+
+    public override async Task CollectChangesAsync(EntityEntry entityEntry, EFCoreChangeset changes)
+    {
+        if (entityEntry.State == EntityState.Added
+            || entityEntry.State == EntityState.Deleted
+            || entityEntry.State == EntityState.Modified)
+        {
+            var propertyEntry = entityEntry.Property(Property);
+            if (entityEntry.State == EntityState.Added
+                || entityEntry.State == EntityState.Deleted
+                || propertyEntry.IsModified)
             {
-                var propertyEntry = entityEntry.Property(Property);
-                if (entityEntry.State == Microsoft.EntityFrameworkCore.EntityState.Added
-                    || entityEntry.State == Microsoft.EntityFrameworkCore.EntityState.Deleted
-                    || propertyEntry.IsModified)
-                {
-                    affectedEntities.Add(entityEntry.Entity);
-                }
+                changes.AddPropertyChange(Property, entityEntry.Entity);
             }
         }
-        return affectedEntities;
+    }
+
+    public async Task<ObservedPropertyChanges> GetChangesAsync(IEFCoreComputedInput input)
+    {
+        return input.ChangesToProcess.GetOrCreatePropertyChanges(Property);
     }
 }

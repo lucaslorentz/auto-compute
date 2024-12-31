@@ -12,7 +12,9 @@ public class OneToManyFilteredItemsTests
     [Fact]
     public async Task TestCollectionElementAdded()
     {
-        using var context = await TestDbContext.Create<PersonDbContext>();
+        using var context = await TestDbContext.Create<PersonDbContext>(
+            useLazyLoadingProxies: false
+        );
 
         var person = context!.Set<Person>().Find(1)!;
         var pet = new Pet { Type = "Cat" };
@@ -78,7 +80,9 @@ public class OneToManyFilteredItemsTests
     [Fact]
     public async Task TestCollectionElementRemoved()
     {
-        using var context = await TestDbContext.Create<PersonDbContext>();
+        using var context = await TestDbContext.Create<PersonDbContext>(
+            useLazyLoadingProxies: false
+        );
 
         var person = context!.Set<Person>().Find(1)!;
         var pet = context!.Set<Pet>().Find(1)!;
@@ -110,7 +114,9 @@ public class OneToManyFilteredItemsTests
     [Fact]
     public async Task DeltaTest()
     {
-        using var context = await TestDbContext.Create<PersonDbContext>();
+        using var context = await TestDbContext.Create<PersonDbContext>(
+            useLazyLoadingProxies: false
+        );
 
         // Add a cat
         var person = context!.Set<Person>().Find(1)!;

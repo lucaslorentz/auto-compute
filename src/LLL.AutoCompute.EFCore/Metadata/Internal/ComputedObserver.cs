@@ -1,5 +1,4 @@
 using LLL.AutoCompute.EFCore.Internal;
-using Microsoft.EntityFrameworkCore;
 
 namespace LLL.AutoCompute.EFCore.Metadata.Internal;
 
@@ -20,22 +19,21 @@ public class ComputedObserver<TEntity, TChange>(
         return "ComputedObserver";
     }
 
-    public override async Task<UpdateChanges> Update(DbContext dbContext)
+    public override async Task<EFCoreChangeset> Update(IEFCoreComputedInput input)
     {
-        var input = dbContext.GetComputedInput();
         var changes = await changesProvider.GetChangesAsync(input, null);
         if (changes.Count > 0)
         {
             var eventData = new ComputedChangeEventData<TEntity, TChange>
             {
-                DbContext = dbContext,
+                DbContext = input.DbContext,
                 Changes = changes
             };
-            dbContext.GetComputedPostSaveActionQueue().Enqueue(async () =>
+            input.DbContext.GetComputedPostSaveActionQueue().Enqueue(async () =>
             {
                 await callback(eventData);
             });
         }
-        return new UpdateChanges();
+        return new EFCoreChangeset();
     }
 }
