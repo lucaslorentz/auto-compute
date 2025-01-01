@@ -80,7 +80,7 @@ class PersonDbContext(
         customizeModel?.Invoke(modelBuilder);
     }
 
-    public static async void SeedData(PersonDbContext dbContext)
+    public static void SeedData(PersonDbContext dbContext)
     {
         var person1 = new Person
         {

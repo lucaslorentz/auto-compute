@@ -11,7 +11,7 @@ public class OneToManyConcatFilteredCountTests
             .Count();
 
     [Fact]
-    public async void TestCollectionElementAdded()
+    public async Task TestCollectionElementAdded()
     {
         using var context = await TestDbContext.Create<PersonDbContext>();
 
@@ -27,7 +27,7 @@ public class OneToManyConcatFilteredCountTests
     }
 
     [Fact]
-    public async void TestCollectionElementAddedInverse()
+    public async Task TestCollectionElementAddedInverse()
     {
         using var context = await TestDbContext.Create<PersonDbContext>();
 
@@ -46,7 +46,7 @@ public class OneToManyConcatFilteredCountTests
     }
 
     [Fact]
-    public async void TestCollectionElementModifiedToBeFilteredOut()
+    public async Task TestCollectionElementModifiedToBeFilteredOut()
     {
         using var context = await TestDbContext.Create<PersonDbContext>();
 
@@ -64,7 +64,7 @@ public class OneToManyConcatFilteredCountTests
     }
 
     [Fact]
-    public async void TestCollectionElementModifiedToContinue()
+    public async Task TestCollectionElementModifiedToContinue()
     {
         using var context = await TestDbContext.Create<PersonDbContext>();
 
@@ -80,7 +80,7 @@ public class OneToManyConcatFilteredCountTests
     }
 
     [Fact]
-    public async void TestCollectionElementRemoved()
+    public async Task TestCollectionElementRemoved()
     {
         using var context = await TestDbContext.Create<PersonDbContext>();
 
@@ -96,7 +96,7 @@ public class OneToManyConcatFilteredCountTests
     }
 
     [Fact]
-    public async void TestCollectionElementRemovedInverse()
+    public async Task TestCollectionElementRemovedInverse()
     {
         using var context = await TestDbContext.Create<PersonDbContext>();
 
@@ -112,7 +112,7 @@ public class OneToManyConcatFilteredCountTests
     }
 
     [Fact]
-    public async void DeltaTest()
+    public async Task DeltaTest()
     {
         using var context = await TestDbContext.Create<PersonDbContext>();
 

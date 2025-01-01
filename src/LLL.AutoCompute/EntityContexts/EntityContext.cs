@@ -55,13 +55,13 @@ public abstract class EntityContext
                     entities.Add(entity);
                     foreach (var addedEntity in changes.Added)
                     {
-                        incrementalContext?.SetShouldLoadAll(addedEntity);
-                        incrementalContext?.AddCurrentEntity(entity, observedNavigation, addedEntity);
+                        incrementalContext.SetShouldLoadAll(addedEntity);
+                        incrementalContext.AddCurrentEntity(entity, observedNavigation, addedEntity);
                     }
                     foreach (var removedEntity in changes.Removed)
                     {
-                        incrementalContext?.SetShouldLoadAll(removedEntity);
-                        incrementalContext?.AddOriginalEntity(entity, observedNavigation, removedEntity);
+                        incrementalContext.SetShouldLoadAll(removedEntity);
+                        incrementalContext.AddOriginalEntity(entity, observedNavigation, removedEntity);
                     }
                 }
             }

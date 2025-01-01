@@ -9,7 +9,7 @@ public class OneToOneInverseTests
     private static readonly Expression<Func<Pet, string?>> _computedExpression = (Pet pet) => pet.FavoritePetInverse != null ? pet.FavoritePetInverse.FirstName : null;
 
     [Fact]
-    public async void TestReferenceSet()
+    public async Task TestReferenceSet()
     {
         using var context = await TestDbContext.Create<PersonDbContext>();
 
@@ -24,7 +24,7 @@ public class OneToOneInverseTests
     }
 
     [Fact]
-    public async void TestInverseReferenceSet()
+    public async Task TestInverseReferenceSet()
     {
         using var context = await TestDbContext.Create<PersonDbContext>();
 
@@ -39,7 +39,7 @@ public class OneToOneInverseTests
     }
 
     [Fact]
-    public async void TestReferencedEntityModified()
+    public async Task TestReferencedEntityModified()
     {
         using var context = await TestDbContext.Create<PersonDbContext>();
 
@@ -57,7 +57,7 @@ public class OneToOneInverseTests
     }
 
     [Fact]
-    public async void TestReferenceUnset()
+    public async Task TestReferenceUnset()
     {
         using var context = await TestDbContext.Create<PersonDbContext>();
 
@@ -75,7 +75,7 @@ public class OneToOneInverseTests
     }
 
     [Fact]
-    public async void TestReferenceUnsetInverse()
+    public async Task TestReferenceUnsetInverse()
     {
         using var context = await TestDbContext.Create<PersonDbContext>();
 

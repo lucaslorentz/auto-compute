@@ -5,7 +5,7 @@ namespace LLL.AutoCompute.EFCore.Tests.Changes;
 public class LookupTests
 {
     [Fact]
-    public async void TestLookupKeys()
+    public async Task TestLookupKeys()
     {
         using var context = await TestDbContext.Create<PersonDbContext>();
 
@@ -21,7 +21,7 @@ public class LookupTests
     }
 
     [Fact]
-    public async void TestLookupValue()
+    public async Task TestLookupValue()
     {
         using var context = await TestDbContext.Create<PersonDbContext>();
 

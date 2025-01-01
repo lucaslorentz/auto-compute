@@ -13,7 +13,7 @@ public class ManyToManyDistinctTests
             .ToArray();
 
     [Fact]
-    public async void TestCollectionElementAdded()
+    public async Task TestCollectionElementAdded()
     {
         using var context = await TestDbContext.Create<PersonDbContext>();
 
@@ -30,7 +30,7 @@ public class ManyToManyDistinctTests
     }
 
     [Fact]
-    public async void TestCollectionElementRemoved()
+    public async Task TestCollectionElementRemoved()
     {
         using var context = await TestDbContext.Create<PersonDbContext>(
             seedData: async seedContext =>
@@ -52,7 +52,7 @@ public class ManyToManyDistinctTests
     }
 
     [Fact]
-    public async void TestCollectionElementRemovedInverse()
+    public async Task TestCollectionElementRemovedInverse()
     {
         using var context = await TestDbContext.Create<PersonDbContext>(
             seedData: async seedContext =>

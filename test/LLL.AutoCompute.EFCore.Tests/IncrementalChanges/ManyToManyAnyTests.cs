@@ -11,7 +11,7 @@ public class ManyToManyContainsTests
             .Any();
 
     [Fact]
-    public async void LoadsEntireCollectionsToDetermineAny()
+    public async Task LoadsEntireCollectionsToDetermineAny()
     {
         using var context = await TestDbContext.Create<PersonDbContext>();
 

@@ -10,7 +10,7 @@ public class OneToManyFilteredItemsTests
         person.Pets.Where(p => p.Type == "Cat");
 
     [Fact]
-    public async void TestCollectionElementAdded()
+    public async Task TestCollectionElementAdded()
     {
         using var context = await TestDbContext.Create<PersonDbContext>();
 
@@ -26,7 +26,7 @@ public class OneToManyFilteredItemsTests
     }
 
     [Fact]
-    public async void TestCollectionElementAddedInverse()
+    public async Task TestCollectionElementAddedInverse()
     {
         using var context = await TestDbContext.Create<PersonDbContext>();
 
@@ -42,7 +42,7 @@ public class OneToManyFilteredItemsTests
     }
 
     [Fact]
-    public async void TestCollectionElementMoved()
+    public async Task TestCollectionElementMoved()
     {
         using var context = await TestDbContext.Create<PersonDbContext>();
 
@@ -61,7 +61,7 @@ public class OneToManyFilteredItemsTests
     }
 
     [Fact]
-    public async void TestCollectionElementModified()
+    public async Task TestCollectionElementModified()
     {
         using var context = await TestDbContext.Create<PersonDbContext>();
 
@@ -76,7 +76,7 @@ public class OneToManyFilteredItemsTests
     }
 
     [Fact]
-    public async void TestCollectionElementRemoved()
+    public async Task TestCollectionElementRemoved()
     {
         using var context = await TestDbContext.Create<PersonDbContext>();
 
@@ -92,7 +92,7 @@ public class OneToManyFilteredItemsTests
     }
 
     [Fact]
-    public async void TestCollectionElementRemovedInverse()
+    public async Task TestCollectionElementRemovedInverse()
     {
         using var context = await TestDbContext.Create<PersonDbContext>();
 
@@ -108,7 +108,7 @@ public class OneToManyFilteredItemsTests
     }
 
     [Fact]
-    public async void DeltaTest()
+    public async Task DeltaTest()
     {
         using var context = await TestDbContext.Create<PersonDbContext>();
 

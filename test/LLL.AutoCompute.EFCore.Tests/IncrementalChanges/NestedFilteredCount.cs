@@ -9,7 +9,7 @@ public class NestedFilteredCount
         person.Friends.SelectMany(f => f.Pets).Where(p => p.Type == "Cat").Count();
 
     [Fact]
-    public async void TestNestedCollectionElementModified()
+    public async Task TestNestedCollectionElementModified()
     {
         using var context = await TestDbContext.Create<PersonDbContext>();
 
@@ -26,7 +26,7 @@ public class NestedFilteredCount
     }
 
     [Fact]
-    public async void TestCollectionElementRemoved()
+    public async Task TestCollectionElementRemoved()
     {
         using var context = await TestDbContext.Create<PersonDbContext>();
 
@@ -41,7 +41,7 @@ public class NestedFilteredCount
     }
 
     [Fact]
-    public async void TestCollectionElementRemovedInverse()
+    public async Task TestCollectionElementRemovedInverse()
     {
         using var context = await TestDbContext.Create<PersonDbContext>();
 

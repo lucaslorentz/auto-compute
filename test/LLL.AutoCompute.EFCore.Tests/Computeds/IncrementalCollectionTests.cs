@@ -6,7 +6,7 @@ namespace LLL.AutoCompute.EFCore.Tests.Computeds;
 public class IncrementalCollectionTests
 {
     [Fact]
-    public async void TestCollectionElementAdded()
+    public async Task TestCollectionElementAdded()
     {
         using var context = await GetDbContextAsync();
 
@@ -24,7 +24,7 @@ public class IncrementalCollectionTests
     }
 
     [Fact]
-    public async void TestCollectionElementAddedInverse()
+    public async Task TestCollectionElementAddedInverse()
     {
         using var context = await GetDbContextAsync();
 
@@ -42,7 +42,7 @@ public class IncrementalCollectionTests
     }
 
     [Fact]
-    public async void TestCollectionElementModified()
+    public async Task TestCollectionElementModified()
     {
         using var context = await GetDbContextAsync();
 
@@ -60,7 +60,7 @@ public class IncrementalCollectionTests
     }
 
     [Fact]
-    public async void TestCollectionElementRemoved()
+    public async Task TestCollectionElementRemoved()
     {
         using var context = await GetDbContextAsync();
 
@@ -78,7 +78,7 @@ public class IncrementalCollectionTests
     }
 
     [Fact]
-    public async void TestCollectionElementRemovedInverse()
+    public async Task TestCollectionElementRemovedInverse()
     {
         using var context = await GetDbContextAsync();
 

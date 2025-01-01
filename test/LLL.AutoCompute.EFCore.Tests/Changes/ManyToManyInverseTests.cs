@@ -9,7 +9,7 @@ public class ManyToManyInverseTests
     private static readonly Expression<Func<Person, int>> _computedExpression = (Person person) => person.FriendsInverse.Count;
 
     [Fact]
-    public async void TestCollectionElementAdded()
+    public async Task TestCollectionElementAdded()
     {
         using var context = await TestDbContext.Create<PersonDbContext>();
 
@@ -26,7 +26,7 @@ public class ManyToManyInverseTests
     }
 
     [Fact]
-    public async void TestCollectionElementAddedInverse()
+    public async Task TestCollectionElementAddedInverse()
     {
         using var context = await TestDbContext.Create<PersonDbContext>();
 
@@ -41,7 +41,7 @@ public class ManyToManyInverseTests
     }
 
     [Fact]
-    public async void TestCollectionElementModified()
+    public async Task TestCollectionElementModified()
     {
         using var context = await TestDbContext.Create<PersonDbContext>();
 
@@ -53,7 +53,7 @@ public class ManyToManyInverseTests
     }
 
     [Fact]
-    public async void TestCollectionElementRemoved()
+    public async Task TestCollectionElementRemoved()
     {
         using var context = await TestDbContext.Create<PersonDbContext>();
 
@@ -69,7 +69,7 @@ public class ManyToManyInverseTests
     }
 
     [Fact]
-    public async void TestCollectionElementRemovedInverse()
+    public async Task TestCollectionElementRemovedInverse()
     {
         using var context = await TestDbContext.Create<PersonDbContext>();
 

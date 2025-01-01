@@ -9,7 +9,7 @@ public class CollectionTests
     private static readonly Expression<Func<Person, int>> _computedExpression = (Person person) => person.Pets.Count;
 
     [Fact]
-    public async void TestCollectionElementAdded()
+    public async Task TestCollectionElementAdded()
     {
         using var context = await TestDbContext.Create<PersonDbContext>();
 
@@ -24,7 +24,7 @@ public class CollectionTests
     }
 
     [Fact]
-    public async void TestCollectionElementAddedInverse()
+    public async Task TestCollectionElementAddedInverse()
     {
         using var context = await TestDbContext.Create<PersonDbContext>();
 
@@ -39,7 +39,7 @@ public class CollectionTests
     }
 
     [Fact]
-    public async void TestCollectionElementModified()
+    public async Task TestCollectionElementModified()
     {
         using var context = await TestDbContext.Create<PersonDbContext>();
 
@@ -51,7 +51,7 @@ public class CollectionTests
     }
 
     [Fact]
-    public async void TestCollectionElementRemoved()
+    public async Task TestCollectionElementRemoved()
     {
         using var context = await TestDbContext.Create<PersonDbContext>();
 
@@ -66,7 +66,7 @@ public class CollectionTests
     }
 
     [Fact]
-    public async void TestCollectionElementRemovedInverse()
+    public async Task TestCollectionElementRemovedInverse()
     {
         using var context = await TestDbContext.Create<PersonDbContext>();
 

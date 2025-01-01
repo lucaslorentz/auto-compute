@@ -9,7 +9,7 @@ public class BasicOperationsTests
     private static readonly Expression<Func<Person, string?>> _computedExpression = (Person p) => p.FirstName + " " + p.LastName;
 
     [Fact]
-    public async void TestCreate()
+    public async Task TestCreate()
     {
         using var context = await TestDbContext.Create<PersonDbContext>();
 
@@ -23,7 +23,7 @@ public class BasicOperationsTests
     }
 
     [Fact]
-    public async void TestModified()
+    public async Task TestModified()
     {
         using var context = await TestDbContext.Create<PersonDbContext>();
 
@@ -37,7 +37,7 @@ public class BasicOperationsTests
     }
 
     [Fact]
-    public async void TestRemove()
+    public async Task TestRemove()
     {
         using var context = await TestDbContext.Create<PersonDbContext>();
 

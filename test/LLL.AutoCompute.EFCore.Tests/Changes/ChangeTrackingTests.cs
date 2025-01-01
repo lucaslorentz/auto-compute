@@ -5,7 +5,7 @@ namespace LLL.AutoCompute.EFCore.Tests.Changes;
 public class ChangeTrackingTests
 {
     [Fact]
-    public async void Property()
+    public async Task Property()
     {
         using var context = await TestDbContext.Create<PersonDbContext>();
 
@@ -27,7 +27,7 @@ public class ChangeTrackingTests
     }
 
     [Fact]
-    public async void Collection()
+    public async Task Collection()
     {
         using var context = await TestDbContext.Create<PersonDbContext>();
 
@@ -49,7 +49,7 @@ public class ChangeTrackingTests
     }
 
     [Fact]
-    public async void CollectionItemProperty()
+    public async Task CollectionItemProperty()
     {
         using var context = await TestDbContext.Create<PersonDbContext>();
 

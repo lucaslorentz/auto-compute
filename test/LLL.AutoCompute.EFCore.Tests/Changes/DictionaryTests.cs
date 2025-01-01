@@ -5,7 +5,7 @@ namespace LLL.AutoCompute.EFCore.Tests.Changes;
 public class DictionaryTests
 {
     [Fact]
-    public async void TestDictionaryKey()
+    public async Task TestDictionaryKey()
     {
         using var context = await TestDbContext.Create<PersonDbContext>();
 
@@ -21,7 +21,7 @@ public class DictionaryTests
     }
 
     [Fact]
-    public async void TestDictionaryValue()
+    public async Task TestDictionaryValue()
     {
         using var context = await TestDbContext.Create<PersonDbContext>();
 
