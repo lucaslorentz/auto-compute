@@ -29,7 +29,7 @@ public class ComputedFactory
                     static x => true,
                     changeCalculation);
 
-                if (!changesProvider.EntityContext.GetAllObservedMembers().Any())
+                if (changesProvider.ObservedMembers.Count == 0)
                     throw new Exception("Computed expression doesn't have observed members");
 
                 return new ComputedProperty<TEntity, TProperty>(
@@ -63,7 +63,7 @@ public class ComputedFactory
                     static x => true,
                     changeCalculation);
 
-                if (!changesProvider.EntityContext.GetAllObservedMembers().Any())
+                if (changesProvider.ObservedMembers.Count == 0)
                     throw new Exception("Computed expression doesn't have observed members");
 
                 var controlledMembers = GetControlledMembers(navigation.TargetEntityType, changesProvider.Expression);

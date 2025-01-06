@@ -8,6 +8,7 @@ public interface IComputedChangesProvider
 {
     LambdaExpression Expression { get; }
     EntityContext EntityContext { get; }
+    IReadOnlySet<IObservedMember> ObservedMembers { get; }
     IChangeCalculation ChangeCalculation { get; }
 }
 

@@ -16,6 +16,7 @@ public class ComputedChangesProvider<TInput, TEntity, TValue, TChange>(
     LambdaExpression IComputedChangesProvider.Expression => expression;
     public Expression<Func<TEntity, TValue>> Expression => expression;
     public EntityContext EntityContext => entityContext;
+    public IReadOnlySet<IObservedMember> ObservedMembers { get; } = entityContext.GetAllObservedMembers().ToHashSet();
     public IChangeCalculation<TChange> ChangeCalculation => changeCalculation;
 
     public async Task<IReadOnlyDictionary<TEntity, TChange>> GetChangesAsync(

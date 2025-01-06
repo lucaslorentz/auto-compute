@@ -10,7 +10,7 @@ public abstract class ComputedBase(
 
     public IComputedChangesProvider ChangesProvider => changesProvider;
 
-    public IReadOnlySet<EFCoreObservedMember> ObservedMembers { get; } = changesProvider.EntityContext.GetAllObservedMembers()
+    public IReadOnlySet<EFCoreObservedMember> ObservedMembers { get; } = changesProvider.ObservedMembers
         .OfType<EFCoreObservedMember>()
         .ToHashSet();
 

@@ -10,7 +10,7 @@ public class EFCoreChangesProvider<TEntity, TChange>(
     where TEntity : class
 {
     private readonly ChangeMemory<TEntity, TChange> _memory = new();
-    private readonly EFCoreObservedMember[] _observedMembers = unboundChangesProvider.EntityContext.GetAllObservedMembers()
+    private readonly EFCoreObservedMember[] _observedMembers = unboundChangesProvider.ObservedMembers
         .OfType<EFCoreObservedMember>()
         .ToArray();
 
