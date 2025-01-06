@@ -8,19 +8,12 @@ public static class PropertyBuilderExtensions
 {
     public static PropertyBuilder<TProperty> AutoCompute<TEntity, TProperty>(
         this PropertyBuilder<TProperty> propertyBuilder,
-        Expression<Func<TEntity, TProperty>> computedExpression)
-        where TEntity : class
-    {
-        return propertyBuilder.AutoCompute(computedExpression, static c => c.CurrentValue());
-    }
-
-    public static PropertyBuilder<TProperty> AutoCompute<TEntity, TProperty>(
-        this PropertyBuilder<TProperty> propertyBuilder,
         Expression<Func<TEntity, TProperty>> computedExpression,
-        ChangeCalculationSelector<TProperty, TProperty> calculationSelector)
+        ChangeCalculationSelector<TProperty, TProperty>? calculationSelector = null)
         where TEntity : class
     {
-        var changeCalculation = calculationSelector(ChangeCalculations<TProperty>.Instance);
+        var changeCalculation = calculationSelector?.Invoke(ChangeCalculations<TProperty>.Instance)
+            ?? ChangeCalculations<TProperty>.Instance.CurrentValue();
 
         propertyBuilder.Metadata.SetComputedFactory(
             ComputedFactory.CreateComputedPropertyFactory(
