@@ -1,21 +1,15 @@
-using System.Linq.Expressions;
 using LLL.AutoCompute.EFCore;
 using LLL.AutoCompute.EFCore.Internal;
-using LLL.AutoCompute.EntityContexts;
 using Microsoft.EntityFrameworkCore;
 
 namespace LLL.AutoCompute.ChangesProviders;
 
 public class EFCoreChangesProvider<TEntity, TChange>(
     IUnboundChangesProvider<IEFCoreComputedInput, TEntity, TChange> unboundChangesProvider,
-    DbContext dbContext,
-    ChangeMemory<TEntity, TChange> memory
-) : IChangesProvider<TEntity, TChange>
+    DbContext dbContext)
     where TEntity : class
 {
-    LambdaExpression IChangesProvider.Expression => unboundChangesProvider.Expression;
-    public EntityContext EntityContext => unboundChangesProvider.EntityContext;
-    public IChangeCalculation<TChange> ChangeCalculation => unboundChangesProvider.ChangeCalculation;
+    private readonly ChangeMemory<TEntity, TChange> _memory = new();
 
     public async Task<IReadOnlyDictionary<TEntity, TChange>> GetChangesAsync()
     {
@@ -30,6 +24,6 @@ public class EFCoreChangesProvider<TEntity, TChange>(
 
         var input = new EFCoreComputedInput(dbContext, changesToProcess);
 
-        return await unboundChangesProvider.GetChangesAsync(input, memory);
+        return await unboundChangesProvider.GetChangesAsync(input, _memory);
     }
 }

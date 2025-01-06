@@ -42,7 +42,7 @@ public static class DbContextExtensions
         return await changesProvider.GetChangesAsync();
     }
 
-    public static IChangesProvider<TEntity, TChange> GetChangesProvider<TEntity, TValue, TChange>(
+    public static EFCoreChangesProvider<TEntity, TChange> GetChangesProvider<TEntity, TValue, TChange>(
         this DbContext dbContext,
         Expression<Func<TEntity, TValue>> computedExpression,
         Expression<Func<TEntity, bool>>? filterExpression,
@@ -77,8 +77,7 @@ public static class DbContextExtensions
 
         return new EFCoreChangesProvider<TEntity, TChange>(
             unboundChangesProvider,
-            dbContext,
-            new ChangeMemory<TEntity, TChange>()
+            dbContext
         );
     }
 
