@@ -59,7 +59,7 @@ public class ComputedExpressionAnalyzer<TInput> : IComputedExpressionAnalyzer<TI
         return this;
     }
 
-    public IUnboundChangesProvider<TInput, TEntity, TChange> CreateChangesProvider<TEntity, TValue, TChange>(
+    public IComputedChangesProvider<TInput, TEntity, TChange> CreateChangesProvider<TEntity, TValue, TChange>(
         IObservedEntityType<TInput> entityType,
         Expression<Func<TEntity, TValue>> computedExpression,
         Expression<Func<TEntity, bool>>? filterExpression,
@@ -83,7 +83,7 @@ public class ComputedExpressionAnalyzer<TInput> : IComputedExpressionAnalyzer<TI
 
         var filterEntityContext = GetEntityContext(entityType, filterExpression, false);
 
-        return new UnboundChangesProvider<TInput, TEntity, TValue, TChange>(
+        return new ComputedChangesProvider<TInput, TEntity, TValue, TChange>(
             computedExpression,
             computedEntityContext,
             filterExpression.Compile(),

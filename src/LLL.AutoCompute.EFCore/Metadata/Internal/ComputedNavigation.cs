@@ -6,20 +6,22 @@ using Microsoft.EntityFrameworkCore.Metadata;
 
 namespace LLL.AutoCompute.EFCore.Metadata.Internal;
 
-public abstract class ComputedNavigation : ComputedMember
+public abstract class ComputedNavigation(
+    IComputedChangesProvider changesProvider)
+    : ComputedMember(changesProvider)
 {
 }
 
 public class ComputedNavigation<TEntity, TProperty>(
     INavigationBase navigation,
-    IUnboundChangesProvider<IEFCoreComputedInput, TEntity, TProperty> changesProvider,
+    IComputedChangesProvider<IEFCoreComputedInput, TEntity, TProperty> changesProvider,
     IReadOnlySet<IPropertyBase> controlledMembers
-) : ComputedNavigation, IComputedNavigationBuilder<TEntity, TProperty>
+) : ComputedNavigation(changesProvider), IComputedNavigationBuilder<TEntity, TProperty>
     where TEntity : class
 {
     private readonly Func<TEntity, TProperty> _compiledExpression = ((Expression<Func<TEntity, TProperty>>)changesProvider.Expression).Compile();
 
-    public override IUnboundChangesProvider<IEFCoreComputedInput, TEntity, TProperty> ChangesProvider => changesProvider;
+    public new IComputedChangesProvider<IEFCoreComputedInput, TEntity, TProperty> ChangesProvider => changesProvider;
     public override INavigationBase Property => navigation;
     public IReadOnlySet<IPropertyBase> ControlledMembers => controlledMembers;
     public Delegate? ReuseKeySelector { get; set; }

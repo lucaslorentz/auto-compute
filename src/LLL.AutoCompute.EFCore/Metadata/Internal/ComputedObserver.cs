@@ -2,17 +2,19 @@ using LLL.AutoCompute.EFCore.Internal;
 
 namespace LLL.AutoCompute.EFCore.Metadata.Internal;
 
-public abstract class ComputedObserver : ComputedBase
+public abstract class ComputedObserver(
+    IComputedChangesProvider changesProvider)
+    : ComputedBase(changesProvider)
 {
 }
 
 public class ComputedObserver<TEntity, TChange>(
-    IUnboundChangesProvider<IEFCoreComputedInput, TEntity, TChange> changesProvider,
+    IComputedChangesProvider<IEFCoreComputedInput, TEntity, TChange> changesProvider,
     Func<ComputedChangeEventData<TEntity, TChange>, Task> callback
-) : ComputedObserver
+) : ComputedObserver(changesProvider)
     where TEntity : class
 {
-    public override IUnboundChangesProvider<IEFCoreComputedInput, TEntity, TChange> ChangesProvider => changesProvider;
+    public new IComputedChangesProvider<IEFCoreComputedInput, TEntity, TChange> ChangesProvider => changesProvider;
 
     public override string ToDebugString()
     {

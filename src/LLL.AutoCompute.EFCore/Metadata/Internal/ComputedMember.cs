@@ -7,7 +7,9 @@ using Microsoft.EntityFrameworkCore.Metadata;
 
 namespace LLL.AutoCompute.EFCore.Metadata.Internal;
 
-public abstract class ComputedMember : ComputedBase
+public abstract class ComputedMember(
+    IComputedChangesProvider changesProvider)
+    : ComputedBase(changesProvider)
 {
     public abstract IPropertyBase Property { get; }
     public abstract Task Fix(object entity, DbContext dbContext);

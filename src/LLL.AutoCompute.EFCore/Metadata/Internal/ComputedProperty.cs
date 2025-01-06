@@ -6,19 +6,21 @@ using Microsoft.EntityFrameworkCore.Metadata;
 
 namespace LLL.AutoCompute.EFCore.Metadata.Internal;
 
-public abstract class ComputedProperty : ComputedMember
+public abstract class ComputedProperty(
+    IComputedChangesProvider changesProvider)
+    : ComputedMember(changesProvider)
 {
 }
 
 public class ComputedProperty<TEntity, TProperty>(
     IProperty property,
-    IUnboundChangesProvider<IEFCoreComputedInput, TEntity, TProperty> changesProvider
-) : ComputedProperty
+    IComputedChangesProvider<IEFCoreComputedInput, TEntity, TProperty> changesProvider
+) : ComputedProperty(changesProvider)
     where TEntity : class
 {
     private readonly Func<TEntity, TProperty> _compiledExpression = ((Expression<Func<TEntity, TProperty>>)changesProvider.Expression).Compile();
 
-    public override IUnboundChangesProvider<IEFCoreComputedInput, TEntity, TProperty> ChangesProvider => changesProvider;
+    public new IComputedChangesProvider<IEFCoreComputedInput, TEntity, TProperty> ChangesProvider => changesProvider;
     public override IProperty Property => property;
 
     public override async Task<EFCoreChangeset> Update(IEFCoreComputedInput input)

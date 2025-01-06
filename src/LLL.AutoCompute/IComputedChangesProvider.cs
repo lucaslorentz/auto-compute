@@ -4,18 +4,18 @@ using LLL.AutoCompute.EntityContexts;
 
 namespace LLL.AutoCompute;
 
-public interface IUnboundChangesProvider
+public interface IComputedChangesProvider
 {
     LambdaExpression Expression { get; }
     EntityContext EntityContext { get; }
     IChangeCalculation ChangeCalculation { get; }
 }
 
-public interface IUnboundChangesProvider<TInput, TEntity, TChange>
-    : IUnboundChangesProvider
+public interface IComputedChangesProvider<TInput, TEntity, TChange>
+    : IComputedChangesProvider
     where TEntity : class
 {
-    IChangeCalculation IUnboundChangesProvider.ChangeCalculation => ChangeCalculation;
+    IChangeCalculation IComputedChangesProvider.ChangeCalculation => ChangeCalculation;
     new IChangeCalculation<TChange> ChangeCalculation { get; }
     Task<IReadOnlyDictionary<TEntity, TChange>> GetChangesAsync(TInput input, ChangeMemory<TEntity, TChange>? memory);
 }

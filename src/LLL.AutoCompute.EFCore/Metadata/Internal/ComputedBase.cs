@@ -2,20 +2,21 @@ using LLL.AutoCompute.EFCore.Internal;
 
 namespace LLL.AutoCompute.EFCore.Metadata.Internal;
 
-public abstract class ComputedBase
+public abstract class ComputedBase(
+    IComputedChangesProvider changesProvider
+)
 {
     public abstract string ToDebugString();
 
-    public abstract IUnboundChangesProvider ChangesProvider { get; }
+    public IComputedChangesProvider ChangesProvider => changesProvider;
 
-    public IEnumerable<EFCoreObservedMember> GetObservedMembers()
-    {
-        return ChangesProvider.EntityContext.GetAllObservedMembers().OfType<EFCoreObservedMember>();
-    }
+    public IReadOnlySet<EFCoreObservedMember> ObservedMembers { get; } = changesProvider.EntityContext.GetAllObservedMembers()
+        .OfType<EFCoreObservedMember>()
+        .ToHashSet();
 
     public IEnumerable<ComputedMember> GetComputedDependencies()
     {
-        return GetObservedMembers()
+        return ObservedMembers
             .Select(e => e.Property.GetComputed())
             .Where(c => c is not null)
             .Select(c => c!)

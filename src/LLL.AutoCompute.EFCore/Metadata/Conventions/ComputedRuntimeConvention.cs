@@ -24,7 +24,7 @@ class ComputedRuntimeConvention(Func<IModel, IComputedExpressionAnalyzer<IEFCore
             if (computed is ComputedMember computedMember)
                 ValidateSelfReferencingComputed(computedMember);
 
-            foreach (var observedMember in computed.GetObservedMembers())
+            foreach (var observedMember in computed.ObservedMembers)
                 observedMember.AddDependent(computed);
         }
 

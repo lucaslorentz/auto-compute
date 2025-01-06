@@ -91,7 +91,7 @@ public static class DbContextExtensions
 
             var changesToProcess = new EFCoreChangeset();
 
-            var observedMembers = sortedComputeds.SelectMany(x => x.GetObservedMembers()).ToHashSet();
+            var observedMembers = sortedComputeds.SelectMany(x => x.ObservedMembers).ToHashSet();
             foreach (var observedMember in observedMembers)
                 await observedMember.CollectChangesAsync(dbContext, changesToProcess);
 

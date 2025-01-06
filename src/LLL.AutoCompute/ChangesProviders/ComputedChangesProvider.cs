@@ -3,17 +3,17 @@ using LLL.AutoCompute.EntityContexts;
 
 namespace LLL.AutoCompute.ChangesProviders;
 
-public class UnboundChangesProvider<TInput, TEntity, TValue, TChange>(
+public class ComputedChangesProvider<TInput, TEntity, TValue, TChange>(
     Expression<Func<TEntity, TValue>> expression,
     EntityContext entityContext,
     Func<TEntity, bool> filter,
     EntityContext filterEntityContext,
     IChangeCalculation<TValue, TChange> changeCalculation,
     ComputedValueAccessors<TInput, TEntity, TValue> computedValueAccessors
-) : IUnboundChangesProvider<TInput, TEntity, TChange>
+) : IComputedChangesProvider<TInput, TEntity, TChange>
     where TEntity : class
 {
-    LambdaExpression IUnboundChangesProvider.Expression => expression;
+    LambdaExpression IComputedChangesProvider.Expression => expression;
     public Expression<Func<TEntity, TValue>> Expression => expression;
     public EntityContext EntityContext => entityContext;
     public IChangeCalculation<TChange> ChangeCalculation => changeCalculation;
