@@ -13,7 +13,7 @@ public class ComputedCollectionTests
         customerA.OrderCount.Should().Be(1);
         customerA.TotalSpent.Should().Be(20);
 
-        var order1 = customerA.Orders.Should().ContainSingle().Subject;
+        var order1 = context.Orders.Find(1)!;
 
         // Clone order 1
         var order2 = new Order
@@ -73,6 +73,9 @@ public class ComputedCollectionTests
 
         customerA.OrderCount.Should().Be(3);
         customerA.TotalSpent.Should().Be(105);
+
+        // Verify collections were not loaded to compute incremental properties
+        context.Entry(customerA).Navigation(nameof(Customer.Orders)).IsLoaded.Should().BeFalse();
     }
 
     private static async Task<CommerceDbContext> GetDbContextAsync()
@@ -97,7 +100,7 @@ public class ComputedCollectionTests
                     UnitPrice = 5
                 };
 
-                var referenceOrder = new Order
+                var order1 = new Order
                 {
                     Customer = customerA,
                     Items = {
@@ -111,7 +114,7 @@ public class ComputedCollectionTests
                 dbContext.Add(customerA);
                 dbContext.Add(productA);
                 dbContext.Add(productB);
-                dbContext.Add(referenceOrder);
+                dbContext.Add(order1);
             }
         );
     }

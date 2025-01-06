@@ -6,8 +6,8 @@ public class Customer
 {
     public virtual required string Id { get; set; }
     public virtual ICollection<Order> Orders { get; protected set; } = [];
-    public virtual int? OrderCount { get; set; }
-    public virtual decimal? TotalSpent { get; set; }
+    public virtual int OrderCount { get; set; }
+    public virtual decimal TotalSpent { get; set; }
 }
 
 public class Order
@@ -53,14 +53,25 @@ class CommerceDbContext(
         base.OnModelCreating(modelBuilder);
 
         var customerBuilder = modelBuilder.Entity<Customer>();
-        customerBuilder.ComputedProperty(e => e.OrderCount, e => e.Orders.Count);
-        customerBuilder.ComputedProperty(e => e.TotalSpent, e => e.Orders.Sum(o => o.Total));
+
+        customerBuilder.ComputedProperty(
+            e => e.OrderCount,
+            e => e.Orders.Count,
+            c => c.NumberIncremental());
+
+        customerBuilder.ComputedProperty(
+            e => e.TotalSpent,
+            e => e.Orders.Sum(o => o.Total) ?? 0,
+            c => c.NumberIncremental());
 
         var orderBuilder = modelBuilder.Entity<Order>();
         orderBuilder.HasMany(e => e.Items).WithOne(e => e.Order);
         orderBuilder.HasOne(e => e.CloneFrom).WithMany(e => e.Clones);
 
-        orderBuilder.ComputedProperty(e => e.Total, e => e.Items.Sum(i => i.Total));
+        orderBuilder.ComputedProperty(
+            e => e.Total,
+            e => e.Items.Sum(i => i.Total));
+
         orderBuilder.Navigation(e => e.Items)
             .AutoCompute(e => e.CloneFrom != null
                 ? e.CloneFrom.Items.Select(i => new OrderItem
@@ -73,8 +84,16 @@ class CommerceDbContext(
             c => c.ReuseItemsByKey(e => new { e.Product }));
 
         var orderItemBuilder = modelBuilder.Entity<OrderItem>();
-        orderItemBuilder.ComputedProperty(e => e.Total, e => e.UnitPrice * e.Quantity);
-        orderItemBuilder.ComputedProperty(e => e.UnitPrice, e => e.Product != null ? e.Product.AsComputedUntracked().UnitPrice : null);
+        
+        orderItemBuilder.ComputedProperty(
+            e => e.Total,
+            e => e.UnitPrice * e.Quantity);
+
+        orderItemBuilder.ComputedProperty(
+            e => e.UnitPrice,
+            e => e.Product != null
+                ? e.Product.AsComputedUntracked().UnitPrice
+                : null);
 
         customizeModel?.Invoke(modelBuilder);
     }
