@@ -36,17 +36,15 @@ public class Product
     public virtual decimal? UnitPrice { get; set; }
 }
 
-class CommerceDbContext(
-    DbContextOptions options,
-    Action<ModelBuilder>? customizeModel
-) : DbContext(options), ITestDbContext<CommerceDbContext>
+class CommerceDbContext(DbContextOptions options)
+    : DbContext(options), ITestDbContext, ICreatableTestDbContext<CommerceDbContext>
 {
     public DbSet<Customer> Customers { get; set; } = default!;
     public DbSet<Order> Orders { get; set; } = default!;
     public DbSet<OrderItem> OrderItems { get; set; } = default!;
     public DbSet<Product> Products { get; set; } = default!;
 
-    public Action<ModelBuilder>? CustomizeModel => customizeModel;
+    public object? ConfigurationKey => null;
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -84,7 +82,7 @@ class CommerceDbContext(
             c => c.ReuseItemsByKey(e => new { e.Product }));
 
         var orderItemBuilder = modelBuilder.Entity<OrderItem>();
-        
+
         orderItemBuilder.ComputedProperty(
             e => e.Total,
             e => e.UnitPrice * e.Quantity);
@@ -94,18 +92,50 @@ class CommerceDbContext(
             e => e.Product != null
                 ? e.Product.AsComputedUntracked().UnitPrice
                 : null);
-
-        customizeModel?.Invoke(modelBuilder);
     }
 
-    public static void SeedData(CommerceDbContext dbContext)
+    public const string CustomerAId = "A";
+    public const string ProductAId = "A";
+    public const string ProductBId = "B";
+
+    public void SeedData()
     {
+        var customerA = new Customer
+        {
+            Id = CustomerAId
+        };
+
+        var productA = new Product
+        {
+            Id = CustomerAId,
+            UnitPrice = 10
+        };
+
+        var productB = new Product
+        {
+            Id = ProductBId,
+            UnitPrice = 5
+        };
+
+        var order1 = new Order
+        {
+            Customer = customerA,
+            Items = {
+                new OrderItem {
+                    Product = productA,
+                    Quantity = 2
+                }
+            }
+        };
+
+        Add(customerA);
+        Add(productA);
+        Add(productB);
+        Add(order1);
     }
 
-    public static CommerceDbContext Create(
-        DbContextOptions options,
-        Action<ModelBuilder>? customizeModel)
+    public static CommerceDbContext Create(DbContextOptions options)
     {
-        return new CommerceDbContext(options, customizeModel);
+        return new CommerceDbContext(options);
     }
 }

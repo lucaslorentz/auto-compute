@@ -9,7 +9,7 @@ public class ChangeTrackingTests
     {
         using var context = await TestDbContext.Create<PersonDbContext>();
 
-        var person = context!.Set<Person>().Find(1)!;
+        var person = context!.Set<Person>().Find(PersonDbContext.PersonAId)!;
 
         person.FirstName = "Modified";
 
@@ -31,18 +31,18 @@ public class ChangeTrackingTests
     {
         using var context = await TestDbContext.Create<PersonDbContext>();
 
-        var person = context!.Set<Person>().Find(1)!;
+        var person = context!.Set<Person>().Find(PersonDbContext.PersonAId)!;
         await context.Entry(person).Collection(nameof(Person.Pets)).LoadAsync();
         person.Pets.Clear();
 
         var changes = await context.GetChangesAsync(
-            (Person p) => p.AsComputedUntracked().AsComputedTracked().Pets.Count(p => p.Type == "Cat"),
+            (Person p) => p.AsComputedUntracked().AsComputedTracked().Pets.Count(p => p.Type == PetType.Cat),
             default,
             c => c.Void());
         changes.Should().HaveCount(1);
         
         changes = await context.GetChangesAsync(
-            (Person p) => p.AsComputedUntracked().Pets.Count(p => p.Type == "Cat"),
+            (Person p) => p.AsComputedUntracked().Pets.Count(p => p.Type == PetType.Cat),
             default,
             c => c.Void());
         changes.Should().BeEmpty();        
@@ -53,17 +53,17 @@ public class ChangeTrackingTests
     {
         using var context = await TestDbContext.Create<PersonDbContext>();
 
-        var pet = context!.Set<Pet>().Find(1)!;
-        pet.Type = "Modified";
+        var pet = context!.Set<Pet>().Find(PersonDbContext.PersonAPet1Id)!;
+        pet.Type = PetType.Other;
 
         var changes = await context.GetChangesAsync(
-            (Person p) => p.Pets.Count(p => p.AsComputedUntracked().AsComputedTracked().Type == "Cat" && p.Color == "Black"),
+            (Person p) => p.Pets.Count(p => p.AsComputedUntracked().AsComputedTracked().Type == PetType.Cat && p.Color == "Black"),
             default,
             c => c.Void());
         changes.Should().HaveCount(1);
 
         changes = await context.GetChangesAsync(
-            (Person p) => p.Pets.Count(p => p.AsComputedUntracked().Type == "Cat" && p.Color == "Black"),
+            (Person p) => p.Pets.Count(p => p.AsComputedUntracked().Type == PetType.Cat && p.Color == "Black"),
             default,
             c => c.Void());
         changes.Should().BeEmpty();

@@ -14,7 +14,7 @@ This library is an automatic implementation of the approach described by Microso
     ```csharp
     modelBuilder.Entity<Person>().ComputedProperty(
         p => p.NumberOfCats,
-        p => p.Pets.Count(pet => pet.Type == "Cat"));
+        p => p.Pets.Count(pet => pet.Type == PetType.Cat));
     ```
 
 4. That's it! The computed property will update automatically during `dbContext.SaveChanges()`.
@@ -33,7 +33,7 @@ Example:
 ```csharp
 personBuilder.ComputedProperty(
     p => p.NumberOfCats,
-    p => p.Pets.Count(pet => pet.Type == "Cat"));
+    p => p.Pets.Count(pet => pet.Type == PetType.Cat));
 ```
 In this example, all pets from all affected persons will be pre-loaded before computation.
 
@@ -45,7 +45,7 @@ Example:
 ```csharp
 personBuilder.ComputedProperty(
     p => p.NumberOfCats,
-    p => p.Pets.Count(pet => pet.Type == "Cat"),
+    p => p.Pets.Count(pet => pet.Type == PetType.Cat),
     static c => c.NumberIncremental());
 ```
 In this example, NumberOfCats is incremented/decremented based on changes to Pets collection or to Pet's Type property, without loading all pets from affected persons.
@@ -60,7 +60,7 @@ Example:
 ```csharp
 // Collect changes before saving
 var catsChanges = await context.GetChangesAsync(
-    (Person person) => person.Pets.Where(p => p.Type == "Cat").Count(),
+    (Person person) => person.Pets.Where(p => p.Type == PetType.Cat).Count(),
     default,
     static c => c.NumberIncremental());
 
@@ -72,7 +72,7 @@ foreach (var change in catsChanges) {
     var person = change.Key;
     var catsAdded = change.Value;
     if (catsAdded > 0) {
-        SendMessageTo(person, $"Congratulations on your new {(catsAdded > 1 ? "cats" : "cat")}"!)
+        SendMessageTo(person, $"Congratulations on your new {(catsAdded > 1 ? "cats" : PetType.Cat)}"!)
     }
 }
 ```

@@ -15,16 +15,16 @@ public class ManyToManyContainsTests
     {
         using var context = await TestDbContext.Create<PersonDbContext>();
 
-        var person1 = context!.Set<Person>().Find(1)!;
-        var person2 = context!.Set<Person>().Find(2)!;
-        await context.Entry(person1).Navigation(nameof(Person.RelativesInverse)).LoadAsync();
+        var personA = context!.Set<Person>().Find(PersonDbContext.PersonAId)!;
+        var personB = context!.Set<Person>().Find(PersonDbContext.PersonBId)!;
+        await context.Entry(personA).Navigation(nameof(Person.RelativesInverse)).LoadAsync();
 
-        person1.RelativesInverse.Add(person2);
+        personA.RelativesInverse.Add(personB);
 
         var changes = await context.GetChangesAsync(_computedExpression, default, static c => c.CurrentValueIncremental());
 
         changes.Should().HaveCount(1);
-        context.Entry(person2).Navigation(nameof(Person.Friends)).IsLoaded.Should().BeTrue();
-        context.Entry(person2).Navigation(nameof(Person.Relatives)).IsLoaded.Should().BeTrue();
+        context.Entry(personB).Navigation(nameof(Person.Friends)).IsLoaded.Should().BeTrue();
+        context.Entry(personB).Navigation(nameof(Person.Relatives)).IsLoaded.Should().BeTrue();
     }
 }

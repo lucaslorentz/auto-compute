@@ -13,10 +13,10 @@ public class ManyToManyInverseTests
     {
         using var context = await TestDbContext.Create<PersonDbContext>();
 
-        var person2 = context!.Set<Person>().Find(2)!;
+        var person2 = context!.Set<Person>().Find(PersonDbContext.PersonBId)!;
         await context.Entry(person2).Navigation(nameof(Person.Friends)).LoadAsync();
 
-        var newPerson = new Person();
+        var newPerson = new Person { Id = "New" };
         person2.Friends.Add(newPerson);
 
         var changes = await context.GetChangesAsync(_computedExpression, default, static c => c.ValueChange());
@@ -30,8 +30,8 @@ public class ManyToManyInverseTests
     {
         using var context = await TestDbContext.Create<PersonDbContext>();
 
-        var person2 = context!.Set<Person>().Find(2)!;
-        var newPerson = new Person { FriendsInverse = { person2 } };
+        var person2 = context!.Set<Person>().Find(PersonDbContext.PersonBId)!;
+        var newPerson = new Person { Id = "New", FriendsInverse = { person2 } };
         context.Add(newPerson);
 
         var changes = await context.GetChangesAsync(_computedExpression, default, static c => c.ValueChange());
@@ -45,7 +45,7 @@ public class ManyToManyInverseTests
     {
         using var context = await TestDbContext.Create<PersonDbContext>();
 
-        var person1 = context!.Set<Person>().Find(1)!;
+        var person1 = context!.Set<Person>().Find(PersonDbContext.PersonAId)!;
         person1.FirstName = "Modified";
 
         var changes = await context.GetChangesAsync(_computedExpression, default, static c => c.ValueChange());
@@ -57,14 +57,14 @@ public class ManyToManyInverseTests
     {
         using var context = await TestDbContext.Create<PersonDbContext>();
 
-        var person1 = context!.Set<Person>().Find(1)!;
-        var person2 = context!.Set<Person>().Find(2)!;
-        await context.Entry(person2).Navigation(nameof(Person.Friends)).LoadAsync();
-        person2.Friends.RemoveAt(0);
+        var personA = context!.Set<Person>().Find(PersonDbContext.PersonAId)!;
+        var personB = context!.Set<Person>().Find(PersonDbContext.PersonBId)!;
+        await context.Entry(personB).Navigation(nameof(Person.Friends)).LoadAsync();
+        personB.Friends.RemoveAt(0);
 
         var changes = await context.GetChangesAsync(_computedExpression, default, static c => c.ValueChange());
         changes.Should().BeEquivalentTo(new Dictionary<Person, ValueChange<int>>{
-            { person1, new ValueChange<int>(1, 0)}
+            { personA, new ValueChange<int>(1, 0)}
         });
     }
 
@@ -73,15 +73,15 @@ public class ManyToManyInverseTests
     {
         using var context = await TestDbContext.Create<PersonDbContext>();
 
-        var person1 = context!.Set<Person>().Find(1)!;
-        await context.Entry(person1).Navigation(nameof(Person.FriendsInverse)).LoadAsync();
-        var person2 = context!.Set<Person>().Find(2)!;
+        var personA = context!.Set<Person>().Find(PersonDbContext.PersonAId)!;
+        await context.Entry(personA).Navigation(nameof(Person.FriendsInverse)).LoadAsync();
+        var personB = context!.Set<Person>().Find(PersonDbContext.PersonBId)!;
 
-        person1.FriendsInverse.RemoveAt(0);
+        personA.FriendsInverse.RemoveAt(0);
 
         var changes = await context.GetChangesAsync(_computedExpression, default, static c => c.ValueChange());
         changes.Should().BeEquivalentTo(new Dictionary<Person, ValueChange<int>>{
-            { person1, new ValueChange<int>(1, 0)}
+            { personA, new ValueChange<int>(1, 0)}
         });
     }
 }

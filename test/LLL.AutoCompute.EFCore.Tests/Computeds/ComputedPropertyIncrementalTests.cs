@@ -1,28 +1,10 @@
-﻿using FluentAssertions;
+using FluentAssertions;
+using Microsoft.EntityFrameworkCore;
 
 namespace LLL.AutoCompute.EFCore.Tests.Computeds;
 
-public class ComputedPropertyTests
+public class ComputedPropertyIncrementalTests
 {
-    [Fact]
-    public async Task TestProperty()
-    {
-        using var context = await GetDbContextAsync();
-
-        var person = context!.Set<Person>().Find(PersonDbContext.PersonAId)!;
-
-        person.FullName.Should().Be("John Doe");
-        person.Description.Should().Be("John Doe (1 pets)");
-
-        person.FirstName = "Jane";
-
-        await context.SaveChangesAsync();
-
-        person.FullName.Should().Be("Jane Doe");
-        person.Description.Should().Be("Jane Doe (1 pets)");
-        context.Entry(person).Navigation(nameof(Person.Pets)).IsLoaded.Should().BeFalse();
-    }
-
     [Fact]
     public async Task TestCollectionElementAdded()
     {
@@ -31,7 +13,7 @@ public class ComputedPropertyTests
         var person = context!.Set<Person>().Find(PersonDbContext.PersonAId)!;
 
         person.NumberOfCats.Should().Be(1);
-        person.Description.Should().Be("John Doe (1 pets)");
+        person.NumberOfCatsAndDogsConcat.Should().Be(1);
 
         var pet = new Pet { Id = "New", Type = PetType.Cat };
         person.Pets.Add(pet);
@@ -39,8 +21,9 @@ public class ComputedPropertyTests
         await context.SaveChangesAsync();
 
         person.NumberOfCats.Should().Be(2);
+        person.NumberOfCatsAndDogsConcat.Should().Be(2);
         person.HasCats.Should().BeTrue();
-        person.Description.Should().Be("John Doe (2 pets)");
+        context.Entry(person).Navigation(nameof(Person.Pets)).IsLoaded.Should().BeFalse();
     }
 
     [Fact]
@@ -51,8 +34,7 @@ public class ComputedPropertyTests
         var person = context!.Set<Person>().Find(PersonDbContext.PersonAId)!;
 
         person.NumberOfCats.Should().Be(1);
-        person.HasCats.Should().BeTrue();
-        person.Description.Should().Be("John Doe (1 pets)");
+        person.NumberOfCatsAndDogsConcat.Should().Be(1);
 
         var pet = new Pet { Id = "New", Type = PetType.Cat, Owner = person };
         context.Add(pet);
@@ -60,9 +42,9 @@ public class ComputedPropertyTests
         await context.SaveChangesAsync();
 
         person.NumberOfCats.Should().Be(2);
+        person.NumberOfCatsAndDogsConcat.Should().Be(2);
         person.HasCats.Should().BeTrue();
-        person.Description.Should().Be("John Doe (2 pets)");
-        context.Entry(person).Navigation(nameof(Person.Pets)).IsLoaded.Should().BeTrue();
+        context.Entry(person).Navigation(nameof(Person.Pets)).IsLoaded.Should().BeFalse();
     }
 
     [Fact]
@@ -73,8 +55,7 @@ public class ComputedPropertyTests
         var person = context!.Set<Person>().Find(PersonDbContext.PersonAId)!;
 
         person.NumberOfCats.Should().Be(1);
-        person.HasCats.Should().BeTrue();
-        person.Description.Should().Be("John Doe (1 pets)");
+        person.NumberOfCatsAndDogsConcat.Should().Be(1);
 
         var pet = context!.Set<Pet>().Find(PersonDbContext.PersonAPet1Id)!;
         pet.Type = PetType.Other;
@@ -82,9 +63,9 @@ public class ComputedPropertyTests
         await context.SaveChangesAsync();
 
         person.NumberOfCats.Should().Be(0);
+        person.NumberOfCatsAndDogsConcat.Should().Be(0);
         person.HasCats.Should().BeFalse();
-        person.Description.Should().Be("John Doe (1 pets)");
-        context.Entry(person).Navigation(nameof(Person.Pets)).IsLoaded.Should().BeTrue();
+        context.Entry(person).Navigation(nameof(Person.Pets)).IsLoaded.Should().BeFalse();
     }
 
     [Fact]
@@ -95,8 +76,7 @@ public class ComputedPropertyTests
         var person = context!.Set<Person>().Find(PersonDbContext.PersonAId)!;
 
         person.NumberOfCats.Should().Be(1);
-        person.HasCats.Should().BeTrue();
-        person.Description.Should().Be("John Doe (1 pets)");
+        person.NumberOfCatsAndDogsConcat.Should().Be(1);
 
         var pet = context!.Set<Pet>().Find(PersonDbContext.PersonAPet1Id)!;
         person.Pets.Remove(pet);
@@ -104,9 +84,9 @@ public class ComputedPropertyTests
         await context.SaveChangesAsync();
 
         person.NumberOfCats.Should().Be(0);
+        person.NumberOfCatsAndDogsConcat.Should().Be(0);
         person.HasCats.Should().BeFalse();
-        person.Description.Should().Be("John Doe (0 pets)");
-        context.Entry(person).Navigation(nameof(Person.Pets)).IsLoaded.Should().BeTrue();
+        context.Entry(person).Navigation(nameof(Person.Pets)).IsLoaded.Should().BeFalse();
     }
 
     [Fact]
@@ -115,10 +95,9 @@ public class ComputedPropertyTests
         using var context = await GetDbContextAsync();
 
         var person = context!.Set<Person>().Find(PersonDbContext.PersonAId)!;
-        person.Description.Should().Be("John Doe (1 pets)");
 
         person.NumberOfCats.Should().Be(1);
-        person.HasCats.Should().BeTrue();
+        person.NumberOfCatsAndDogsConcat.Should().Be(1);
 
         var pet = context!.Set<Pet>().Find(PersonDbContext.PersonAPet1Id)!;
         pet.Owner = null;
@@ -126,13 +105,17 @@ public class ComputedPropertyTests
         await context.SaveChangesAsync();
 
         person.NumberOfCats.Should().Be(0);
+        person.NumberOfCatsAndDogsConcat.Should().Be(0);
         person.HasCats.Should().BeFalse();
-        person.Description.Should().Be("John Doe (0 pets)");
-        context.Entry(person).Navigation(nameof(Person.Pets)).IsLoaded.Should().BeTrue();
+        context.Entry(person).Navigation(nameof(Person.Pets)).IsLoaded.Should().BeFalse();
     }
 
-    private static async Task<PersonDbContext> GetDbContextAsync()
+    private static async Task<DbContext> GetDbContextAsync()
     {
-        return await TestDbContext.Create<PersonDbContext>();
+        return await TestDbContext.Create(
+            options => new PersonDbContext(options, new PersonDbContextParams {
+                UseIncrementalComputation = true
+            }),
+            useLazyLoadingProxies: false);
     }
 }

@@ -13,8 +13,8 @@ public class OneToOneInverseTests
     {
         using var context = await TestDbContext.Create<PersonDbContext>();
 
-        var person = context!.Set<Person>().Find(1)!;
-        var pet = context!.Set<Pet>().Find(1)!;
+        var person = context!.Set<Person>().Find(PersonDbContext.PersonAId)!;
+        var pet = context!.Set<Pet>().Find(PersonDbContext.PersonAPet1Id)!;
         person.FavoritePet = pet;
 
         var changes = await context.GetChangesAsync(_computedExpression, default, static c => c.ValueChange());
@@ -28,8 +28,8 @@ public class OneToOneInverseTests
     {
         using var context = await TestDbContext.Create<PersonDbContext>();
 
-        var person = context!.Set<Person>().Find(1)!;
-        var pet = context!.Set<Pet>().Find(1)!;
+        var person = context!.Set<Person>().Find(PersonDbContext.PersonAId)!;
+        var pet = context!.Set<Pet>().Find(PersonDbContext.PersonAPet1Id)!;
         pet.FavoritePetInverse = person;
 
         var changes = await context.GetChangesAsync(_computedExpression, default, static c => c.ValueChange());
@@ -43,8 +43,8 @@ public class OneToOneInverseTests
     {
         using var context = await TestDbContext.Create<PersonDbContext>();
 
-        var person = context!.Set<Person>().Find(1)!;
-        var pet = context!.Set<Pet>().Find(1)!;
+        var person = context!.Set<Person>().Find(PersonDbContext.PersonAId)!;
+        var pet = context!.Set<Pet>().Find(PersonDbContext.PersonAPet1Id)!;
         person.FavoritePet = pet;
         await context.SaveChangesAsync();
 
@@ -61,8 +61,8 @@ public class OneToOneInverseTests
     {
         using var context = await TestDbContext.Create<PersonDbContext>();
 
-        var person = context!.Set<Person>().Find(1)!;
-        var pet = context!.Set<Pet>().Find(1)!;
+        var person = context!.Set<Person>().Find(PersonDbContext.PersonAId)!;
+        var pet = context!.Set<Pet>().Find(PersonDbContext.PersonAPet1Id)!;
         person.FavoritePet = pet;
         await context.SaveChangesAsync();
 
@@ -79,8 +79,8 @@ public class OneToOneInverseTests
     {
         using var context = await TestDbContext.Create<PersonDbContext>();
 
-        var person = context!.Set<Person>().Find(1)!;
-        var pet = context!.Set<Pet>().Find(1)!;
+        var person = context!.Set<Person>().Find(PersonDbContext.PersonAId)!;
+        var pet = context!.Set<Pet>().Find(PersonDbContext.PersonAPet1Id)!;
         person.FavoritePet = pet;
         await context.SaveChangesAsync();
 

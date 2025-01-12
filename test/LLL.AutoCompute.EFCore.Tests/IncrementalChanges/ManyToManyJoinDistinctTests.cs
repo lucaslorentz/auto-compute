@@ -5,7 +5,7 @@ namespace LLL.AutoCompute.EFCore.Tests.IncrementalChanges;
 
 public class ManyToManyJoinDistinctTests
 {
-    private static readonly Expression<Func<Person, IEnumerable<int>>> _computedExpression =
+    private static readonly Expression<Func<Person, IEnumerable<string>>> _computedExpression =
         (Person person) => person.FriendsJoin.Select(f => f.ToPerson)
             .Concat(person.RelativesJoin.Select(x => x.ToPerson))
             .Distinct()
@@ -17,16 +17,16 @@ public class ManyToManyJoinDistinctTests
     {
         using var context = await TestDbContext.Create<PersonDbContext>();
 
-        var person1 = context!.Set<Person>().Find(1)!;
-        var person2 = context!.Set<Person>().Find(2)!;
-        await context.Entry(person2).Navigation(nameof(Person.Relatives)).LoadAsync();
+        var personA = context!.Set<Person>().Find(PersonDbContext.PersonAId)!;
+        var personB = context!.Set<Person>().Find(PersonDbContext.PersonBId)!;
+        await context.Entry(personB).Navigation(nameof(Person.Relatives)).LoadAsync();
 
-        person2.Relatives.Add(person1);
+        personB.Relatives.Add(personA);
 
         var changes = await context.GetChangesAsync(_computedExpression, default, static c => c.SetIncremental());
 
         changes.Should().BeEmpty();
-        context.Entry(person2).Navigation(nameof(Person.Friends)).IsLoaded.Should().BeFalse();
+        context.Entry(personB).Navigation(nameof(Person.Friends)).IsLoaded.Should().BeFalse();
     }
 
     [Fact]
@@ -35,13 +35,13 @@ public class ManyToManyJoinDistinctTests
         using var context = await TestDbContext.Create<PersonDbContext>(
             seedData: async seedContext =>
             {
-                var p1 = seedContext!.Set<Person>().Find(1)!;
-                var p2 = seedContext!.Set<Person>().Find(2)!;
+                var p1 = seedContext!.Set<Person>().Find(PersonDbContext.PersonAId)!;
+                var p2 = seedContext!.Set<Person>().Find(PersonDbContext.PersonBId)!;
                 await seedContext.Entry(p2).Navigation(nameof(Person.Relatives)).LoadAsync();
                 p2.Relatives.Add(p1);
             });
 
-        var person2 = context!.Set<Person>().Find(2)!;
+        var person2 = context!.Set<Person>().Find(PersonDbContext.PersonBId)!;
         await context.Entry(person2).Navigation(nameof(Person.Friends)).LoadAsync();
         person2.Friends.Clear();
 
@@ -57,20 +57,20 @@ public class ManyToManyJoinDistinctTests
         using var context = await TestDbContext.Create<PersonDbContext>(
             seedData: async seedContext =>
             {
-                var p1 = seedContext!.Set<Person>().Find(1)!;
-                var p2 = seedContext!.Set<Person>().Find(2)!;
+                var p1 = seedContext!.Set<Person>().Find(PersonDbContext.PersonAId)!;
+                var p2 = seedContext!.Set<Person>().Find(PersonDbContext.PersonBId)!;
                 await seedContext.Entry(p2).Navigation(nameof(Person.Relatives)).LoadAsync();
                 p2.Relatives.Add(p1);
             });
 
-        var person1 = context!.Set<Person>().Find(1)!;
-        await context.Entry(person1).Navigation(nameof(Person.FriendsInverse)).LoadAsync();
-        person1.FriendsInverse.Clear();
+        var personA = context!.Set<Person>().Find(PersonDbContext.PersonAId)!;
+        await context.Entry(personA).Navigation(nameof(Person.FriendsInverse)).LoadAsync();
+        personA.FriendsInverse.Clear();
 
         var changes = await context.GetChangesAsync(_computedExpression, default, static c => c.SetIncremental());
 
-        var person2 = context!.Set<Person>().Find(2)!;
-        var pet = context!.Set<Pet>().Find(1)!;
+        var person2 = context!.Set<Person>().Find(PersonDbContext.PersonBId)!;
+        var pet = context!.Set<Pet>().Find(PersonDbContext.PersonAPet1Id)!;
         changes.Should().BeEmpty();
         context.Entry(person2).Navigation(nameof(Person.Relatives)).IsLoaded.Should().BeFalse();
     }

@@ -4,32 +4,47 @@ namespace LLL.AutoCompute.EFCore.Tests;
 
 public class Person
 {
-    public virtual int Id { get; protected set; }
+    public virtual required string Id { get; set; }
     public virtual string? FirstName { get; set; }
     public virtual string? LastName { get; set; }
-    public virtual string? FullName { get; protected set; }
-    public virtual IList<Pet> Pets { get; protected set; } = [];
-    public virtual bool HasCats { get; protected set; }
-    public virtual string? Description { get; protected set; }
-    public virtual int Total { get; protected set; }
     public virtual Pet? FavoritePet { get; set; }
+    public virtual IList<Pet> Pets { get; protected set; } = [];
     public virtual IList<Person> Friends { get; protected set; } = [];
-    public virtual IList<Person> Relatives { get; protected set; } = [];
     public virtual IList<Person> FriendsInverse { get; protected set; } = [];
+    public virtual IList<FriendsJoin> FriendsJoin { get; protected set; } = [];
+    public virtual IList<FriendsJoin> FriendsInverseJoin { get; protected set; } = [];
+    public virtual IList<Person> Relatives { get; protected set; } = [];
     public virtual IList<Person> RelativesInverse { get; protected set; } = [];
     public virtual IList<RelativesJoin> RelativesJoin { get; protected set; } = [];
     public virtual IList<RelativesJoin> RelativesInverseJoin { get; protected set; } = [];
-    public virtual IList<FriendsJoin> FriendsJoin { get; protected set; } = [];
-    public virtual IList<FriendsJoin> FriendsInverseJoin { get; protected set; } = [];
+
+    public virtual string? FullName { get; protected set; }
+    public virtual bool HasCats { get; protected set; }
+    public virtual bool HasDogs { get; protected set; }
+    public virtual int NumberOfCats { get; protected set; }
+    public virtual int NumberOfDogs { get; protected set; }
+    public virtual int NumberOfPets { get; protected set; }
+    public virtual int NumberOfCatsAndDogsConcat { get; protected set; }
+    public virtual string? Description { get; protected set; }
+    public virtual int FriendsCount { get; protected set; }
+    public virtual int RelativesCount { get; protected set; }
+    public virtual int DistinctFriendRelativesCount { get; protected set; }
 }
 
 public class Pet
 {
-    public virtual int Id { get; protected set; }
+    public virtual required string Id { get; set; }
     public virtual string? Color { get; set; }
-    public virtual string? Type { get; set; }
+    public virtual PetType? Type { get; set; }
     public virtual Person? Owner { get; set; }
     public virtual Person? FavoritePetInverse { get; set; }
+}
+
+public enum PetType
+{
+    Cat,
+    Dog,
+    Other
 }
 
 public class RelativesJoin
@@ -44,20 +59,27 @@ public class FriendsJoin
     public virtual required Person ToPerson { get; init; }
 }
 
+record class PersonDbContextParams
+{
+    public bool UseIncrementalComputation { get; set; }
+}
+
 class PersonDbContext(
     DbContextOptions options,
-    Action<ModelBuilder>? customizeModel
-) : DbContext(options), ITestDbContext<PersonDbContext>
+    PersonDbContextParams parameters
+) : DbContext(options), ITestDbContext, ICreatableTestDbContext<PersonDbContext>
 {
-    public Action<ModelBuilder>? CustomizeModel => customizeModel;
+    public const string PersonAId = "A";
+    public const string PersonAPet1Id = "A.A";
+    public const string PersonBId = "B";
+
+    public object? ConfigurationKey => parameters;
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         base.OnModelCreating(modelBuilder);
 
         var personBuilder = modelBuilder.Entity<Person>();
-
-        personBuilder.Property(e => e.Id).ValueGeneratedOnAdd();
 
         personBuilder.HasOne(e => e.FavoritePet)
             .WithOne(e => e.FavoritePetInverse)
@@ -77,39 +99,71 @@ class PersonDbContext(
                 r => r.HasOne<Person>(x => x.FromPerson).WithMany(x => x.RelativesJoin)
             );
 
-        var petBuilder = modelBuilder.Entity<Pet>();
+        personBuilder.ComputedProperty(
+            p => p.FullName,
+            p => p.FirstName + " " + p.LastName);
 
-        petBuilder.Property(e => e.Id).ValueGeneratedOnAdd();
+        personBuilder.ComputedProperty(
+            p => p.NumberOfCats,
+            p => p.Pets.Count(x => x.Type == PetType.Cat),
+            c => parameters.UseIncrementalComputation ? c.NumberIncremental() : c.CurrentValue());
 
-        customizeModel?.Invoke(modelBuilder);
+        personBuilder.ComputedProperty(
+            p => p.NumberOfDogs,
+            p => p.Pets.Count(x => x.Type == PetType.Dog),
+            c => parameters.UseIncrementalComputation ? c.NumberIncremental() : c.CurrentValue());
+
+        personBuilder.ComputedProperty(
+            p => p.NumberOfPets,
+            p => p.Pets.Count,
+            c => parameters.UseIncrementalComputation ? c.NumberIncremental() : c.CurrentValue());
+
+        personBuilder.ComputedProperty(
+            p => p.HasCats,
+            p => p.NumberOfCats > 0);
+
+        personBuilder.ComputedProperty(
+            p => p.HasDogs,
+            p => p.NumberOfDogs > 0);
+
+        personBuilder.ComputedProperty(
+            p => p.NumberOfCatsAndDogsConcat,
+            p => p.Pets.Where(x => x.Type == PetType.Cat)
+                .Concat(p.Pets.Where(x => x.Type == PetType.Dog))
+                .Count(),
+            c => parameters.UseIncrementalComputation ? c.NumberIncremental() : c.CurrentValue());
+
+        personBuilder.ComputedProperty(p => p.Description, p => p.FullName + " (" + p.NumberOfPets + " pets)");
     }
 
-    public static void SeedData(PersonDbContext dbContext)
+    public void SeedData()
     {
-        var person1 = new Person
+        var personA = new Person
         {
+            Id = PersonAId,
             FirstName = "John",
             LastName = "Doe",
             Pets = {
-                new Pet { Type = "Cat" }
+                new Pet { Id = PersonAPet1Id, Type = PetType.Cat }
             },
         };
-        dbContext.Add(person1);
 
-        dbContext.Add(new Person
+        var personB = new Person
         {
+            Id = PersonBId,
             FirstName = "Jane",
             LastName = "Doe",
             Friends = {
-                person1
+                personA
             }
-        });
+        };
+
+        Add(personA);
+        Add(personB);
     }
 
-    public static PersonDbContext Create(
-        DbContextOptions options,
-        Action<ModelBuilder>? customizeModel)
+    public static PersonDbContext Create(DbContextOptions options)
     {
-        return new PersonDbContext(options, customizeModel);
+        return new PersonDbContext(options, new PersonDbContextParams());
     }
 }

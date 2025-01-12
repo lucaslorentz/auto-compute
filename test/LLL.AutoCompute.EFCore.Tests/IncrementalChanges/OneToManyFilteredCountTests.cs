@@ -6,7 +6,7 @@ namespace LLL.AutoCompute.EFCore.Tests.IncrementalChanges;
 public class OneToManyFilteredCountTests
 {
     private static readonly Expression<Func<Person, int>> _computedExpression = (Person person) =>
-        person.Pets.Where(p => p.Type == "Cat").Count();
+        person.Pets.Where(p => p.Type == PetType.Cat).Count();
 
     [Fact]
     public async Task TestCollectionElementAdded()
@@ -15,8 +15,8 @@ public class OneToManyFilteredCountTests
             useLazyLoadingProxies: false
         );
 
-        var person = context!.Set<Person>().Find(1)!;
-        var pet = new Pet { Type = "Cat" };
+        var person = context!.Set<Person>().Find(PersonDbContext.PersonAId)!;
+        var pet = new Pet { Id = "New", Type = PetType.Cat };
         person.Pets.Add(pet);
 
         var changes = await context.GetChangesAsync(_computedExpression, default, static c => c.NumberIncremental());
@@ -31,8 +31,8 @@ public class OneToManyFilteredCountTests
     {
         using var context = await TestDbContext.Create<PersonDbContext>();
 
-        var person = context!.Set<Person>().Find(1)!;
-        var pet = new Pet { Type = "Cat", Owner = person };
+        var person = context!.Set<Person>().Find(PersonDbContext.PersonAId)!;
+        var pet = new Pet { Id = "New", Type = PetType.Cat, Owner = person };
         context.Add(pet);
 
         var changes = await context.GetChangesAsync(_computedExpression, default, static c => c.NumberIncremental());
@@ -47,18 +47,18 @@ public class OneToManyFilteredCountTests
     {
         using var context = await TestDbContext.Create<PersonDbContext>();
 
-        var person1 = context!.Set<Person>().Find(1)!;
-        var person2 = context!.Set<Person>().Find(2)!;
-        var pet = context!.Set<Pet>().Find(1)!;
-        pet.Owner = person2;
+        var personA = context!.Set<Person>().Find(PersonDbContext.PersonAId)!;
+        var personB = context!.Set<Person>().Find(PersonDbContext.PersonBId)!;
+        var pet = context!.Set<Pet>().Find(PersonDbContext.PersonAPet1Id)!;
+        pet.Owner = personB;
 
         var changes = await context.GetChangesAsync(_computedExpression, default, static c => c.NumberIncremental());
         changes.Should().BeEquivalentTo(new Dictionary<Person, int>{
-            { person1, -1},
-            { person2, 1}
+            { personA, -1},
+            { personB, 1}
         });
-        context.Entry(person1).Navigation(nameof(Person.Pets)).IsLoaded.Should().BeFalse();
-        context.Entry(person2).Navigation(nameof(Person.Pets)).IsLoaded.Should().BeFalse();
+        context.Entry(personA).Navigation(nameof(Person.Pets)).IsLoaded.Should().BeFalse();
+        context.Entry(personB).Navigation(nameof(Person.Pets)).IsLoaded.Should().BeFalse();
     }
 
     [Fact]
@@ -66,8 +66,8 @@ public class OneToManyFilteredCountTests
     {
         using var context = await TestDbContext.Create<PersonDbContext>();
 
-        var pet = context!.Set<Pet>().Find(1)!;
-        pet.Type = "Modified";
+        var pet = context!.Set<Pet>().Find(PersonDbContext.PersonAPet1Id)!;
+        pet.Type = PetType.Other;
 
         var changes = await context.GetChangesAsync(_computedExpression, default, static c => c.NumberIncremental());
         changes.Should().BeEquivalentTo(new Dictionary<Person, int>{
@@ -83,8 +83,8 @@ public class OneToManyFilteredCountTests
             useLazyLoadingProxies: false
         );
 
-        var person = context!.Set<Person>().Find(1)!;
-        var pet = context!.Set<Pet>().Find(1)!;
+        var person = context!.Set<Person>().Find(PersonDbContext.PersonAId)!;
+        var pet = context!.Set<Pet>().Find(PersonDbContext.PersonAPet1Id)!;
         person.Pets.Remove(pet);
 
         var changes = await context.GetChangesAsync(_computedExpression, default, static c => c.NumberIncremental());
@@ -99,8 +99,8 @@ public class OneToManyFilteredCountTests
     {
         using var context = await TestDbContext.Create<PersonDbContext>();
 
-        var person = context!.Set<Person>().Find(1)!;
-        var pet = context!.Set<Pet>().Find(1)!;
+        var person = context!.Set<Person>().Find(PersonDbContext.PersonAId)!;
+        var pet = context!.Set<Pet>().Find(PersonDbContext.PersonAPet1Id)!;
         pet.Owner = null;
 
         var changes = await context.GetChangesAsync(_computedExpression, default, static c => c.NumberIncremental());
@@ -118,8 +118,8 @@ public class OneToManyFilteredCountTests
         );
 
         // Add a cat
-        var person = context!.Set<Person>().Find(1)!;
-        var newPet = new Pet { Type = "Cat" };
+        var person = context!.Set<Person>().Find(PersonDbContext.PersonAId)!;
+        var newPet = new Pet { Id = "New", Type = PetType.Cat };
         person.Pets.Add(newPet);
 
         var deltaProvider = context.GetChangesProvider(_computedExpression, default, static c => c.NumberIncremental())!;

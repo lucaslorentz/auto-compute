@@ -6,19 +6,19 @@ namespace LLL.AutoCompute.EFCore.Tests.IncrementalChanges;
 public class NestedFilteredCount
 {
     private static readonly Expression<Func<Person, int>> _computedExpression = (Person person) =>
-        person.Friends.SelectMany(f => f.Pets).Where(p => p.Type == "Cat").Count();
+        person.Friends.SelectMany(f => f.Pets).Where(p => p.Type == PetType.Cat).Count();
 
     [Fact]
     public async Task TestNestedCollectionElementModified()
     {
         using var context = await TestDbContext.Create<PersonDbContext>();
 
-        var pet = context!.Set<Pet>().Find(1)!;
-        pet.Type = "Modified";
+        var pet = context!.Set<Pet>().Find(PersonDbContext.PersonAPet1Id)!;
+        pet.Type = PetType.Other;
 
         var changes = await context.GetChangesAsync(_computedExpression, default, static c => c.NumberIncremental());
 
-        var person2 = context!.Set<Person>().Find(2)!;
+        var person2 = context!.Set<Person>().Find(PersonDbContext.PersonBId)!;
         changes.Should().BeEquivalentTo(new Dictionary<Person, int>{
             { person2, -1}
         });
@@ -30,7 +30,7 @@ public class NestedFilteredCount
     {
         using var context = await TestDbContext.Create<PersonDbContext>();
 
-        var person2 = context!.Set<Person>().Find(2)!;
+        var person2 = context!.Set<Person>().Find(PersonDbContext.PersonBId)!;
         await context.Entry(person2).Navigation(nameof(Person.Friends)).LoadAsync();
         person2.Friends.Clear();
 
@@ -45,13 +45,13 @@ public class NestedFilteredCount
     {
         using var context = await TestDbContext.Create<PersonDbContext>();
 
-        var person1 = context!.Set<Person>().Find(1)!;
-        await context.Entry(person1).Navigation(nameof(Person.FriendsInverse)).LoadAsync();
-        person1.FriendsInverse.Clear();
+        var personA = context!.Set<Person>().Find(PersonDbContext.PersonAId)!;
+        await context.Entry(personA).Navigation(nameof(Person.FriendsInverse)).LoadAsync();
+        personA.FriendsInverse.Clear();
 
         var changes = await context.GetChangesAsync(_computedExpression, default, static c => c.NumberIncremental());
 
-        var person2 = context!.Set<Person>().Find(2)!;
+        var person2 = context!.Set<Person>().Find(PersonDbContext.PersonBId)!;
         changes.Should().BeEquivalentTo(new Dictionary<Person, int>{
             { person2, -1}
         });

@@ -7,15 +7,15 @@ namespace LLL.AutoCompute.EFCore.Tests.Changes;
 
 public class FilteredCollectionTests
 {
-    private static readonly Expression<Func<Person, int>> _computedExpression = (Person person) => person.Pets.Where(p => p.Type == "Cat").Count();
+    private static readonly Expression<Func<Person, int>> _computedExpression = (Person person) => person.Pets.Where(p => p.Type == PetType.Cat).Count();
 
     [Fact]
     public async Task TestCollectionElementAdded()
     {
         using var context = await TestDbContext.Create<PersonDbContext>();
 
-        var person = context!.Set<Person>().Find(1)!;
-        var pet = new Pet { Type = "Cat" };
+        var person = context!.Set<Person>().Find(PersonDbContext.PersonAId)!;
+        var pet = new Pet { Id = "New", Type = PetType.Cat };
         person.Pets.Add(pet);
 
         var changes = await context.GetChangesAsync(_computedExpression, default, static c => c.ValueChange());
@@ -29,8 +29,8 @@ public class FilteredCollectionTests
     {
         using var context = await TestDbContext.Create<PersonDbContext>();
 
-        var person = context!.Set<Person>().Find(1)!;
-        var pet = new Pet { Type = "Cat", Owner = person };
+        var person = context!.Set<Person>().Find(PersonDbContext.PersonAId)!;
+        var pet = new Pet { Id = "New", Type = PetType.Cat, Owner = person };
         context.Add(pet);
 
         var changes = await context.GetChangesAsync(_computedExpression, default, static c => c.ValueChange());
@@ -44,8 +44,8 @@ public class FilteredCollectionTests
     {
         using var context = await TestDbContext.Create<PersonDbContext>();
 
-        var pet = context!.Set<Pet>().Find(1)!;
-        pet.Type = "Modified";
+        var pet = context!.Set<Pet>().Find(PersonDbContext.PersonAPet1Id)!;
+        pet.Type = PetType.Other;
 
         var changes = await context.GetChangesAsync(_computedExpression, default, static c => c.ValueChange());
         changes.Should().BeEquivalentTo(new Dictionary<Person, ValueChange<int>>{
@@ -58,8 +58,8 @@ public class FilteredCollectionTests
     {
         using var context = await TestDbContext.Create<PersonDbContext>();
 
-        var person = context!.Set<Person>().Find(1)!;
-        var pet = context!.Set<Pet>().Find(1)!;
+        var person = context!.Set<Person>().Find(PersonDbContext.PersonAId)!;
+        var pet = context!.Set<Pet>().Find(PersonDbContext.PersonAPet1Id)!;
         person.Pets.Remove(pet);
 
         var changes = await context.GetChangesAsync(_computedExpression, default, static c => c.ValueChange());
@@ -73,8 +73,8 @@ public class FilteredCollectionTests
     {
         using var context = await TestDbContext.Create<PersonDbContext>();
 
-        var person = context!.Set<Person>().Find(1)!;
-        var pet = context!.Set<Pet>().Find(1)!;
+        var person = context!.Set<Person>().Find(PersonDbContext.PersonAId)!;
+        var pet = context!.Set<Pet>().Find(PersonDbContext.PersonAPet1Id)!;
         pet.Owner = null;
 
         var changes = await context.GetChangesAsync(_computedExpression, default, static c => c.ValueChange());
@@ -88,12 +88,12 @@ public class FilteredCollectionTests
     {
         using var context = await TestDbContext.Create<PersonDbContext>();
 
-        var person = context!.Set<Person>().Find(1)!;
+        var person = context!.Set<Person>().Find(PersonDbContext.PersonAId)!;
 
         var changesProvider = context.GetChangesProvider(_computedExpression, default, static c => c.ValueChange())!;
 
         // Add a cat
-        person.Pets.Add(new Pet { Type = "Cat" });
+        person.Pets.Add(new Pet { Id = "New", Type = PetType.Cat });
         var changes = await changesProvider.GetChangesAsync();
         changes.Should().BeEquivalentTo(new Dictionary<Person, ValueChange<int>>{
             { person, new ValueChange<int>(1, 2)}

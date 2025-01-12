@@ -9,7 +9,7 @@ public class ComputedCollectionTests
     {
         using var context = await GetDbContextAsync();
 
-        var customerA = context.Customers.Find("A")!;
+        var customerA = context.Customers.Find(CommerceDbContext.CustomerAId)!;
         customerA.OrderCount.Should().Be(1);
         customerA.TotalSpent.Should().Be(20);
 
@@ -36,12 +36,12 @@ public class ComputedCollectionTests
         await context.SaveChangesAsync();
 
         // Verify computeds were updated
-        var order2ItemA = order2.Items.First(i => i.Product!.Id == "A");
+        var order2ItemA = order2.Items.First(i => i.Product!.Id == CommerceDbContext.ProductAId);
         order2ItemA.UnitPrice.Should().Be(10);
         order2ItemA.Total.Should().Be(20);
         order2.Total.Should().Be(20);
 
-        var order3ItemA = order3.Items.First(i => i.Product!.Id == "A");
+        var order3ItemA = order3.Items.First(i => i.Product!.Id == CommerceDbContext.ProductAId);
         order3ItemA.UnitPrice.Should().Be(10);
         order3ItemA.Total.Should().Be(20);
         order3.Total.Should().Be(20);
@@ -52,20 +52,20 @@ public class ComputedCollectionTests
         // Modify order 1
         order1.Items.Add(new OrderItem
         {
-            Product = context.Products.Find("B")!,
+            Product = context.Products.Find(CommerceDbContext.ProductBId)!,
             Quantity = 3
         });
 
         await context.SaveChangesAsync();
 
         // Verify computeds were updated
-        var order2ItemB = order2.Items.First(i => i.Product!.Id == "B");
+        var order2ItemB = order2.Items.First(i => i.Product!.Id == CommerceDbContext.ProductBId);
         order2ItemB.UnitPrice.Should().Be(5);
         order2ItemB.Total.Should().Be(15);
         order2.Total.Should().Be(35);
         order2.Items.Should().Contain(order2ItemA); // Verify item A was reused and not recreated
 
-        var order3ItemB = order2.Items.First(i => i.Product!.Id == "B");
+        var order3ItemB = order2.Items.First(i => i.Product!.Id == CommerceDbContext.ProductBId);
         order3ItemB.UnitPrice.Should().Be(5);
         order3ItemB.Total.Should().Be(15);
         order3.Total.Should().Be(35);
@@ -80,42 +80,6 @@ public class ComputedCollectionTests
 
     private static async Task<CommerceDbContext> GetDbContextAsync()
     {
-        return await TestDbContext.Create<CommerceDbContext>(
-            seedData: async (dbContext) =>
-            {
-                var customerA = new Customer
-                {
-                    Id = "A"
-                };
-
-                var productA = new Product
-                {
-                    Id = "A",
-                    UnitPrice = 10
-                };
-
-                var productB = new Product
-                {
-                    Id = "B",
-                    UnitPrice = 5
-                };
-
-                var order1 = new Order
-                {
-                    Customer = customerA,
-                    Items = {
-                        new OrderItem {
-                            Product = productA,
-                            Quantity = 2
-                        }
-                    }
-                };
-
-                dbContext.Add(customerA);
-                dbContext.Add(productA);
-                dbContext.Add(productB);
-                dbContext.Add(order1);
-            }
-        );
+        return await TestDbContext.Create<CommerceDbContext>();
     }
 }

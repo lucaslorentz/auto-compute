@@ -4,15 +4,11 @@ namespace LLL.AutoCompute.EFCore.Tests;
 
 public interface ITestDbContext
 {
-    public Action<ModelBuilder>? CustomizeModel { get; }
+    public object? ConfigurationKey { get; }
+    abstract void SeedData();
 }
 
-public interface ITestDbContext<TDbContext> : ITestDbContext
-    where TDbContext : DbContext, ITestDbContext<TDbContext>
+public interface ICreatableTestDbContext<TDbContext> : ITestDbContext
 {
-    abstract static void SeedData(TDbContext dbContext);
-
-    abstract static TDbContext Create(
-        DbContextOptions options,
-        Action<ModelBuilder>? customizeModel);
+    abstract static TDbContext Create(DbContextOptions options);
 }

@@ -13,7 +13,7 @@ public class BasicOperationsTests
     {
         using var context = await TestDbContext.Create<PersonDbContext>();
 
-        var person = new Person { FirstName = "Jane", LastName = "Doe" };
+        var person = new Person { Id = "New", FirstName = "Jane", LastName = "Doe" };
         context!.Add(person);
 
         var changes = await context.GetChangesAsync(_computedExpression, default, static c => c.ValueChange());
@@ -27,7 +27,7 @@ public class BasicOperationsTests
     {
         using var context = await TestDbContext.Create<PersonDbContext>();
 
-        var person = context!.Set<Person>().Find(1)!;
+        var person = context!.Set<Person>().Find(PersonDbContext.PersonAId)!;
         person.FirstName = "Modified";
 
         var changes = await context.GetChangesAsync(_computedExpression, default, static c => c.ValueChange());
@@ -41,7 +41,7 @@ public class BasicOperationsTests
     {
         using var context = await TestDbContext.Create<PersonDbContext>();
 
-        var person = context!.Set<Person>().Find(1)!;
+        var person = context!.Set<Person>().Find(PersonDbContext.PersonAId)!;
         context.Remove(person);
 
         var changes = await context.GetChangesAsync(_computedExpression, default, static c => c.ValueChange());
