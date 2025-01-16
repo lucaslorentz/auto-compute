@@ -19,10 +19,10 @@ public class Person
     public virtual IList<RelativesJoin> RelativesInverseJoin { get; protected set; } = [];
 
     public virtual string? FullName { get; protected set; }
-    public virtual bool HasCats { get; protected set; }
-    public virtual bool HasDogs { get; protected set; }
     public virtual int NumberOfCats { get; protected set; }
+    public virtual bool HasCats { get; protected set; }
     public virtual int NumberOfDogs { get; protected set; }
+    public virtual bool HasDogs { get; protected set; }
     public virtual int NumberOfPets { get; protected set; }
     public virtual int NumberOfCatsAndDogsConcat { get; protected set; }
     public virtual string? Description { get; protected set; }

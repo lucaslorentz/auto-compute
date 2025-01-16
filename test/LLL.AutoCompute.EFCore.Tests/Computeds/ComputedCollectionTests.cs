@@ -10,8 +10,8 @@ public class ComputedCollectionTests
         using var context = await GetDbContextAsync();
 
         var customerA = context.Customers.Find(CommerceDbContext.CustomerAId)!;
-        customerA.OrderCount.Should().Be(1);
-        customerA.TotalSpent.Should().Be(20);
+        
+        VerifyInitialStateCustomerA(customerA);
 
         var order1 = context.Orders.Find(1)!;
 
@@ -81,5 +81,11 @@ public class ComputedCollectionTests
     private static async Task<CommerceDbContext> GetDbContextAsync()
     {
         return await TestDbContext.Create<CommerceDbContext>();
+    }
+
+    private static void VerifyInitialStateCustomerA(Customer customerA)
+    {
+        customerA.OrderCount.Should().Be(1);
+        customerA.TotalSpent.Should().Be(20);
     }
 }
