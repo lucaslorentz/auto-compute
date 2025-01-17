@@ -28,7 +28,22 @@ This library provides an automated implementation of the approach described by M
 
 **Auto Compute** analyzes computed expressions and tracks all referenced data. When any of the referenced data changes, it traverses inverse navigations to identify affected entities and updates their computed properties accordingly.
 
-## Mapping Features
+## Roadmap
+
+- [x] Computed properties, collections and references
+- [x] Incremental computed properties
+   - [x] Incremental calculation
+   - [x] Load all navigation items to evaluate Linq All/Any/Contains
+   - [x] Load necessary navigation items to evaluate Linq Distinct 
+- [x] Computed observers
+- [ ] Async queue-based update for hot computed properties
+  - [ ] Throttled update - Update X seconds after the first change
+  - [ ] Debounced update - Update X seconds after the last change
+- [ ] Methods to query inconsistent entities
+- [ ] Periodic consistency check and fixes
+- [ ] Web-based UI for schema introspection, consistency check and fix
+
+## Features
 
 ### Computed Properties
 
