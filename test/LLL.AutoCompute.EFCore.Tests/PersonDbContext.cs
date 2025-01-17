@@ -1,4 +1,6 @@
 ﻿using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.Extensions.Logging;
 
 namespace LLL.AutoCompute.EFCore.Tests;
 
@@ -62,6 +64,7 @@ public class FriendsJoin
 record class PersonDbContextParams
 {
     public bool UseIncrementalComputation { get; set; }
+    public Action<ModelBuilder>? SetupObservers { get; set; }
 }
 
 class PersonDbContext(
@@ -70,7 +73,7 @@ class PersonDbContext(
 ) : DbContext(options), ITestDbContext, ICreatableTestDbContext<PersonDbContext>
 {
     public const string PersonAId = "A";
-    public const string PersonAPet1Id = "A.A";
+    public const string PersonAPet1Id = "A.Pet.1";
     public const string PersonBId = "B";
 
     public object? ConfigurationKey => parameters;
@@ -134,6 +137,8 @@ class PersonDbContext(
             c => parameters.UseIncrementalComputation ? c.NumberIncremental() : c.CurrentValue());
 
         personBuilder.ComputedProperty(p => p.Description, p => p.FullName + " (" + p.NumberOfPets + " pets)");
+
+        parameters.SetupObservers?.Invoke(modelBuilder);
     }
 
     public void SeedData()

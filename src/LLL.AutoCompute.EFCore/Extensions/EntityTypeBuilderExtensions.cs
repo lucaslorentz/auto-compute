@@ -21,12 +21,13 @@ public static class EntityTypeBuilderExtensions
         this EntityTypeBuilder<TEntity> entityTypeBuilder,
         Expression<Func<TEntity, TProperty>> navigationExpression,
         Expression<Func<TEntity, TProperty>> computedExpression,
-        ChangeCalculationSelector<TProperty, TProperty>? calculationSelector = null)
+        ChangeCalculationSelector<TProperty, TProperty>? calculationSelector = null,
+        Action<IComputedNavigationBuilder<TEntity, TProperty>>? configure = null)
         where TEntity : class
         where TProperty : class
     {
         return entityTypeBuilder.Navigation(navigationExpression!)
-            .AutoCompute(computedExpression, calculationSelector);
+            .AutoCompute(computedExpression, calculationSelector, configure);
     }
 
     public static void ComputedObserver<TEntity, TValue, TChange>(

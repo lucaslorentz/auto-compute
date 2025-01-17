@@ -70,8 +70,9 @@ class CommerceDbContext(DbContextOptions options)
             e => e.Total,
             e => e.Items.Sum(i => i.Total));
 
-        orderBuilder.Navigation(e => e.Items)
-            .AutoCompute(e => e.CloneFrom != null
+        orderBuilder.ComputedNavigation(
+            e => e.Items,
+            e => e.CloneFrom != null
                 ? e.CloneFrom.Items.Select(i => new OrderItem
                 {
                     Product = i.Product,
