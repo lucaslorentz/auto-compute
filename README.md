@@ -1,4 +1,4 @@
-# EF Core Auto Compute ![CI](https://github.com/lucaslorentz/auto-compute/workflows/CI/badge.svg) [![Coverage Status](https://coveralls.io/repos/github/lucaslorentz/auto-compute/badge.svg)](https://coveralls.io/github/lucaslorentz/auto-compute)
+# EF Core Auto Compute ![CI](https://github.com/lucaslorentz/auto-compute/workflows/CI/badge.svg) [![Coverage Status](https://coveralls.io/repos/github/lucaslorentz/auto-compute/badge.svg?branch=main)](https://coveralls.io/github/lucaslorentz/auto-compute)
 
 **Automatically update persisted computed properties in EF Core on save changes!**
 
