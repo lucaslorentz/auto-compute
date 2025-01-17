@@ -2,7 +2,7 @@
 using FluentAssertions;
 using LLL.AutoCompute.ChangeCalculations;
 
-namespace LLL.AutoCompute.EFCore.Tests.IncrementalChanges;
+namespace LLL.AutoCompute.EFCore.Tests.Changes.Incremental;
 
 public class OneToManyFilteredItemsTests
 {

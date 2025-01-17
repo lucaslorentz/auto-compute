@@ -1,9 +1,9 @@
 using FluentAssertions;
 using Microsoft.EntityFrameworkCore;
 
-namespace LLL.AutoCompute.EFCore.Tests.Computeds;
+namespace LLL.AutoCompute.EFCore.Tests.Computeds.Incremental;
 
-public class ComputedPropertyIncrementalTests
+public class ComputedPropertyTests
 {
     [Fact]
     public async Task TestCollectionElementAdded()

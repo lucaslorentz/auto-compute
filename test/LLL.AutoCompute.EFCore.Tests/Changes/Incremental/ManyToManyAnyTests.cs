@@ -1,7 +1,7 @@
 ﻿using System.Linq.Expressions;
 using FluentAssertions;
 
-namespace LLL.AutoCompute.EFCore.Tests.IncrementalChanges;
+namespace LLL.AutoCompute.EFCore.Tests.Changes.Incremental;
 
 public class ManyToManyContainsTests
 {

@@ -1,12 +1,14 @@
 ﻿using System.Linq.Expressions;
 using FluentAssertions;
 
-namespace LLL.AutoCompute.EFCore.Tests.IncrementalChanges;
+namespace LLL.AutoCompute.EFCore.Tests.Changes.Incremental;
 
-public class OneToManyFilteredCountTests
+public class OneToManyConcatFilteredCountTests
 {
-    private static readonly Expression<Func<Person, int>> _computedExpression = (Person person) =>
-        person.Pets.Where(p => p.Type == PetType.Cat).Count();
+    private static readonly Expression<Func<Person, int>> _computedExpression =
+        (Person person) => person.Pets.Where(p => p.Type == PetType.Cat)
+            .Concat(person.Pets.Where(p => p.Type == PetType.Dog))
+            .Count();
 
     [Fact]
     public async Task TestCollectionElementAdded()
@@ -35,7 +37,10 @@ public class OneToManyFilteredCountTests
         var pet = new Pet { Id = "New", Type = PetType.Cat, Owner = person };
         context.Add(pet);
 
-        var changes = await context.GetChangesAsync(_computedExpression, default, static c => c.NumberIncremental());
+        var changes = await context.GetChangesAsync(
+            _computedExpression,
+            default,
+            static c => c.NumberIncremental());
         changes.Should().BeEquivalentTo(new Dictionary<Person, int>{
             { person, 1}
         });
@@ -43,36 +48,36 @@ public class OneToManyFilteredCountTests
     }
 
     [Fact]
-    public async Task TestCollectionElementMoved()
-    {
-        using var context = await TestDbContext.Create<PersonDbContext>();
-
-        var personA = context!.Set<Person>().Find(PersonDbContext.PersonAId)!;
-        var personB = context!.Set<Person>().Find(PersonDbContext.PersonBId)!;
-        var pet = context!.Set<Pet>().Find(PersonDbContext.PersonAPet1Id)!;
-        pet.Owner = personB;
-
-        var changes = await context.GetChangesAsync(_computedExpression, default, static c => c.NumberIncremental());
-        changes.Should().BeEquivalentTo(new Dictionary<Person, int>{
-            { personA, -1},
-            { personB, 1}
-        });
-        context.Entry(personA).Navigation(nameof(Person.Pets)).IsLoaded.Should().BeFalse();
-        context.Entry(personB).Navigation(nameof(Person.Pets)).IsLoaded.Should().BeFalse();
-    }
-
-    [Fact]
-    public async Task TestCollectionElementModified()
+    public async Task TestCollectionElementModifiedToBeFilteredOut()
     {
         using var context = await TestDbContext.Create<PersonDbContext>();
 
         var pet = context!.Set<Pet>().Find(PersonDbContext.PersonAPet1Id)!;
         pet.Type = PetType.Other;
 
-        var changes = await context.GetChangesAsync(_computedExpression, default, static c => c.NumberIncremental());
+        var changes = await context.GetChangesAsync(
+            _computedExpression,
+            default,
+            static c => c.NumberIncremental());
         changes.Should().BeEquivalentTo(new Dictionary<Person, int>{
             { pet.Owner!, -1}
         });
+        context.Entry(pet.Owner!).Navigation(nameof(Person.Pets)).IsLoaded.Should().BeFalse();
+    }
+
+    [Fact]
+    public async Task TestCollectionElementModifiedToContinue()
+    {
+        using var context = await TestDbContext.Create<PersonDbContext>();
+
+        var pet = context!.Set<Pet>().Find(PersonDbContext.PersonAPet1Id)!;
+        pet.Type = PetType.Dog;
+
+        var changes = await context.GetChangesAsync(
+            _computedExpression,
+            default,
+            static c => c.NumberIncremental());
+        changes.Should().BeEmpty();
         context.Entry(pet.Owner!).Navigation(nameof(Person.Pets)).IsLoaded.Should().BeFalse();
     }
 
@@ -119,27 +124,27 @@ public class OneToManyFilteredCountTests
 
         // Add a cat
         var person = context!.Set<Person>().Find(PersonDbContext.PersonAId)!;
-        var newPet = new Pet { Id = "New", Type = PetType.Cat };
-        person.Pets.Add(newPet);
+        var pet = new Pet { Id = "New", Type = PetType.Cat };
+        person.Pets.Add(pet);
 
-        var deltaProvider = context.GetChangesProvider(_computedExpression, default, static c => c.NumberIncremental())!;
+        var provider = context.GetChangesProvider(
+            _computedExpression,
+            default,
+            c => c.NumberIncremental())!;
 
-        var changes = await deltaProvider.GetChangesAsync();
+        var changes = await provider.GetChangesAsync();
         changes.Should().BeEquivalentTo(new Dictionary<Person, int>{
             { person, 1}
         });
 
-        changes = await deltaProvider.GetChangesAsync();
+        changes = await provider.GetChangesAsync();
         changes.Should().BeEmpty();
-        context.Entry(person).Navigation(nameof(Person.Pets)).IsLoaded.Should().BeFalse();
 
-        await context.Entry(person).Navigation(nameof(person.Pets)).LoadAsync();
-        var pet = person.Pets.First(p => p != newPet);
         person.Pets.Clear();
-
-        changes = await deltaProvider.GetChangesAsync();
+        changes = await provider.GetChangesAsync();
         changes.Should().BeEquivalentTo(new Dictionary<Person, int>{
-            { person, -2}
+            { person, -1}
         });
+        context.Entry(person).Navigation(nameof(Person.Pets)).IsLoaded.Should().BeFalse();
     }
 }

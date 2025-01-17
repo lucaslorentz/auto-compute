@@ -15,7 +15,7 @@ public class DictionaryTests
         var changes = await context.GetChangesAsync(
             (Person person) => person.Pets.ToDictionary(p => p).Where(kv => kv.Key.Type != null).Count(),
             default,
-            static c => c.Void());
+            static c => c.CurrentValue());
 
         changes.Keys.Should().BeEquivalentTo([pet.Owner]);
     }
@@ -31,7 +31,7 @@ public class DictionaryTests
         var changes = await context.GetChangesAsync(
             (Person person) => person.Pets.ToDictionary(p => p.Id).Where(kv => kv.Value.Type != null).Count(),
             default,
-            static c => c.Void());
+            static c => c.CurrentValue());
 
         changes.Keys.Should().BeEquivalentTo([pet.Owner]);
     }

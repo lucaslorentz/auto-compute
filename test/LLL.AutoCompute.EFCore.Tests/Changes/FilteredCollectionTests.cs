@@ -1,6 +1,5 @@
 ﻿using System.Linq.Expressions;
 using FluentAssertions;
-using LLL.AutoCompute.EFCore.Internal;
 using LLL.AutoCompute.ChangeCalculations;
 
 namespace LLL.AutoCompute.EFCore.Tests.Changes;

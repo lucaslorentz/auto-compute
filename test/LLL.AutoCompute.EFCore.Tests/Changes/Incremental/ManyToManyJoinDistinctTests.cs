@@ -1,13 +1,13 @@
 ﻿using System.Linq.Expressions;
 using FluentAssertions;
 
-namespace LLL.AutoCompute.EFCore.Tests.IncrementalChanges;
+namespace LLL.AutoCompute.EFCore.Tests.Changes.Incremental;
 
-public class ManyToManyDistinctTests
+public class ManyToManyJoinDistinctTests
 {
     private static readonly Expression<Func<Person, IEnumerable<string>>> _computedExpression =
-        (Person person) => person.Friends
-            .Concat(person.Relatives)
+        (Person person) => person.FriendsJoin.Select(f => f.ToPerson)
+            .Concat(person.RelativesJoin.Select(x => x.ToPerson))
             .Distinct()
             .Select(p => p.Id)
             .ToArray();

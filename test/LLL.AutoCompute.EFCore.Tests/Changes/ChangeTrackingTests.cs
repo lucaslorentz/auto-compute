@@ -16,13 +16,13 @@ public class ChangeTrackingTests
         var changes = await context.GetChangesAsync(
             (Person p) => p.AsComputedUntracked().AsComputedTracked().FirstName + " " + p.LastName,
             default,
-            c => c.Void());
+            c => c.CurrentValue());
         changes.Should().HaveCount(1);
 
         changes = await context.GetChangesAsync(
             (Person p) => p.AsComputedUntracked().FirstName + " " + p.LastName,
             default,
-            c => c.Void());
+            c => c.CurrentValue());
         changes.Should().BeEmpty();
     }
 
@@ -38,13 +38,13 @@ public class ChangeTrackingTests
         var changes = await context.GetChangesAsync(
             (Person p) => p.AsComputedUntracked().AsComputedTracked().Pets.Count(p => p.Type == PetType.Cat),
             default,
-            c => c.Void());
+            c => c.CurrentValue());
         changes.Should().HaveCount(1);
         
         changes = await context.GetChangesAsync(
             (Person p) => p.AsComputedUntracked().Pets.Count(p => p.Type == PetType.Cat),
             default,
-            c => c.Void());
+            c => c.CurrentValue());
         changes.Should().BeEmpty();        
     }
 
@@ -59,13 +59,13 @@ public class ChangeTrackingTests
         var changes = await context.GetChangesAsync(
             (Person p) => p.Pets.Count(p => p.AsComputedUntracked().AsComputedTracked().Type == PetType.Cat && p.Color == "Black"),
             default,
-            c => c.Void());
+            c => c.CurrentValue());
         changes.Should().HaveCount(1);
 
         changes = await context.GetChangesAsync(
             (Person p) => p.Pets.Count(p => p.AsComputedUntracked().Type == PetType.Cat && p.Color == "Black"),
             default,
-            c => c.Void());
+            c => c.CurrentValue());
         changes.Should().BeEmpty();
     }
 }
