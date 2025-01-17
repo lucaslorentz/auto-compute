@@ -111,7 +111,7 @@ orderBuilder.Navigation(e => e.Items)
 
 Computed observers allow you to define callbacks that react to computed changes. These callbacks support both normal and incremental change calculations.
 
-Example:
+**Example:**
 ```csharp
 personBuilder.ComputedObserver(
     p => p.Pets.Count(x => x.Type == PetType.Cat),
@@ -123,7 +123,7 @@ personBuilder.ComputedObserver(
     });
 ```
 
-Alternatively you can get an event object with all changes, having access to other services as well:
+**Alternatively** you can get an event object with all changes, having access to other services as well:
 ```csharp
 personBuilder.ComputedObserver(
     p => p.Pets.Count(x => x.Type == PetType.Cat),
