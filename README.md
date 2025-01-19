@@ -5,6 +5,12 @@
 This library provides an automated implementation of the approach described by Microsoft:  
 [Modeling for Performance > Update cache columns when inputs change](https://learn.microsoft.com/en-us/ef/core/performance/modeling-for-performance#update-cache-columns-when-inputs-change).
 
+## Why
+
+Denormalizing data by storing computed properties is a common strategy for improving application performance. It enables faster queries and reduces the need for complex joins or expensive runtime computations, making your application more efficient and responsive.
+
+**EF Core Auto Compute** simplifies this process by automating the management of computed properties. It ensures that your derived data stays accurate and consistent without requiring manual updates or repetitive boilerplate code.
+
 ## Getting Started
 
 1. **Install the NuGet package:**  
@@ -27,21 +33,6 @@ This library provides an automated implementation of the approach described by M
 ## How It Works
 
 **Auto Compute** analyzes computed expressions and tracks all referenced data. When any of the referenced data changes, it traverses inverse navigations to identify affected entities and updates their computed properties accordingly.
-
-## Roadmap
-
-- [x] Computed properties, collections and references
-- [x] Incremental computed properties
-   - [x] Incremental calculation
-   - [x] Load all navigation items to evaluate Linq All/Any/Contains
-   - [x] Load necessary navigation items to evaluate Linq Distinct 
-- [x] Computed observers
-- [ ] Async queue-based update for hot computed properties
-  - [ ] Throttled update - Update X seconds after the first change
-  - [ ] Debounced update - Update X seconds after the last change
-- [ ] Methods to query inconsistent entities
-- [ ] Periodic consistency check and fixes
-- [ ] Web-based UI for schema introspection, consistency check and fix
 
 ## Features
 
@@ -85,7 +76,7 @@ personBuilder.Property(p => p.NumberOfCats)
 
 **Note:** In this example, `NumberOfCats` is updated incrementally based on changes to the `Pets` collection or the `Pet.Type` property, without loading all pets for the affected `Person`.
 
-## Computed Navigations
+### Computed Navigations
 
 Computed navigations update reference or collection navigation properties.
 
@@ -122,7 +113,7 @@ orderBuilder.Navigation(e => e.Items)
 - Updates are based on changes to the items the order was cloned from.
 - Items are reused if their key (e.g., `Product`) matches, and only the specified properties (e.g., `Product` and `Quantity`) are updated.
 
-## Computed Observers
+### Computed Observers
 
 Computed observers allow you to define callbacks that react to computed changes. These callbacks support both normal and incremental change calculations.
 
@@ -157,6 +148,21 @@ personBuilder.ComputedObserver(
 ```
 
 **Important:** Observers are triggered only after `dbContext.SaveChanges()` completes. If additional changes are made to entities in observers, you must call `SaveChanges()` again to save them.
+
+## Roadmap
+
+- [x] Computed properties, collections and references
+- [x] Incremental computed properties
+   - [x] Incremental calculation
+   - [x] Load all navigation items to evaluate Linq All/Any/Contains
+   - [x] Load necessary navigation items to evaluate Linq Distinct 
+- [x] Computed observers
+- [ ] Async queue-based update for hot computed properties
+  - [ ] Throttled update - Update X seconds after the first change
+  - [ ] Debounced update - Update X seconds after the last change
+- [ ] Methods to query inconsistent entities
+- [ ] Periodic consistency check and fixes
+- [ ] Web-based UI for schema introspection, consistency check and fix
 
 ## License
 This project is licensed under the MIT License. See the [LICENSE](LICENSE) file for details.
