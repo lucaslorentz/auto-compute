@@ -1,6 +1,9 @@
 using System.Collections;
 using System.Collections.Immutable;
+using System.Linq.Expressions;
+using System.Reflection;
 using LLL.AutoCompute.EFCore.Internal;
+using LLL.AutoCompute.Internal.ExpressionVisitors;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.ChangeTracking;
 using Microsoft.EntityFrameworkCore.Metadata;
@@ -148,5 +151,59 @@ public abstract class ComputedMember(
 
         var reuseKey = reuseKeySelector.DynamicInvoke(newEntity);
         return availableEntities.FirstOrDefault(x => Equals(reuseKeySelector.DynamicInvoke(x), reuseKey));
+    }
+
+    public LambdaExpression CreateIsEntityInconsistentLambda()
+    {
+        var entParameter = ChangesProvider.Expression.Parameters.First();
+
+        var computedValue = new RemoveChangeComputedTrackingVisitor().Visit(
+            ChangesProvider.Expression.Body
+        );
+
+        var storedValue = CreateEFPropertyExpression(entParameter, Property);
+
+        return Expression.Lambda(
+            CreateIsValueInconsistentExpression(computedValue, storedValue),
+            entParameter
+        );
+    }
+
+    protected abstract Expression CreateIsValueInconsistentExpression(Expression computedValue, Expression storedValue);
+
+    private static readonly MethodInfo _efPropertyMethod = ((Func<object, string, object>)EF.Property<object>)
+        .Method.GetGenericMethodDefinition();
+
+    protected static Expression CreateEFPropertyExpression(
+        Expression expression,
+        IPropertyBase property)
+    {
+        if (property.PropertyInfo is not null)
+        {
+            return Expression.Property(
+                expression,
+                property.PropertyInfo
+            );
+        }
+        else if (property.FieldInfo is not null)
+        {
+            return Expression.Field(
+                expression,
+                property.FieldInfo
+            );
+        }
+        else if (property.IsShadowProperty())
+        {
+            return Expression.Call(
+                null,
+                _efPropertyMethod.MakeGenericMethod(property.ClrType),
+                expression,
+                Expression.Constant(property.Name)
+            );
+        }
+        else
+        {
+            throw new Exception("Unsupported property access");
+        }
     }
 }

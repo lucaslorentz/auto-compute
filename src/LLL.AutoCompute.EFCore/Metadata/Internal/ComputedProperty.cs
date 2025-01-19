@@ -60,4 +60,13 @@ public class ComputedProperty<TEntity, TProperty>(
 
         return (TProperty)propertyEntry.OriginalValue!;
     }
+
+    protected override Expression CreateIsValueInconsistentExpression(Expression computedValue, Expression storedValue)
+    {
+        return Expression.Not(Expression.Call(
+            typeof(object), nameof(object.Equals), [],
+            Expression.Convert(computedValue, typeof(object)),
+            Expression.Convert(storedValue, typeof(object))
+        ));
+    }
 }
