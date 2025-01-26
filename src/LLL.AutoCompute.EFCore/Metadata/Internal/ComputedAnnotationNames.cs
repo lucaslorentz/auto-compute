@@ -11,4 +11,5 @@ public static class ComputedAnnotationNames
     public const string ObservedEntityType = Prefix + "ObservedEntityType";
     public const string ObservedMember = Prefix + "ObservedMember";
     public const string SortedComputeds = Prefix + "SortedComputeds";
+    public const string ConsistencyFilter = Prefix + "ConsistencyFilter";
 }

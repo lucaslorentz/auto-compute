@@ -17,7 +17,7 @@ public abstract class ComputedBase(
     public IEnumerable<ComputedMember> GetComputedDependencies()
     {
         return ObservedMembers
-            .Select(e => e.Property.GetComputed())
+            .Select(e => e.Property.GetComputedMember())
             .Where(c => c is not null)
             .Select(c => c!)
             .ToArray();

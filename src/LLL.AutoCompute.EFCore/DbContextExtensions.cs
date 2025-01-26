@@ -173,4 +173,29 @@ public static class DbContextExtensions
             dbContext.ChangeTracker.AutoDetectChangesEnabled = autoDetectChanges;
         }
     }
+
+    public static IQueryable<TEntity> CreateConsistencyQuery<TEntity>(
+        this DbContext dbContext,
+        IEntityType entityType,
+        DateTime since)
+        where TEntity : class
+    {
+        IQueryable<TEntity> query = dbContext.Set<TEntity>(entityType.Name);
+
+        var consistencyFilter = entityType.GetConsistencyFilter();
+        if (consistencyFilter is not null)
+        {
+            var preparedConsistencyFilter = Expression.Lambda<Func<TEntity, bool>>(
+                ReplacingExpressionVisitor.Replace(
+                    consistencyFilter.Parameters[1],
+                    Expression.Constant(since),
+                    consistencyFilter.Body
+                ),
+                consistencyFilter.Parameters[0]);
+
+            query = query.Where(preparedConsistencyFilter);
+        }
+
+        return query;
+    }
 }

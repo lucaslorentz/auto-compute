@@ -6,17 +6,11 @@ using Microsoft.EntityFrameworkCore.Metadata;
 
 namespace LLL.AutoCompute.EFCore.Metadata.Internal;
 
-public abstract class ComputedNavigation(
-    IComputedChangesProvider changesProvider)
-    : ComputedMember(changesProvider)
-{
-}
-
 public class ComputedNavigation<TEntity, TProperty>(
     INavigationBase navigationBase,
     IComputedChangesProvider<IEFCoreComputedInput, TEntity, TProperty> changesProvider,
     IReadOnlySet<IPropertyBase> controlledMembers
-) : ComputedNavigation(changesProvider), IComputedNavigationBuilder<TEntity, TProperty>
+) : ComputedMember<TEntity, TProperty>(changesProvider), IComputedNavigationBuilder<TEntity, TProperty>
     where TEntity : class
 {
     private readonly Func<TEntity, TProperty> _compiledExpression = ((Expression<Func<TEntity, TProperty>>)changesProvider.Expression).Compile();
@@ -56,7 +50,7 @@ public class ComputedNavigation<TEntity, TProperty>(
         return updateChanges;
     }
 
-    public override async Task Fix(object entity, DbContext dbContext)
+    public override async Task FixAsync(object entity, DbContext dbContext)
     {
         var entityEntry = dbContext.Entry(entity);
         var navigationEntry = entityEntry.Navigation(navigationBase);

@@ -14,8 +14,12 @@ public abstract class ComputedMember(
     IComputedChangesProvider changesProvider)
     : ComputedBase(changesProvider)
 {
+    public IEntityType EntityType => Property.DeclaringType.ContainingEntityType;
     public abstract IPropertyBase Property { get; }
-    public abstract Task Fix(object entity, DbContext dbContext);
+    public abstract Task<ComputedMemberConsistency> CheckConsistencyAsync(DbContext dbContext, DateTime since);
+    public abstract IQueryable QueryInconsistentEntities(DbContext dbContext, DateTime since);
+    public abstract LambdaExpression CreateIsEntityInconsistentLambda();
+    public abstract Task FixAsync(object entity, DbContext dbContext);
 
     public override string ToDebugString()
     {
@@ -152,8 +156,35 @@ public abstract class ComputedMember(
         var reuseKey = reuseKeySelector.DynamicInvoke(newEntity);
         return availableEntities.FirstOrDefault(x => Equals(reuseKeySelector.DynamicInvoke(x), reuseKey));
     }
+}
 
-    public LambdaExpression CreateIsEntityInconsistentLambda()
+public abstract class ComputedMember<TEntity, TMember>(
+    IComputedChangesProvider changesProvider)
+    : ComputedMember(changesProvider)
+    where TEntity : class
+{
+    public override async Task<ComputedMemberConsistency> CheckConsistencyAsync(DbContext dbContext, DateTime since)
+    {
+        var result = await dbContext.CreateConsistencyQuery<TEntity>(EntityType, since)
+            .GroupBy(CreateIsEntityInconsistentLambda())
+            .ToDictionaryAsync(x => x.Key, x => x.Count());
+
+        if (!result.TryGetValue(false, out var consistent))
+            consistent = 0;
+
+        if (!result.TryGetValue(true, out var inconsistent))
+            inconsistent = 0;
+
+        return new ComputedMemberConsistency(consistent, inconsistent);
+    }
+
+    public override IQueryable<TEntity> QueryInconsistentEntities(DbContext dbContext, DateTime since)
+    {
+        return dbContext.CreateConsistencyQuery<TEntity>(EntityType, since)
+            .Where(CreateIsEntityInconsistentLambda());
+    }
+
+    public override Expression<Func<TEntity, bool>> CreateIsEntityInconsistentLambda()
     {
         var entParameter = ChangesProvider.Expression.Parameters.First();
 
@@ -163,7 +194,7 @@ public abstract class ComputedMember(
 
         var storedValue = CreateEFPropertyExpression(entParameter, Property);
 
-        return Expression.Lambda(
+        return Expression.Lambda<Func<TEntity, bool>>(
             CreateIsValueInconsistentExpression(computedValue, storedValue),
             entParameter
         );

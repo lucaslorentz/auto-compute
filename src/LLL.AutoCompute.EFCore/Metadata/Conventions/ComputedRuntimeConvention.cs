@@ -50,7 +50,7 @@ class ComputedRuntimeConvention(Func<IModel, IComputedExpressionAnalyzer<IEFCore
                     .Select(f => f(analyzer, entityType))
                     .OfType<ComputedObserver>()
                     .ToArray();
-                entityType.SetObservers(observers);
+                entityType.SetComputedObservers(observers);
                 computeds.AddRange(observers);
             }
 
@@ -60,7 +60,7 @@ class ComputedRuntimeConvention(Func<IModel, IComputedExpressionAnalyzer<IEFCore
                 if (computedFacotry is not null)
                 {
                     var computed = computedFacotry(analyzer, property);
-                    property.SetComputed(computed);
+                    property.SetComputedMember(computed);
                     computeds.Add(computed);
                 }
             }
@@ -75,7 +75,7 @@ class ComputedRuntimeConvention(Func<IModel, IComputedExpressionAnalyzer<IEFCore
                 if (computedFactory is not null)
                 {
                     var computed = computedFactory(analyzer, navigation);
-                    navigation.SetComputed(computed);
+                    navigation.SetComputedMember(computed);
                     computeds.Add(computed);
                 }
             }

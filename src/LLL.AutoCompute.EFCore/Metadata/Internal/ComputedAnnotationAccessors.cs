@@ -1,4 +1,5 @@
-﻿using LLL.AutoCompute.EFCore.Internal;
+﻿using System.Linq.Expressions;
+using LLL.AutoCompute.EFCore.Internal;
 using Microsoft.EntityFrameworkCore.Metadata;
 
 namespace LLL.AutoCompute.EFCore.Metadata.Internal;
@@ -89,24 +90,24 @@ public static class ComputedAnnotationAccessors
         factories.Add(factory);
     }
 
-    public static ComputedMember? GetComputed(this IPropertyBase target)
+    public static ComputedMember? GetComputedMember(this IPropertyBase target)
     {
         return target.FindRuntimeAnnotationValue(ComputedAnnotationNames.Computed) as ComputedMember;
     }
 
-    internal static void SetComputed(this IPropertyBase propertyBase, ComputedMember? computeds)
+    internal static void SetComputedMember(this IPropertyBase propertyBase, ComputedMember? computedMember)
     {
-        propertyBase.SetRuntimeAnnotation(ComputedAnnotationNames.Computed, computeds);
+        propertyBase.SetRuntimeAnnotation(ComputedAnnotationNames.Computed, computedMember);
     }
 
-    public static IReadOnlyList<ComputedObserver>? GetObservers(this IEntityType target)
+    public static IReadOnlyList<ComputedObserver>? GetComputedObservers(this IEntityType target)
     {
         return target.FindRuntimeAnnotationValue(ComputedAnnotationNames.Observers) as IReadOnlyList<ComputedObserver>;
     }
 
-    internal static void SetObservers(this IEntityType target, IReadOnlyList<ComputedObserver>? observers)
+    internal static void SetComputedObservers(this IEntityType target, IReadOnlyList<ComputedObserver>? computedObservers)
     {
-        target.SetRuntimeAnnotation(ComputedAnnotationNames.Observers, observers);
+        target.SetRuntimeAnnotation(ComputedAnnotationNames.Observers, computedObservers);
     }
 
     public static IComputedExpressionAnalyzer<IEFCoreComputedInput> GetComputedExpressionAnalyzerOrThrow(this IModel annotatable)
@@ -120,7 +121,7 @@ public static class ComputedAnnotationAccessors
         annotatable.SetRuntimeAnnotation(ComputedAnnotationNames.ExpressionAnalyzer, analyzer);
     }
 
-    internal static IReadOnlyList<ComputedBase> GetSortedComputedsOrThrow(this IModel annotatable)
+    public static IReadOnlyList<ComputedBase> GetSortedComputedsOrThrow(this IModel annotatable)
     {
         return annotatable.FindRuntimeAnnotationValue(ComputedAnnotationNames.SortedComputeds) as IReadOnlyList<ComputedBase>
             ?? throw new Exception($"SortedComputeds not found in model");
@@ -129,5 +130,18 @@ public static class ComputedAnnotationAccessors
     internal static void SetSortedComputeds(this IModel annotatable, IReadOnlyList<ComputedBase> computeds)
     {
         annotatable.SetRuntimeAnnotation(ComputedAnnotationNames.SortedComputeds, computeds);
+    }
+
+    internal static LambdaExpression? GetConsistencyFilter(
+        this IEntityType entityType)
+    {
+        return entityType[ComputedAnnotationNames.ConsistencyFilter] as LambdaExpression;
+    }
+
+    internal static void SetConsistencyFilter(
+        this IMutableEntityType entityType,
+        LambdaExpression filter)
+    {
+        entityType[ComputedAnnotationNames.ConsistencyFilter] = filter;
     }
 }

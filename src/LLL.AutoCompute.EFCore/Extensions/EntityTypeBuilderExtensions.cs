@@ -70,4 +70,12 @@ public static class EntityTypeBuilderExtensions
                 changeCalculation,
                 callback));
     }
+
+    public static void ConsistencyFilter<TEntity>(
+        this EntityTypeBuilder<TEntity> entityTypeBuilder,
+        Expression<Func<TEntity, DateTime, bool>> filter)
+        where TEntity : class
+    {
+        entityTypeBuilder.Metadata.SetConsistencyFilter(filter);
+    }
 }
