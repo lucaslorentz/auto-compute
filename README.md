@@ -106,6 +106,8 @@ modelBuilder.Entity<Person>().ComputedObserver(
 
 **Auto Compute** analyzes computed expressions and tracks all referenced data. When any of the referenced data changes, it traverses inverse navigations to identify affected entities and updates their computed properties accordingly.
 
+[Diagram](https://excalidraw.com/#json=fZqhU0GKni812toTdr2vZ,qkLdmgG9sw7w_24fgY9VOw)
+
 ## Roadmap
 
 - [x] Computed properties, collections and references
