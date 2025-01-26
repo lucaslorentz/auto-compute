@@ -164,7 +164,7 @@ public class ComputedNavigation<TEntity, TProperty>(
             return body;
         }
 
-        if (navigationBase is INavigation navigation && !navigation.IsCollection && navigation.IsOnDependent)
+        if (navigationBase is INavigation navigation && !navigation.IsCollection)
         {
             var principalKeyProperty = navigation.ForeignKey.PrincipalKey.Properties[0];
             // Compare keys of references
