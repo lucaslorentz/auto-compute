@@ -185,6 +185,8 @@ public static class DbContextExtensions
         var consistencyFilter = entityType.GetConsistencyFilter();
         if (consistencyFilter is not null)
         {
+            var analyzer = dbContext.Model.GetComputedExpressionAnalyzerOrThrow();
+
             var preparedConsistencyFilter = Expression.Lambda<Func<TEntity, bool>>(
                 ReplacingExpressionVisitor.Replace(
                     consistencyFilter.Parameters[1],
@@ -192,6 +194,8 @@ public static class DbContextExtensions
                     consistencyFilter.Body
                 ),
                 consistencyFilter.Parameters[0]);
+
+            preparedConsistencyFilter = (Expression<Func<TEntity, bool>>)analyzer.RunExpressionModifiers(preparedConsistencyFilter);
 
             query = query.Where(preparedConsistencyFilter);
         }

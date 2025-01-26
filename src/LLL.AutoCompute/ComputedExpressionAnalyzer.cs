@@ -14,7 +14,7 @@ public class ComputedExpressionAnalyzer<TInput> : IComputedExpressionAnalyzer<TI
     private readonly IList<IEntityContextPropagator> _entityContextPropagators = [];
     private readonly HashSet<IObservedNavigationAccessLocator> _navigationAccessLocators = [];
     private readonly HashSet<IObservedMemberAccessLocator> _memberAccessLocators = [];
-    private readonly IList<Func<LambdaExpression, LambdaExpression>> _expressionModifiers = [];
+    private readonly IList<Func<Expression, Expression>> _expressionModifiers = [];
     private IObservedEntityTypeResolver? _entityTypeResolver;
 
     public ComputedExpressionAnalyzer<TInput> AddDefaults()
@@ -46,7 +46,7 @@ public class ComputedExpressionAnalyzer<TInput> : IComputedExpressionAnalyzer<TI
         return this;
     }
 
-    public ComputedExpressionAnalyzer<TInput> AddExpressionModifier(Func<LambdaExpression, LambdaExpression> modifier)
+    public ComputedExpressionAnalyzer<TInput> AddExpressionModifier(Func<Expression, Expression> modifier)
     {
         _expressionModifiers.Add(modifier);
         return this;
@@ -68,7 +68,7 @@ public class ComputedExpressionAnalyzer<TInput> : IComputedExpressionAnalyzer<TI
     {
         filterExpression ??= static x => true;
 
-        computedExpression = PrepareComputedExpression(computedExpression);
+        computedExpression = (Expression<Func<TEntity, TValue>>)RunExpressionModifiers(computedExpression);
 
         var computedEntityContext = GetEntityContext(entityType, computedExpression, changeCalculation.IsIncremental);
 
@@ -235,12 +235,12 @@ public class ComputedExpressionAnalyzer<TInput> : IComputedExpressionAnalyzer<TI
         ]);
     }
 
-    private Expression<Func<TEntity, TValue>> PrepareComputedExpression<TEntity, TValue>(Expression<Func<TEntity, TValue>> computedExpression) where TEntity : class
+    public Expression RunExpressionModifiers(Expression expression)
     {
         foreach (var modifier in _expressionModifiers)
-            computedExpression = (Expression<Func<TEntity, TValue>>)modifier(computedExpression);
+            expression = modifier(expression);
 
-        return computedExpression;
+        return expression;
     }
 
     private Expression PrepareComputedOutputExpression(Type returnType, Expression body)

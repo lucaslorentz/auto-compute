@@ -10,4 +10,6 @@ public interface IComputedExpressionAnalyzer<TInput>
         Expression<Func<TEntity, bool>> filterExpression,
         IChangeCalculation<TValue, TChange> changeCalculation)
         where TEntity : class;
+
+    Expression RunExpressionModifiers(Expression expression);
 }

@@ -5,5 +5,5 @@ public class ComputedMemberConsistency(int consistentCount, int inconsistentCoun
     public int ConsistentCount => consistentCount;
     public int InconsistentCount => inconsistentCount;
     public int TotalCount => consistentCount + inconsistentCount;
-    public decimal ConsistencyPercentage => 100m * ConsistentCount / TotalCount;
+    public decimal ConsistencyPercentage => TotalCount == 0 ? 100m : 100m * ConsistentCount / TotalCount;
 }
