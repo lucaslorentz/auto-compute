@@ -33,8 +33,8 @@ Denormalizing data is a **powerful performance optimization**, but manually mana
 
 ```csharp
 modelBuilder.Entity<Person>().ComputedProperty(
-   p => p.NumberOfCats,
-   p => p.Pets.Count(pet => pet.Type == PetType.Cat));
+   p => p.NumberOfCats, // Property to map
+   p => p.Pets.Count(pet => pet.Type == PetType.Cat)); // Computed expression
 ```
 
 ### ⚡ Incremental Updates
@@ -43,9 +43,9 @@ modelBuilder.Entity<Person>().ComputedProperty(
 
 ```csharp
 modelBuilder.Entity<Post>().ComputedProperty(
-   p => p.LikeCount,
-   p => p.Interactions.Count(i => i.Type == InteractionType.Like),
-   c => c.NumberIncremental()); // No full collection load!
+   p => p.LikeCount, // Property to map
+   p => p.Interactions.Count(i => i.Type == InteractionType.Like), // Computed expression
+   c => c.NumberIncremental()); // Change calculation
 ```
 
 ### 🔗 Computed Navigations
@@ -54,16 +54,16 @@ modelBuilder.Entity<Post>().ComputedProperty(
 
 ```csharp
 modelBuilder.Entity<Order>().ComputedNavigation(
-   o => o.Items,
+   o => o.Items, // Navigation to map
    o => o.CloneFrom != null
      ? o.CloneFrom.Items.Select(i => new OrderItem
      {
          Product = i.Product,
          Quantity = i.Quantity
      }).ToArray()
-     : o.AsComputedUntracked().Items,
-   c => c.CurrentValue(),
-   c => c.ReuseItemsByKey(e => new { e.Product }));
+     : o.AsComputedUntracked().Items, // Computed expression
+   c => c.CurrentValue(), // Change calculation
+   c => c.ReuseItemsByKey(e => new { e.Product })); // Other options
 ```
 
 ### 👀 Computed Observers
@@ -73,12 +73,12 @@ modelBuilder.Entity<Order>().ComputedNavigation(
 ```csharp
 modelBuilder.Entity<Person>().ComputedObserver(
    p => p.Pets.Count(x => x.Type == PetType.Cat), // Observed expression
-   p => p.IsActive, // Filter persons
-   c => c.CurrentValue(), // Calculation mode
+   p => p.IsActive, // Filter
+   c => c.CurrentValue(), // Change calculation
    async (person, numberOfCats) =>
    {
      Console.WriteLine($"Person {person.FullName} now has {numberOfCats} cats.");
-   });
+   }); // Callback
 ```
 
 ## Getting Started
@@ -93,11 +93,11 @@ modelBuilder.Entity<Person>().ComputedObserver(
    dbContextOptions.UseAutoCompute();
    ```
 
-3. **Define computed properties:**
+3. **Map computed properties:**
     ```csharp
     modelBuilder.Entity<Person>().ComputedProperty(
-        p => p.NumberOfCats,
-        p => p.Pets.Count(pet => pet.Type == PetType.Cat));
+        p => p.NumberOfCats, // Property to map
+        p => p.Pets.Count(pet => pet.Type == PetType.Cat)); // Computed expression
     ```
 
 **Done!** Computed properties will now update automatically during `dbContext.SaveChanges()`.
