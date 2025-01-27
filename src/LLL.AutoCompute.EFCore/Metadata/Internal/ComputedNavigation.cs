@@ -20,11 +20,6 @@ public class ComputedNavigation<TEntity, TProperty>(
     public IReadOnlySet<IPropertyBase> ControlledMembers => controlledMembers;
     public Delegate? ReuseKeySelector { get; set; }
 
-    public override string ToDebugString()
-    {
-        return navigationBase.ToString()!;
-    }
-
     public override async Task<EFCoreChangeset> Update(IEFCoreComputedInput input)
     {
         var updateChanges = new EFCoreChangeset();
