@@ -22,6 +22,4 @@ public abstract class ComputedBase(
             .Select(c => c!)
             .ToArray();
     }
-
-    public abstract Task<EFCoreChangeset> Update(IEFCoreComputedInput input);
 }

@@ -68,9 +68,9 @@ public class EFCoreChangeset
         }
     }
 
-    public IReadOnlySet<ComputedBase> GetAffectedComputeds(IReadOnlySet<ComputedBase> targetComputeds)
+    public IReadOnlySet<ComputedMember> GetAffectedComputedMembers(IReadOnlySet<ComputedMember> targetComputeds)
     {
-        var affectedComputeds = new HashSet<ComputedBase>();
+        var affectedComputedMembers = new HashSet<ComputedMember>();
 
         var affectedMembers = _propertyChanges.Keys.OfType<IPropertyBase>()
             .Concat(_navigationChanges.Keys);
@@ -81,11 +81,11 @@ public class EFCoreChangeset
             if (observedMember is null)
                 continue;
 
-            affectedComputeds.UnionWith(observedMember.Dependents);
+            affectedComputedMembers.UnionWith(observedMember.DependentMembers);
         }
 
-        affectedComputeds.IntersectWith(targetComputeds);
+        affectedComputedMembers.IntersectWith(targetComputeds);
 
-        return affectedComputeds;
+        return affectedComputedMembers;
     }
 }

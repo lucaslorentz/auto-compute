@@ -6,6 +6,7 @@ public abstract class ComputedObserver(
     IComputedChangesProvider changesProvider)
     : ComputedBase(changesProvider)
 {
+    public abstract Task<Func<Task>?> CreateObserverNotifier(IEFCoreComputedInput input);
 }
 
 public class ComputedObserver<TEntity, TChange>(
@@ -21,21 +22,18 @@ public class ComputedObserver<TEntity, TChange>(
         return "ComputedObserver";
     }
 
-    public override async Task<EFCoreChangeset> Update(IEFCoreComputedInput input)
+    public override async Task<Func<Task>?> CreateObserverNotifier(IEFCoreComputedInput input)
     {
         var changes = await changesProvider.GetChangesAsync(input, null);
-        if (changes.Count > 0)
+        if (changes.Count == 0)
+            return null;
+
+        var eventData = new ComputedChangeEventData<TEntity, TChange>
         {
-            var eventData = new ComputedChangeEventData<TEntity, TChange>
-            {
-                DbContext = input.DbContext,
-                Changes = changes
-            };
-            input.DbContext.GetComputedPostSaveActionQueue().Enqueue(async () =>
-            {
-                await callback(eventData);
-            });
-        }
-        return new EFCoreChangeset();
+            DbContext = input.DbContext,
+            Changes = changes
+        };
+
+        return () => callback(eventData);
     }
 }

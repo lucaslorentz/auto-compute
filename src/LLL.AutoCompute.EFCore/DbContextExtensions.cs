@@ -87,32 +87,32 @@ public static class DbContextExtensions
         {
             dbContext.ChangeTracker.DetectChanges();
 
-            var allComputeds = dbContext.Model.GetAllComputeds();
+            var sortedComputedMembers = dbContext.Model.GetAllComputedMembers();
 
             var changesToProcess = new EFCoreChangeset();
 
-            var observedMembers = allComputeds.SelectMany(x => x.ObservedMembers).ToHashSet();
+            var observedMembers = sortedComputedMembers.SelectMany(x => x.ObservedMembers).ToHashSet();
             foreach (var observedMember in observedMembers)
                 await observedMember.CollectChangesAsync(dbContext, changesToProcess);
 
             var updates = new EFCoreChangeset();
 
-            var visitedComputeds = new HashSet<ComputedBase>();
+            var visitedComputedMembers = new HashSet<ComputedMember>();
 
-            await UpdateComputedsAsync(allComputeds.ToHashSet(), changesToProcess);
+            await UpdateComputedsAsync(sortedComputedMembers.ToHashSet(), changesToProcess);
 
             return updates.Count;
 
             async Task UpdateComputedsAsync(
-                IReadOnlySet<ComputedBase> targetComputeds,
+                IReadOnlySet<ComputedMember> targetComputeds,
                 EFCoreChangeset changesToProcess)
             {
-                foreach (var computed in allComputeds)
+                foreach (var computed in sortedComputedMembers)
                 {
                     if (!targetComputeds.Contains(computed))
                         continue;
 
-                    visitedComputeds.Add(computed);
+                    visitedComputedMembers.Add(computed);
 
                     var input = new EFCoreComputedInput(dbContext, changesToProcess);
 
@@ -128,7 +128,7 @@ public static class DbContextExtensions
                     newChanges.MergeInto(updates, true);
 
                     // Re-update affected computeds that were already updated
-                    var computedsToReUpdate = newChanges.GetAffectedComputeds(visitedComputeds);
+                    var computedsToReUpdate = newChanges.GetAffectedComputedMembers(visitedComputedMembers);
                     if (computedsToReUpdate.Count != 0)
                         await UpdateComputedsAsync(computedsToReUpdate, newChanges);
 
@@ -136,6 +136,35 @@ public static class DbContextExtensions
                     newChanges.MergeInto(changesToProcess, false);
                 }
             }
+        });
+    }
+
+    public static async Task<IComputedObserversNotifier> CreateObserversNotifier(this DbContext dbContext)
+    {
+        return await WithoutAutoDetectChangesAsync(dbContext, async () =>
+        {
+            dbContext.ChangeTracker.DetectChanges();
+
+            var allComputedObservers = dbContext.Model.GetAllComputedObservers();
+
+            var changesToProcess = new EFCoreChangeset();
+
+            var observedMembers = allComputedObservers.SelectMany(x => x.ObservedMembers).ToHashSet();
+            foreach (var observedMember in observedMembers)
+                await observedMember.CollectChangesAsync(dbContext, changesToProcess);
+
+            var input = new EFCoreComputedInput(dbContext, changesToProcess);
+
+            var computedObserversNotifier = new ComputedObserversNotifier();
+
+            foreach (var computed in allComputedObservers)
+            {
+                var notifier = await computed.CreateObserverNotifier(input);
+                if (notifier is not null)
+                    computedObserversNotifier.AddNotification(notifier);
+            }
+
+            return computedObserversNotifier;
         });
     }
 
@@ -150,12 +179,6 @@ public static class DbContextExtensions
             .Entries
             .Where(e => e.EntityType == entityType)
             .Select(e => new EntityEntry(e));
-    }
-
-    private static readonly ConditionalWeakTable<DbContext, ConcurrentQueue<Func<Task>>> _postSaveActionsQueues = [];
-    internal static ConcurrentQueue<Func<Task>> GetComputedPostSaveActionQueue(this DbContext context)
-    {
-        return _postSaveActionsQueues.GetValue(context, k => []);
     }
 
     internal static async Task<T> WithoutAutoDetectChangesAsync<T>(

@@ -1,9 +1,16 @@
-﻿using Microsoft.EntityFrameworkCore.Diagnostics;
+﻿using System.Runtime.CompilerServices;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Diagnostics;
 
 namespace LLL.AutoCompute.EFCore;
 
-public class ComputedInterceptor(bool updateComputedsOnSave) : ISaveChangesInterceptor
+public class ComputedSaveChangesInterceptor(
+    bool updateComputedsOnSave,
+    bool notifyObserversOnSave)
+    : ISaveChangesInterceptor
 {
+    private static readonly ConditionalWeakTable<DbContext, IComputedObserversNotifier> _computedObserversNotifiers = [];
+
     public async ValueTask<InterceptionResult<int>> SavingChangesAsync(
         DbContextEventData eventData,
         InterceptionResult<int> result,
@@ -12,6 +19,13 @@ public class ComputedInterceptor(bool updateComputedsOnSave) : ISaveChangesInter
         if (updateComputedsOnSave)
         {
             await eventData.Context!.UpdateComputedsAsync();
+        }
+
+        if (notifyObserversOnSave)
+        {
+            var observersNotifier = await eventData.Context!.CreateObserversNotifier();
+
+            _computedObserversNotifiers.AddOrUpdate(eventData.Context!, observersNotifier);
         }
 
         return result;
@@ -29,12 +43,13 @@ public class ComputedInterceptor(bool updateComputedsOnSave) : ISaveChangesInter
         int result,
         CancellationToken cancellationToken = default)
     {
-        var postSaveActionsQueue = eventData.Context?.GetComputedPostSaveActionQueue();
-        if (postSaveActionsQueue is not null)
+        if (_computedObserversNotifiers.TryGetValue(eventData.Context!, out var computedObserversNotifier))
         {
-            while (postSaveActionsQueue.TryDequeue(out var postSaveAction))
-                await postSaveAction();
+            _computedObserversNotifiers.Remove(eventData.Context!);
+
+            await computedObserversNotifier.Notify();
         }
+
         return result;
     }
 

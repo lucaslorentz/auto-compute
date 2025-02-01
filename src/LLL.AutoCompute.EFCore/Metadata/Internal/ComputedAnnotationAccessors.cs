@@ -100,12 +100,12 @@ public static class ComputedAnnotationAccessors
         propertyBase.SetRuntimeAnnotation(ComputedAnnotationNames.Member, computedMember);
     }
 
-    public static IReadOnlySet<ComputedObserver>? GetComputedObservers(this IEntityType target)
+    public static IReadOnlyCollection<ComputedObserver>? GetComputedObservers(this IEntityType target)
     {
-        return target.FindRuntimeAnnotationValue(ComputedAnnotationNames.Observers) as IReadOnlySet<ComputedObserver>;
+        return target.FindRuntimeAnnotationValue(ComputedAnnotationNames.Observers) as IReadOnlyCollection<ComputedObserver>;
     }
 
-    internal static void SetComputedObservers(this IEntityType target, IReadOnlySet<ComputedObserver>? computedObservers)
+    internal static void SetComputedObservers(this IEntityType target, IReadOnlyCollection<ComputedObserver>? computedObservers)
     {
         target.SetRuntimeAnnotation(ComputedAnnotationNames.Observers, computedObservers);
     }
@@ -119,14 +119,6 @@ public static class ComputedAnnotationAccessors
     internal static void SetExpressionAnalyzer(this IModel annotatable, IComputedExpressionAnalyzer<IEFCoreComputedInput> analyzer)
     {
         annotatable.SetRuntimeAnnotation(ComputedAnnotationNames.ExpressionAnalyzer, analyzer);
-    }
-
-    public static IReadOnlyList<ComputedBase> GetAllComputeds(this IModel annotatable)
-    {
-        return annotatable.GetOrAddRuntimeAnnotationValue(
-            ComputedAnnotationNames.AllComputeds,
-            static (a) => a!.GetAllComputedMembers().OfType<ComputedBase>().Concat(a!.GetAllComputedObservers()).ToList(),
-            annotatable);
     }
 
     public static IReadOnlyList<ComputedMember> GetAllComputedMembers(this IModel annotatable)

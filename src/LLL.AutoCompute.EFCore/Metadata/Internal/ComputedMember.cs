@@ -26,6 +26,8 @@ public abstract class ComputedMember(
         return $"{Property.DeclaringType.Name}.{Property.Name}";
     }
 
+    public abstract Task<EFCoreChangeset> Update(IEFCoreComputedInput input);
+
     protected static void MaybeUpdateProperty(PropertyEntry propertyEntry, object? newValue, EFCoreChangeset? updateChanges)
     {
         var valueComparer = propertyEntry.Metadata.GetValueComparer();

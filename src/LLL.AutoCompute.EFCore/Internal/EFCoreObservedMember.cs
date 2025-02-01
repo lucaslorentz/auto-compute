@@ -8,15 +8,15 @@ namespace LLL.AutoCompute.EFCore.Internal;
 
 public abstract class EFCoreObservedMember : IObservedMember<IEFCoreComputedInput>
 {
-    private readonly HashSet<ComputedBase> _dependents = [];
+    private readonly HashSet<ComputedMember> _dependentMembers = [];
 
     public abstract IPropertyBase Property { get; }
-    public IReadOnlySet<ComputedBase> Dependents => _dependents;
     public Type InputType => typeof(IEFCoreComputedInput);
 
-    internal bool AddDependent(ComputedBase computed)
+    internal IReadOnlySet<ComputedMember> DependentMembers => _dependentMembers;
+    internal bool AddDependentMember(ComputedMember computed)
     {
-        return _dependents.Add(computed);
+        return _dependentMembers.Add(computed);
     }
 
     public abstract string Name { get; }

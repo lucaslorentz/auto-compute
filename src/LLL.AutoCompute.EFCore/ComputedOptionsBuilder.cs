@@ -9,6 +9,7 @@ public class ComputedOptionsBuilder
     private readonly ComputedOptionsExtension _extension;
     private readonly DbContextOptionsBuilder _optionsBuilder;
     private bool _enableUpdateComputedsOnSave = true;
+    private bool _enableNotifyObserversOnSave = true;
 
     public ComputedOptionsBuilder(DbContextOptionsBuilder optionsBuilder)
     {
@@ -36,9 +37,15 @@ public class ComputedOptionsBuilder
         return this;
     }
 
+    public ComputedOptionsBuilder EnableNotifyObserversOnSave(bool enable)
+    {
+        _enableNotifyObserversOnSave = enable;
+        return this;
+    }
+
     internal ComputedOptionsExtension Build()
     {
-        _optionsBuilder.AddInterceptors(new ComputedInterceptor(_enableUpdateComputedsOnSave));
+        _optionsBuilder.AddInterceptors(new ComputedSaveChangesInterceptor(_enableUpdateComputedsOnSave, _enableNotifyObserversOnSave));
         return _extension;
     }
 }

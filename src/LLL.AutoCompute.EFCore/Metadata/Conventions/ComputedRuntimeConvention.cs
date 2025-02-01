@@ -66,7 +66,7 @@ class ComputedRuntimeConvention(Func<IModel, IComputedExpressionAnalyzer<IEFCore
             ValidateSelfReferencingComputedMember(computedMember);
 
             foreach (var observedMember in computedMember.ObservedMembers)
-                observedMember.AddDependent(computedMember);
+                observedMember.AddDependentMember(computedMember);
         }
 
         return allComputedMembers;
@@ -85,16 +85,10 @@ class ComputedRuntimeConvention(Func<IModel, IComputedExpressionAnalyzer<IEFCore
             {
                 var computedObservers = computedObserversFactories
                     .Select(f => f(analyzer, entityType))
-                    .ToHashSet();
+                    .ToArray();
                 entityType.SetComputedObservers(computedObservers);
                 allComputedObservers.AddRange(computedObservers);
             }
-        }
-
-        foreach (var computedMember in allComputedObservers)
-        {
-            foreach (var observedMember in computedMember.ObservedMembers)
-                observedMember.AddDependent(computedMember);
         }
 
         return allComputedObservers;
