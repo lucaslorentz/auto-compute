@@ -64,7 +64,7 @@ public static class EntityTypeBuilderExtensions
         var changeCalculation = calculationSelector(ChangeCalculations<TValue>.Instance);
 
         entityTypeBuilder.Metadata.AddObserverFactory(
-            ObserverFactory.CreateObserverFactory(
+            ComputedObserverFactory.CreateObserverFactory(
                 computedExpression,
                 filterExpression,
                 changeCalculation,

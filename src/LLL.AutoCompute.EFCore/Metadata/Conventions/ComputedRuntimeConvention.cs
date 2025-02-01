@@ -14,46 +14,26 @@ class ComputedRuntimeConvention(Func<IModel, IComputedExpressionAnalyzer<IEFCore
 
         model.SetExpressionAnalyzer(analyzer);
 
-        var computeds = CreateComputeds(model, analyzer);
+        var allComputedMembers = CreateComputedMembers(model, analyzer)
+            .TopoSort(c => c.GetComputedDependencies());
+            
+        model.SetAllComputedMembers(allComputedMembers);
 
-        foreach (var computed in computeds)
-        {
-            // TODO: Validate if forbid cyclic dependencies is enabled
-            // ValidateCyclicComputedDependencies(computed, computed, []);
+        var allComputedObservers = CreateComputedObservers(model, analyzer);
 
-            if (computed is ComputedMember computedMember)
-                ValidateSelfReferencingComputed(computedMember);
-
-            foreach (var observedMember in computed.ObservedMembers)
-                observedMember.AddDependent(computed);
-        }
-
-        var sortedComputeds = computeds.TopoSort(c => c.GetComputedDependencies());
-
-        model.SetSortedComputeds(sortedComputeds);
+        model.SetAllComputedObservers(allComputedObservers);
 
         return model;
     }
 
-    private static IReadOnlyList<ComputedBase> CreateComputeds(
+    private static IReadOnlyList<ComputedMember> CreateComputedMembers(
         IModel model,
         IComputedExpressionAnalyzer<IEFCoreComputedInput> analyzer)
     {
-        var computeds = new List<ComputedBase>();
+        var allComputedMembers = new List<ComputedMember>();
 
         foreach (var entityType in model.GetEntityTypes())
         {
-            var observersFactories = entityType.GetObserversFactories();
-            if (observersFactories is not null)
-            {
-                var observers = observersFactories
-                    .Select(f => f(analyzer, entityType))
-                    .OfType<ComputedObserver>()
-                    .ToArray();
-                entityType.SetComputedObservers(observers);
-                computeds.AddRange(observers);
-            }
-
             foreach (var property in entityType.GetDeclaredProperties())
             {
                 var computedFacotry = property.GetComputedFactory();
@@ -61,7 +41,7 @@ class ComputedRuntimeConvention(Func<IModel, IComputedExpressionAnalyzer<IEFCore
                 {
                     var computed = computedFacotry(analyzer, property);
                     property.SetComputedMember(computed);
-                    computeds.Add(computed);
+                    allComputedMembers.Add(computed);
                 }
             }
 
@@ -76,31 +56,51 @@ class ComputedRuntimeConvention(Func<IModel, IComputedExpressionAnalyzer<IEFCore
                 {
                     var computed = computedFactory(analyzer, navigation);
                     navigation.SetComputedMember(computed);
-                    computeds.Add(computed);
+                    allComputedMembers.Add(computed);
                 }
             }
         }
 
-        return computeds;
-    }
-
-    private static void ValidateCyclicComputedDependencies(
-        ComputedBase initial,
-        ComputedBase current,
-        HashSet<ComputedBase> visited)
-    {
-        visited.Add(current);
-
-        foreach (var dependency in current.GetComputedDependencies())
+        foreach (var computedMember in allComputedMembers)
         {
-            if (visited.Contains(dependency))
-                throw new Exception($"Cyclic computed dependency between {initial.ToDebugString()} and {current.ToDebugString()}");
+            ValidateSelfReferencingComputedMember(computedMember);
 
-            ValidateCyclicComputedDependencies(initial, dependency, visited);
+            foreach (var observedMember in computedMember.ObservedMembers)
+                observedMember.AddDependent(computedMember);
         }
+
+        return allComputedMembers;
     }
 
-    private static void ValidateSelfReferencingComputed(ComputedMember computedMember)
+    private static IReadOnlyList<ComputedObserver> CreateComputedObservers(
+        IModel model,
+        IComputedExpressionAnalyzer<IEFCoreComputedInput> analyzer)
+    {
+        var allComputedObservers = new List<ComputedObserver>();
+
+        foreach (var entityType in model.GetEntityTypes())
+        {
+            var computedObserversFactories = entityType.GetObserversFactories();
+            if (computedObserversFactories is not null)
+            {
+                var computedObservers = computedObserversFactories
+                    .Select(f => f(analyzer, entityType))
+                    .ToHashSet();
+                entityType.SetComputedObservers(computedObservers);
+                allComputedObservers.AddRange(computedObservers);
+            }
+        }
+
+        foreach (var computedMember in allComputedObservers)
+        {
+            foreach (var observedMember in computedMember.ObservedMembers)
+                observedMember.AddDependent(computedMember);
+        }
+
+        return allComputedObservers;
+    }
+
+    private static void ValidateSelfReferencingComputedMember(ComputedMember computedMember)
     {
         var observedMember = computedMember.Property.GetObservedMember();
         if (observedMember is not null

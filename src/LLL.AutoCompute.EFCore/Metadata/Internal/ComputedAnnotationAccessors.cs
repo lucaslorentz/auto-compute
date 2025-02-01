@@ -54,32 +54,32 @@ public static class ComputedAnnotationAccessors
             ComputedAnnotationNames.ObservedMember) as EFCoreObservedMember;
     }
 
-    internal static ComputedFactory<IProperty>? GetComputedFactory(this IReadOnlyProperty target)
+    internal static ComputedMemberFactory<IProperty>? GetComputedFactory(this IReadOnlyProperty target)
     {
-        return target[ComputedAnnotationNames.ComputedFactory] as ComputedFactory<IProperty>;
+        return target[ComputedAnnotationNames.MemberFactory] as ComputedMemberFactory<IProperty>;
     }
 
-    internal static void SetComputedFactory(this IMutableProperty target, ComputedFactory<IProperty> factory)
+    internal static void SetComputedFactory(this IMutableProperty target, ComputedMemberFactory<IProperty> factory)
     {
-        target[ComputedAnnotationNames.ComputedFactory] = factory;
+        target[ComputedAnnotationNames.MemberFactory] = factory;
     }
 
-    internal static ComputedFactory<INavigationBase>? GetComputedFactory(this IReadOnlyNavigationBase target)
+    internal static ComputedMemberFactory<INavigationBase>? GetComputedFactory(this IReadOnlyNavigationBase target)
     {
-        return target[ComputedAnnotationNames.ComputedFactory] as ComputedFactory<INavigationBase>;
+        return target[ComputedAnnotationNames.MemberFactory] as ComputedMemberFactory<INavigationBase>;
     }
 
-    internal static void SetComputedFactory(this IMutableNavigationBase target, ComputedFactory<INavigationBase> factory)
+    internal static void SetComputedFactory(this IMutableNavigationBase target, ComputedMemberFactory<INavigationBase> factory)
     {
-        target[ComputedAnnotationNames.ComputedFactory] = factory;
+        target[ComputedAnnotationNames.MemberFactory] = factory;
     }
 
-    internal static List<ObserverFactory<IEntityType>>? GetObserversFactories(this IReadOnlyEntityType target)
+    internal static List<ComputedObserverFactory<IEntityType>>? GetObserversFactories(this IReadOnlyEntityType target)
     {
-        return target[ComputedAnnotationNames.ObserversFactories] as List<ObserverFactory<IEntityType>>;
+        return target[ComputedAnnotationNames.ObserversFactories] as List<ComputedObserverFactory<IEntityType>>;
     }
 
-    internal static void AddObserverFactory(this IMutableEntityType target, ObserverFactory<IEntityType> factory)
+    internal static void AddObserverFactory(this IMutableEntityType target, ComputedObserverFactory<IEntityType> factory)
     {
         var factories = target.GetObserversFactories();
         if (factories is null)
@@ -92,20 +92,20 @@ public static class ComputedAnnotationAccessors
 
     public static ComputedMember? GetComputedMember(this IPropertyBase target)
     {
-        return target.FindRuntimeAnnotationValue(ComputedAnnotationNames.Computed) as ComputedMember;
+        return target.FindRuntimeAnnotationValue(ComputedAnnotationNames.Member) as ComputedMember;
     }
 
     internal static void SetComputedMember(this IPropertyBase propertyBase, ComputedMember? computedMember)
     {
-        propertyBase.SetRuntimeAnnotation(ComputedAnnotationNames.Computed, computedMember);
+        propertyBase.SetRuntimeAnnotation(ComputedAnnotationNames.Member, computedMember);
     }
 
-    public static IReadOnlyList<ComputedObserver>? GetComputedObservers(this IEntityType target)
+    public static IReadOnlySet<ComputedObserver>? GetComputedObservers(this IEntityType target)
     {
-        return target.FindRuntimeAnnotationValue(ComputedAnnotationNames.Observers) as IReadOnlyList<ComputedObserver>;
+        return target.FindRuntimeAnnotationValue(ComputedAnnotationNames.Observers) as IReadOnlySet<ComputedObserver>;
     }
 
-    internal static void SetComputedObservers(this IEntityType target, IReadOnlyList<ComputedObserver>? computedObservers)
+    internal static void SetComputedObservers(this IEntityType target, IReadOnlySet<ComputedObserver>? computedObservers)
     {
         target.SetRuntimeAnnotation(ComputedAnnotationNames.Observers, computedObservers);
     }
@@ -121,15 +121,34 @@ public static class ComputedAnnotationAccessors
         annotatable.SetRuntimeAnnotation(ComputedAnnotationNames.ExpressionAnalyzer, analyzer);
     }
 
-    public static IReadOnlyList<ComputedBase> GetSortedComputedsOrThrow(this IModel annotatable)
+    public static IReadOnlyList<ComputedBase> GetAllComputeds(this IModel annotatable)
     {
-        return annotatable.FindRuntimeAnnotationValue(ComputedAnnotationNames.SortedComputeds) as IReadOnlyList<ComputedBase>
-            ?? throw new Exception($"SortedComputeds not found in model");
+        return annotatable.GetOrAddRuntimeAnnotationValue(
+            ComputedAnnotationNames.AllComputeds,
+            static (a) => a!.GetAllComputedMembers().OfType<ComputedBase>().Concat(a!.GetAllComputedObservers()).ToList(),
+            annotatable);
     }
 
-    internal static void SetSortedComputeds(this IModel annotatable, IReadOnlyList<ComputedBase> computeds)
+    public static IReadOnlyList<ComputedMember> GetAllComputedMembers(this IModel annotatable)
     {
-        annotatable.SetRuntimeAnnotation(ComputedAnnotationNames.SortedComputeds, computeds);
+        return annotatable.FindRuntimeAnnotationValue(ComputedAnnotationNames.AllMembers) as IReadOnlyList<ComputedMember>
+            ?? throw new Exception($"{ComputedAnnotationNames.AllMembers} annotation not found in model");
+    }
+
+    internal static void SetAllComputedMembers(this IModel annotatable, IReadOnlyList<ComputedMember> computeds)
+    {
+        annotatable.SetRuntimeAnnotation(ComputedAnnotationNames.AllMembers, computeds);
+    }
+
+    public static IReadOnlyList<ComputedObserver> GetAllComputedObservers(this IModel annotatable)
+    {
+        return annotatable.FindRuntimeAnnotationValue(ComputedAnnotationNames.AllObservers) as IReadOnlyList<ComputedObserver>
+            ?? throw new Exception($"{ComputedAnnotationNames.AllObservers} annotation not found in model");
+    }
+
+    internal static void SetAllComputedObservers(this IModel annotatable, IReadOnlyList<ComputedObserver> computeds)
+    {
+        annotatable.SetRuntimeAnnotation(ComputedAnnotationNames.AllObservers, computeds);
     }
 
     internal static LambdaExpression? GetConsistencyFilter(

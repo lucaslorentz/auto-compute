@@ -87,11 +87,11 @@ public static class DbContextExtensions
         {
             dbContext.ChangeTracker.DetectChanges();
 
-            var sortedComputeds = dbContext.Model.GetSortedComputedsOrThrow();
+            var allComputeds = dbContext.Model.GetAllComputeds();
 
             var changesToProcess = new EFCoreChangeset();
 
-            var observedMembers = sortedComputeds.SelectMany(x => x.ObservedMembers).ToHashSet();
+            var observedMembers = allComputeds.SelectMany(x => x.ObservedMembers).ToHashSet();
             foreach (var observedMember in observedMembers)
                 await observedMember.CollectChangesAsync(dbContext, changesToProcess);
 
@@ -99,7 +99,7 @@ public static class DbContextExtensions
 
             var visitedComputeds = new HashSet<ComputedBase>();
 
-            await UpdateComputedsAsync(sortedComputeds.ToHashSet(), changesToProcess);
+            await UpdateComputedsAsync(allComputeds.ToHashSet(), changesToProcess);
 
             return updates.Count;
 
@@ -107,7 +107,7 @@ public static class DbContextExtensions
                 IReadOnlySet<ComputedBase> targetComputeds,
                 EFCoreChangeset changesToProcess)
             {
-                foreach (var computed in sortedComputeds)
+                foreach (var computed in allComputeds)
                 {
                     if (!targetComputeds.Contains(computed))
                         continue;

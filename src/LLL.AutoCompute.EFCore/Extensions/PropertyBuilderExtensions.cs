@@ -16,7 +16,7 @@ public static class PropertyBuilderExtensions
             ?? ChangeCalculations<TProperty>.Instance.CurrentValue();
 
         propertyBuilder.Metadata.SetComputedFactory(
-            ComputedFactory.CreateComputedPropertyFactory(
+            ComputedMemberFactory.CreateComputedPropertyFactory(
                 computedExpression,
                 changeCalculation));
 

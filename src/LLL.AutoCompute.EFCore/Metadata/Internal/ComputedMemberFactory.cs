@@ -5,13 +5,13 @@ using Microsoft.EntityFrameworkCore.Metadata;
 
 namespace LLL.AutoCompute.EFCore.Metadata.Internal;
 
-public delegate ComputedMember ComputedFactory<in TTarget>(
+public delegate ComputedMember ComputedMemberFactory<in TTarget>(
     IComputedExpressionAnalyzer<IEFCoreComputedInput> analyzer,
     TTarget target);
 
-public class ComputedFactory
+public class ComputedMemberFactory
 {
-    public static ComputedFactory<IProperty> CreateComputedPropertyFactory<TEntity, TProperty>(
+    public static ComputedMemberFactory<IProperty> CreateComputedPropertyFactory<TEntity, TProperty>(
         Expression<Func<TEntity, TProperty>> computedExpression,
         IChangeCalculation<TProperty, TProperty> changeCalculation)
         where TEntity : class
@@ -43,7 +43,7 @@ public class ComputedFactory
         };
     }
 
-    public static ComputedFactory<INavigationBase> CreateComputedNavigationFactory<TEntity, TProperty>(
+    public static ComputedMemberFactory<INavigationBase> CreateComputedNavigationFactory<TEntity, TProperty>(
         Expression<Func<TEntity, TProperty>> computedExpression,
         IChangeCalculation<TProperty, TProperty> changeCalculation,
         Action<IComputedNavigationBuilder<TEntity, TProperty>>? configure)
@@ -85,7 +85,7 @@ public class ComputedFactory
     }
 
 
-    private static IReadOnlySet<IPropertyBase> GetControlledMembers(
+    private static HashSet<IPropertyBase> GetControlledMembers(
         IEntityType entityType,
         LambdaExpression expression)
     {

@@ -4,13 +4,13 @@ using Microsoft.EntityFrameworkCore.Metadata;
 
 namespace LLL.AutoCompute.EFCore.Metadata.Internal;
 
-public delegate ComputedObserver ObserverFactory<in TTarget>(
+public delegate ComputedObserver ComputedObserverFactory<in TTarget>(
     IComputedExpressionAnalyzer<IEFCoreComputedInput> analyzer,
     TTarget target);
 
-public class ObserverFactory
+public class ComputedObserverFactory
 {
-    public static ObserverFactory<IEntityType> CreateObserverFactory<TEntity, TValue, TChange>(
+    public static ComputedObserverFactory<IEntityType> CreateObserverFactory<TEntity, TValue, TChange>(
         Expression<Func<TEntity, TValue>> computedExpression,
         Expression<Func<TEntity, bool>>? filterExpression,
         IChangeCalculation<TValue, TChange> changeCalculation,

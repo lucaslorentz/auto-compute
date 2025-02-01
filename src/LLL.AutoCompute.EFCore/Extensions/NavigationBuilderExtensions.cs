@@ -18,7 +18,7 @@ public static class NavigationBuilderExtensions
             ?? ChangeCalculations<TProperty>.Instance.CurrentValue();
 
         navigationBuilder.Metadata.SetComputedFactory(
-            ComputedFactory.CreateComputedNavigationFactory(
+            ComputedMemberFactory.CreateComputedNavigationFactory(
                 computedExpression,
                 changeCalculation,
                 configure));

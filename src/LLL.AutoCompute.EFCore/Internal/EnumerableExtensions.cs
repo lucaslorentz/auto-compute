@@ -4,12 +4,12 @@ namespace LLL.AutoCompute.EFCore;
 internal static class EnumerableExtensions
 {
     public static IReadOnlyList<T> TopoSort<T>(
-        this IReadOnlyList<T> source,
+        this IEnumerable<T> source,
         Func<T, IEnumerable<T>> getDependencies)
         where T : notnull
     {
         var visited = new HashSet<T>();
-        var result = new List<T>(source.Count);
+        var result = new List<T>();
 
         // Visit item, adding their dependencies first
         void Visit(T item)
