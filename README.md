@@ -37,6 +37,13 @@ modelBuilder.Entity<Person>().ComputedProperty(
    p => p.Pets.Count(pet => pet.Type == PetType.Cat)); // Computed expression
 ```
 
+**Example Usage** - Add a new cat or modify existing pets to trigger recomputation:
+```csharp
+var person = dbContext.People.First();
+person.Pets.Add(new Pet { Type = PetType.Cat }); // Add to navigation collection
+dbContext.SaveChanges(); // NumberOfCats is automatically recalculated!
+```
+
 ### ⚡ Incremental Updates
 **Optimize performance** by updating values without loading entire collections.  
 *Perfect for large collections.*
@@ -46,6 +53,15 @@ modelBuilder.Entity<Post>().ComputedProperty(
    p => p.LikeCount, // Property to map
    p => p.Interactions.Count(i => i.Type == InteractionType.Like), // Computed expression
    c => c.NumberIncremental()); // Change calculation
+```
+
+**Example Usage** - Add a new interaction or modify existing interactions to trigger recomputation:
+```csharp
+dbContext.Interactions.Add(new Interaction { 
+   Post = post,
+   Type = InteractionType.Like 
+});
+dbContext.SaveChanges(); // Post LikeCount updates via lightweight increment
 ```
 
 ### 🔗 Computed Navigations
