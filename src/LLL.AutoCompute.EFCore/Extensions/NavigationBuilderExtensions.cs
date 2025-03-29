@@ -8,7 +8,7 @@ public static class NavigationBuilderExtensions
 {
     public static NavigationBuilder<TEntity, TProperty> AutoCompute<TEntity, TProperty>(
         this NavigationBuilder<TEntity, TProperty> navigationBuilder,
-        Expression<Func<TEntity, TProperty>> computedExpression,
+        Expression<Func<TEntity, TProperty?>> computedExpression,
         ChangeCalculationSelector<TProperty, TProperty>? calculationSelector = null,
         Action<IComputedNavigationBuilder<TEntity, TProperty>>? configure = null)
         where TEntity : class
@@ -19,7 +19,7 @@ public static class NavigationBuilderExtensions
 
         navigationBuilder.Metadata.SetComputedFactory(
             ComputedMemberFactory.CreateComputedNavigationFactory(
-                computedExpression,
+                computedExpression!,
                 changeCalculation,
                 configure));
 

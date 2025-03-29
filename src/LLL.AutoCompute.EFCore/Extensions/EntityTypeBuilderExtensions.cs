@@ -27,7 +27,7 @@ public static class EntityTypeBuilderExtensions
         where TProperty : class
     {
         return entityTypeBuilder.Navigation(navigationExpression!)
-            .AutoCompute(computedExpression, calculationSelector, configure);
+            .AutoCompute(computedExpression!, calculationSelector, configure);
     }
 
     public static void ComputedObserver<TEntity, TValue, TChange>(
@@ -35,7 +35,7 @@ public static class EntityTypeBuilderExtensions
         Expression<Func<TEntity, TValue>> computedExpression,
         Expression<Func<TEntity, bool>>? filterExpression,
         ChangeCalculationSelector<TValue, TChange> calculationSelector,
-        Func<TEntity, TChange?, Task> callback)
+        Func<TEntity, TChange, Task> callback)
         where TEntity : class
     {
         entityTypeBuilder
