@@ -27,6 +27,8 @@ public class NavigationEntityContext : EntityContext
 
         var inverseNavigation = _navigation.GetInverse();
 
+        var sourceType = _navigation.SourceEntityType;
+
         var entities = await GetAffectedEntitiesAsync(input, incrementalContext);
 
         var parentEntities = new HashSet<object>();
@@ -34,6 +36,9 @@ public class NavigationEntityContext : EntityContext
         {
             foreach (var parent in parents)
             {
+                if (!sourceType.IsInstanceOfType(parent))
+                    continue;
+
                 parentEntities.Add(parent);
                 incrementalContext?.AddOriginalEntity(parent, _navigation, ent);
             }
@@ -42,6 +47,9 @@ public class NavigationEntityContext : EntityContext
         {
             foreach (var parent in parents)
             {
+                if (!sourceType.IsInstanceOfType(parent))
+                    continue;
+
                 parentEntities.Add(parent);
                 incrementalContext?.AddCurrentEntity(parent, _navigation, ent);
             }

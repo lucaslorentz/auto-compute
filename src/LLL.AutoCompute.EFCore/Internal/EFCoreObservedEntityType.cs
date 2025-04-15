@@ -18,4 +18,8 @@ public class EFCoreObservedEntityType(IEntityType entityType)
             _ => ObservedEntityState.None
         };
     }
+
+    public bool IsInstanceOfType(object obj) {
+        return entityType.ClrType.IsInstanceOfType(obj);
+    }
 }

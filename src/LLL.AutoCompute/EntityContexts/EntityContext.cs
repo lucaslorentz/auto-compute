@@ -45,13 +45,21 @@ public abstract class EntityContext
             {
                 var propertyChanges = await observedProperty.GetChangesAsync(input);
                 foreach (var ent in propertyChanges.GetEntityChanges())
+                {
+                    if (!EntityType.IsInstanceOfType(ent))
+                        continue;
+
                     entities.Add(ent);
+                }
             }
             else if (member is IObservedNavigation observedNavigation)
             {
                 var navigationChanges = await observedNavigation.GetChangesAsync(input);
                 foreach (var (entity, changes) in navigationChanges.GetEntityChanges())
                 {
+                    if (!EntityType.IsInstanceOfType(entity))
+                        continue;
+
                     entities.Add(entity);
                     foreach (var addedEntity in changes.Added)
                     {
@@ -71,7 +79,12 @@ public abstract class EntityContext
         {
             var ents = await childContext.GetParentAffectedEntities(input, incrementalContext);
             foreach (var ent in ents)
+            {
+                if (!EntityType.IsInstanceOfType(ent))
+                    continue;
+
                 entities.Add(ent);
+            }
         }
 
         return entities;

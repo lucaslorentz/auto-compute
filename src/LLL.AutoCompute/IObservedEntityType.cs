@@ -5,6 +5,7 @@ public interface IObservedEntityType
     string Name { get; }
     Type InputType { get; }
     ObservedEntityState GetEntityState(object input, object entity);
+    bool IsInstanceOfType(object obj);
 }
 
 public interface IObservedEntityType<in TInput> : IObservedEntityType
