@@ -132,10 +132,11 @@ modelBuilder.Entity<Person>().ComputedObserver(
    - [x] Load all navigation items to evaluate Linq All/Any/Contains
    - [x] Load necessary navigation items to evaluate Linq Distinct 
 - [x] Computed observers
+- [x] Methods to query inconsistent entities
+- [x] Methods to fix inconsistent entities
 - [ ] Async queue-based update for hot computed properties
   - [ ] Throttled update - Update X seconds after the first change
   - [ ] Debounced update - Update X seconds after the last change
-- [ ] Methods to query inconsistent entities
 - [ ] Periodic consistency check and fixes
 - [ ] Web-based UI for schema introspection, consistency check and fix
 
