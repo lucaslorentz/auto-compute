@@ -1,7 +1,5 @@
-﻿using System.Collections.Concurrent;
-using System.Diagnostics.CodeAnalysis;
+﻿using System.Diagnostics.CodeAnalysis;
 using System.Linq.Expressions;
-using System.Runtime.CompilerServices;
 using LLL.AutoCompute.ChangesProviders;
 using LLL.AutoCompute.EFCore.Caching;
 using LLL.AutoCompute.EFCore.Internal;
@@ -177,7 +175,7 @@ public static class DbContextExtensions
         var dependencies = dbContext.GetDependencies();
         return dependencies.StateManager
             .Entries
-            .Where(e => e.EntityType == entityType)
+            .Where(e => entityType.IsAssignableFrom(e.EntityType))
             .Select(e => new EntityEntry(e));
     }
 

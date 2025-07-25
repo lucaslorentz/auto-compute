@@ -11,7 +11,7 @@ public class BasicOperationsTests
     [Fact]
     public async Task TestCreate()
     {
-        using var context = await TestDbContext.Create<PersonDbContext>();
+        using var context = await TestDbContextFactory.Create<PersonDbContext>();
 
         var person = new Person { Id = "New", FirstName = "Jane", LastName = "Doe" };
         context!.Add(person);
@@ -25,7 +25,7 @@ public class BasicOperationsTests
     [Fact]
     public async Task TestModified()
     {
-        using var context = await TestDbContext.Create<PersonDbContext>();
+        using var context = await TestDbContextFactory.Create<PersonDbContext>();
 
         var person = context!.Set<Person>().Find(PersonDbContext.PersonAId)!;
         person.FirstName = "Modified";
@@ -39,7 +39,7 @@ public class BasicOperationsTests
     [Fact]
     public async Task TestRemove()
     {
-        using var context = await TestDbContext.Create<PersonDbContext>();
+        using var context = await TestDbContextFactory.Create<PersonDbContext>();
 
         var person = context!.Set<Person>().Find(PersonDbContext.PersonAId)!;
         context.Remove(person);

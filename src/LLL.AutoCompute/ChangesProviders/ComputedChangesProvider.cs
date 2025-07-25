@@ -26,7 +26,7 @@ public class ComputedChangesProvider<TInput, TEntity, TValue, TChange>(
         var incrementalContext = new IncrementalContext();
 
         var affectedEntities = (await entityContext.GetAffectedEntitiesAsync(input!, incrementalContext))
-            .Cast<TEntity>()
+            .OfType<TEntity>()
             .ToArray();
 
         await filterEntityContext.PreLoadNavigationsAsync(input!, affectedEntities);

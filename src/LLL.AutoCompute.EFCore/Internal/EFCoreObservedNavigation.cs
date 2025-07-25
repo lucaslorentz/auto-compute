@@ -252,7 +252,7 @@ public class EFCoreObservedNavigation(
             return;
         }
 
-        if (entityEntry.Metadata == Navigation.DeclaringEntityType)
+        if (Navigation.DeclaringEntityType.IsAssignableFrom(entityEntry.Metadata))
         {
             var navigationEntry = entityEntry.Navigation(Navigation);
             if (entityEntry.State == EntityState.Added
@@ -269,7 +269,7 @@ public class EFCoreObservedNavigation(
             }
         }
 
-        if (Navigation.Inverse is not null && entityEntry.Metadata == Navigation.Inverse.DeclaringEntityType)
+        if (Navigation.Inverse is not null && Navigation.Inverse.DeclaringEntityType.IsAssignableFrom(entityEntry.Metadata))
         {
             if (entityEntry.State == EntityState.Added
                                 || entityEntry.State == EntityState.Deleted
@@ -294,7 +294,7 @@ public class EFCoreObservedNavigation(
             }
         }
 
-        if (Navigation is ISkipNavigation skipNavigation && entityEntry.Metadata == skipNavigation.JoinEntityType)
+        if (Navigation is ISkipNavigation skipNavigation && skipNavigation.JoinEntityType.IsAssignableFrom(entityEntry.Metadata))
         {
             var dependentToPrincipal = skipNavigation.ForeignKey.DependentToPrincipal!;
             var joinReferenceToOther = skipNavigation.Inverse.ForeignKey.DependentToPrincipal;

@@ -15,7 +15,7 @@ public class ManyToManyDistinctTests
     [Fact]
     public async Task TestCollectionElementAdded()
     {
-        using var context = await TestDbContext.Create<PersonDbContext>();
+        using var context = await TestDbContextFactory.Create<PersonDbContext>();
 
         var personA = context!.Set<Person>().Find(PersonDbContext.PersonAId)!;
         var personB = context!.Set<Person>().Find(PersonDbContext.PersonBId)!;
@@ -32,7 +32,7 @@ public class ManyToManyDistinctTests
     [Fact]
     public async Task TestCollectionElementRemoved()
     {
-        using var context = await TestDbContext.Create<PersonDbContext>(
+        using var context = await TestDbContextFactory.Create<PersonDbContext>(
             seedData: async seedContext =>
             {
                 var p1 = seedContext!.Set<Person>().Find(PersonDbContext.PersonAId)!;
@@ -54,7 +54,7 @@ public class ManyToManyDistinctTests
     [Fact]
     public async Task TestCollectionElementRemovedInverse()
     {
-        using var context = await TestDbContext.Create<PersonDbContext>(
+        using var context = await TestDbContextFactory.Create<PersonDbContext>(
             seedData: async seedContext =>
             {
                 var p1 = seedContext!.Set<Person>().Find(PersonDbContext.PersonAId)!;

@@ -7,13 +7,13 @@ public class LookupTests
     [Fact]
     public async Task TestLookupKeys()
     {
-        using var context = await TestDbContext.Create<PersonDbContext>();
+        using var context = await TestDbContextFactory.Create<PersonDbContext>();
 
         var pet = context!.Set<Pet>().Find(PersonDbContext.PersonAPet1Id)!;
-        pet.Type = PetType.Other;
+        pet.Color = PetColor.Other;
 
         var changes = await context.GetChangesAsync(
-            (Person person) => person.Pets.ToLookup(p => p).Where(kv => kv.Key.Type != null).Count(),
+            (Person person) => person.Pets.ToLookup(p => p).Where(kv => kv.Key.Color != null).Count(),
             default,
             c => c.CurrentValue());
 
@@ -23,13 +23,13 @@ public class LookupTests
     [Fact]
     public async Task TestLookupValue()
     {
-        using var context = await TestDbContext.Create<PersonDbContext>();
+        using var context = await TestDbContextFactory.Create<PersonDbContext>();
 
         var pet = context!.Set<Pet>().Find(PersonDbContext.PersonAPet1Id)!;
-        pet.Type = PetType.Other;
+        pet.Color = PetColor.Other;
 
         var changes = await context.GetChangesAsync(
-            (Person person) => person.Pets.ToLookup(p => p.Id).Where(kv => kv.Any(p => p.Type != null)).Count(),
+            (Person person) => person.Pets.ToLookup(p => p.Id).Where(kv => kv.Any(p => p.Color != null)).Count(),
             default,
             c => c.CurrentValue());
 

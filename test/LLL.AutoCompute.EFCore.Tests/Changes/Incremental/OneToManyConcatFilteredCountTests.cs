@@ -6,19 +6,19 @@ namespace LLL.AutoCompute.EFCore.Tests.Changes.Incremental;
 public class OneToManyConcatFilteredCountTests
 {
     private static readonly Expression<Func<Person, int>> _computedExpression =
-        (Person person) => person.Pets.Where(p => p.Type == PetType.Cat)
-            .Concat(person.Pets.Where(p => p.Type == PetType.Dog))
+        person => person.Pets.Where(p => p.Color == PetColor.Orange)
+            .Concat(person.Pets.Where(p => p.Color == PetColor.Black))
             .Count();
 
     [Fact]
     public async Task TestCollectionElementAdded()
     {
-        using var context = await TestDbContext.Create<PersonDbContext>(
+        using var context = await TestDbContextFactory.Create<PersonDbContext>(
             useLazyLoadingProxies: false
         );
 
         var person = context!.Set<Person>().Find(PersonDbContext.PersonAId)!;
-        var pet = new Pet { Id = "New", Type = PetType.Cat };
+        var pet = new Cat { Id = "New", Color = PetColor.Orange };
         person.Pets.Add(pet);
 
         var changes = await context.GetChangesAsync(_computedExpression, default, static c => c.NumberIncremental());
@@ -31,10 +31,10 @@ public class OneToManyConcatFilteredCountTests
     [Fact]
     public async Task TestCollectionElementAddedInverse()
     {
-        using var context = await TestDbContext.Create<PersonDbContext>();
+        using var context = await TestDbContextFactory.Create<PersonDbContext>();
 
         var person = context!.Set<Person>().Find(PersonDbContext.PersonAId)!;
-        var pet = new Pet { Id = "New", Type = PetType.Cat, Owner = person };
+        var pet = new Cat { Id = "New", Color = PetColor.Orange, Owner = person };
         context.Add(pet);
 
         var changes = await context.GetChangesAsync(
@@ -50,10 +50,10 @@ public class OneToManyConcatFilteredCountTests
     [Fact]
     public async Task TestCollectionElementModifiedToBeFilteredOut()
     {
-        using var context = await TestDbContext.Create<PersonDbContext>();
+        using var context = await TestDbContextFactory.Create<PersonDbContext>();
 
         var pet = context!.Set<Pet>().Find(PersonDbContext.PersonAPet1Id)!;
-        pet.Type = PetType.Other;
+        pet.Color = PetColor.Other;
 
         var changes = await context.GetChangesAsync(
             _computedExpression,
@@ -68,10 +68,10 @@ public class OneToManyConcatFilteredCountTests
     [Fact]
     public async Task TestCollectionElementModifiedToContinue()
     {
-        using var context = await TestDbContext.Create<PersonDbContext>();
+        using var context = await TestDbContextFactory.Create<PersonDbContext>();
 
         var pet = context!.Set<Pet>().Find(PersonDbContext.PersonAPet1Id)!;
-        pet.Type = PetType.Dog;
+        pet.Color = PetColor.Black;
 
         var changes = await context.GetChangesAsync(
             _computedExpression,
@@ -84,7 +84,7 @@ public class OneToManyConcatFilteredCountTests
     [Fact]
     public async Task TestCollectionElementRemoved()
     {
-        using var context = await TestDbContext.Create<PersonDbContext>(
+        using var context = await TestDbContextFactory.Create<PersonDbContext>(
             useLazyLoadingProxies: false
         );
 
@@ -102,7 +102,7 @@ public class OneToManyConcatFilteredCountTests
     [Fact]
     public async Task TestCollectionElementRemovedInverse()
     {
-        using var context = await TestDbContext.Create<PersonDbContext>();
+        using var context = await TestDbContextFactory.Create<PersonDbContext>();
 
         var person = context!.Set<Person>().Find(PersonDbContext.PersonAId)!;
         var pet = context!.Set<Pet>().Find(PersonDbContext.PersonAPet1Id)!;
@@ -118,13 +118,13 @@ public class OneToManyConcatFilteredCountTests
     [Fact]
     public async Task DeltaTest()
     {
-        using var context = await TestDbContext.Create<PersonDbContext>(
+        using var context = await TestDbContextFactory.Create<PersonDbContext>(
             useLazyLoadingProxies: false
         );
 
         // Add a cat
         var person = context!.Set<Person>().Find(PersonDbContext.PersonAId)!;
-        var pet = new Pet { Id = "New", Type = PetType.Cat };
+        var pet = new Cat { Id = "New", Color = PetColor.Orange };
         person.Pets.Add(pet);
 
         var provider = context.GetChangesProvider(

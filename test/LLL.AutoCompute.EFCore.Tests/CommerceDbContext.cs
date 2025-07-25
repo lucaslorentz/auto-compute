@@ -37,7 +37,7 @@ public class Product
 }
 
 class CommerceDbContext(DbContextOptions options)
-    : DbContext(options), ITestDbContext, ICreatableTestDbContext<CommerceDbContext>
+    : DbContext(options), ITestDbContext<CommerceDbContext>
 {
     public DbSet<Customer> Customers { get; set; } = default!;
     public DbSet<Order> Orders { get; set; } = default!;

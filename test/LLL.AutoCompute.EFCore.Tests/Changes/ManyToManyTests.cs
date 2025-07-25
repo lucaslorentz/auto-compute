@@ -11,7 +11,7 @@ public class ManyToManyTests
     [Fact]
     public async Task TestCollectionElementAdded()
     {
-        using var context = await TestDbContext.Create<PersonDbContext>();
+        using var context = await TestDbContextFactory.Create<PersonDbContext>();
 
         var person2 = context!.Set<Person>().Find(PersonDbContext.PersonBId)!;
         await context.Entry(person2).Navigation(nameof(Person.Friends)).LoadAsync();
@@ -27,7 +27,7 @@ public class ManyToManyTests
     [Fact]
     public async Task TestCollectionElementAddedInverse()
     {
-        using var context = await TestDbContext.Create<PersonDbContext>();
+        using var context = await TestDbContextFactory.Create<PersonDbContext>();
 
         var person2 = context!.Set<Person>().Find(PersonDbContext.PersonBId)!;
         var newPerson = new Person { Id = "New", FriendsInverse = { person2 } };
@@ -42,7 +42,7 @@ public class ManyToManyTests
     [Fact]
     public async Task TestCollectionElementModified()
     {
-        using var context = await TestDbContext.Create<PersonDbContext>();
+        using var context = await TestDbContextFactory.Create<PersonDbContext>();
 
         var personA = context!.Set<Person>().Find(PersonDbContext.PersonAId)!;
         personA.FirstName = "Modified";
@@ -54,7 +54,7 @@ public class ManyToManyTests
     [Fact]
     public async Task TestCollectionElementRemoved()
     {
-        using var context = await TestDbContext.Create<PersonDbContext>();
+        using var context = await TestDbContextFactory.Create<PersonDbContext>();
 
         var personA = context!.Set<Person>().Find(PersonDbContext.PersonAId)!;
         var personB = context!.Set<Person>().Find(PersonDbContext.PersonBId)!;
@@ -70,7 +70,7 @@ public class ManyToManyTests
     [Fact]
     public async Task TestCollectionElementRemovedInverse()
     {
-        using var context = await TestDbContext.Create<PersonDbContext>();
+        using var context = await TestDbContextFactory.Create<PersonDbContext>();
 
         var personA = context!.Set<Person>().Find(PersonDbContext.PersonAId)!;
         await context.Entry(personA).Navigation(nameof(Person.FriendsInverse)).LoadAsync();
