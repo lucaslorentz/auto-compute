@@ -20,7 +20,7 @@ public class ComputedMemberFactory
         {
             try
             {
-                if (property.DeclaringType.ClrType != typeof(TEntity))
+                if (!property.DeclaringType.ClrType.IsAssignableFrom(typeof(TEntity)))
                     throw new Exception($"Expected entity type {property.DeclaringType.ClrType} but got {typeof(TEntity)}");
 
                 var changesProvider = analyzer.CreateChangesProvider(
@@ -54,7 +54,7 @@ public class ComputedMemberFactory
         {
             try
             {
-                if (navigation.DeclaringType.ClrType != typeof(TEntity))
+                if (!navigation.DeclaringType.ClrType.IsAssignableFrom(typeof(TEntity)))
                     throw new Exception($"Expected entity type {navigation.DeclaringType.ClrType} but got {typeof(TEntity)}");
 
                 var changesProvider = analyzer.CreateChangesProvider(

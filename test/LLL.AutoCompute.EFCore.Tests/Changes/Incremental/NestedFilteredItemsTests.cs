@@ -6,16 +6,16 @@ namespace LLL.AutoCompute.EFCore.Tests.Changes.Incremental;
 
 public class NestedFilteredItemsTests
 {
-    private static readonly Expression<Func<Person, IEnumerable<Pet>>> _computedExpression = (Person person) =>
-        person.Friends.SelectMany(f => f.Pets).Where(p => p.Type == PetType.Cat);
+    private static readonly Expression<Func<Person, IEnumerable<Pet>>> _computedExpression = person =>
+        person.Friends.SelectMany(f => f.Pets).Where(p => p.Color == PetColor.Orange);
 
     [Fact]
     public async Task TestNestedCollectionElementModified()
     {
-        using var context = await TestDbContext.Create<PersonDbContext>();
+        using var context = await TestDbContextFactory.Create<PersonDbContext>();
 
         var pet = context!.Set<Pet>().Find(PersonDbContext.PersonAPet1Id)!;
-        pet.Type = PetType.Other;
+        pet.Color = PetColor.Other;
 
         var changes = await context.GetChangesAsync(_computedExpression, default, static c => c.SetIncremental());
 
@@ -29,7 +29,7 @@ public class NestedFilteredItemsTests
     [Fact]
     public async Task TestCollectionElementRemoved()
     {
-        using var context = await TestDbContext.Create<PersonDbContext>();
+        using var context = await TestDbContextFactory.Create<PersonDbContext>();
 
         var person2 = context!.Set<Person>().Find(PersonDbContext.PersonBId)!;
         await context.Entry(person2).Navigation(nameof(Person.Friends)).LoadAsync();
@@ -46,7 +46,7 @@ public class NestedFilteredItemsTests
     [Fact]
     public async Task TestCollectionElementRemovedInverse()
     {
-        using var context = await TestDbContext.Create<PersonDbContext>();
+        using var context = await TestDbContextFactory.Create<PersonDbContext>();
 
         var personA = context!.Set<Person>().Find(PersonDbContext.PersonAId)!;
         await context.Entry(personA).Navigation(nameof(Person.FriendsInverse)).LoadAsync();

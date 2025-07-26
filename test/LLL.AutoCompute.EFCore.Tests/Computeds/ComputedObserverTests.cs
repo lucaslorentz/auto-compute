@@ -45,7 +45,7 @@ public class ComputedObserverTests
     public async Task TestObserveCollectionsCurrentValue()
     {
         using var context = await CreateContextWithObserver(
-            (Person p) => p.Pets.Where(p => p.Type == PetType.Cat),
+            (Person p) => p.Pets.Where(p => p.Color == PetColor.Orange),
             c => c.CurrentValue(),
             out var observedChanges);
 
@@ -53,7 +53,7 @@ public class ComputedObserverTests
 
         var pet1 = context.Set<Pet>().Find(PersonDbContext.PersonAPet1Id)!;
 
-        var newPet = new Pet { Id = "New", Type = PetType.Cat };
+        var newPet = new Cat { Id = "New", Color = PetColor.Orange };
         person.Pets.Add(newPet);
 
         await context.SaveChangesAsync();
@@ -67,13 +67,13 @@ public class ComputedObserverTests
     public async Task TestObserveCollectionsCurrentValueIncremental()
     {
         using var context = await CreateContextWithObserver(
-            (Person p) => p.Pets.Where(p => p.Type == PetType.Cat),
+            (Person p) => p.Pets.Where(p => p.Color == PetColor.Orange),
             c => c.CurrentValueIncremental(),
             out var observedChanges);
 
         var person = context.Set<Person>().Find(PersonDbContext.PersonAId)!;
 
-        var newPet = new Pet { Id = "New", Type = PetType.Cat };
+        var newPet = new Cat { Id = "New", Color = PetColor.Orange };
         person.Pets.Add(newPet);
 
         await context.SaveChangesAsync();
@@ -87,13 +87,13 @@ public class ComputedObserverTests
     public async Task TestObserveCollectionsSetIncremental()
     {
         using var context = await CreateContextWithObserver(
-            (Person p) => p.Pets.Where(p => p.Type == PetType.Cat),
+            (Person p) => p.Pets.Where(p => p.Color == PetColor.Orange),
             c => c.SetIncremental(),
             out var observedChanges);
 
         var person = context.Set<Person>().Find(PersonDbContext.PersonAId)!;
 
-        var newPet = new Pet { Id = "New", Type = PetType.Cat };
+        var newPet = new Cat { Id = "New", Color = PetColor.Orange };
         person.Pets.Add(newPet);
 
         await context.SaveChangesAsync();
@@ -110,13 +110,13 @@ public class ComputedObserverTests
     public async Task TestObserveCollectionsNumberIncremental()
     {
         using var context = await CreateContextWithObserver(
-            (Person p) => p.Pets.Where(p => p.Type == PetType.Cat).Count(),
+            (Person p) => p.Pets.Where(p => p.Color == PetColor.Orange).Count(),
             c => c.NumberIncremental(),
             out var observedChanges);
 
         var person = context.Set<Person>().Find(PersonDbContext.PersonAId)!;
 
-        var newPet = new Pet { Id = "New", Type = PetType.Cat };
+        var newPet = new Cat { Id = "New", Color = PetColor.Orange };
         person.Pets.Add(newPet);
 
         await context.SaveChangesAsync();
@@ -138,7 +138,7 @@ public class ComputedObserverTests
 
         async Task<PersonDbContext> CreateContext()
         {
-            var context = await TestDbContext.Create(o => new PersonDbContext(o, new PersonDbContextParams
+            var context = await TestDbContextFactory.Create(o => new PersonDbContext(o, new PersonDbContextParams
             {
                 SetupObservers = modelBuilder =>
                 {

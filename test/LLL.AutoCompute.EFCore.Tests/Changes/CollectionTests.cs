@@ -11,10 +11,10 @@ public class CollectionTests
     [Fact]
     public async Task TestCollectionElementAdded()
     {
-        using var context = await TestDbContext.Create<PersonDbContext>();
+        using var context = await TestDbContextFactory.Create<PersonDbContext>();
 
         var person = context!.Set<Person>().Find(PersonDbContext.PersonAId)!;
-        var pet = new Pet { Id = "New", Type = PetType.Cat };
+        var pet = new Cat { Id = "New", Color = PetColor.Orange };
         person.Pets.Add(pet);
 
         var changes = await context.GetChangesAsync(_computedExpression, default, static c => c.ValueChange());
@@ -26,10 +26,10 @@ public class CollectionTests
     [Fact]
     public async Task TestCollectionElementAddedInverse()
     {
-        using var context = await TestDbContext.Create<PersonDbContext>();
+        using var context = await TestDbContextFactory.Create<PersonDbContext>();
 
         var person = context!.Set<Person>().Find(PersonDbContext.PersonAId)!;
-        var pet = new Pet { Id = "New", Type = PetType.Cat, Owner = person };
+        var pet = new Cat { Id = "New", Color = PetColor.Orange, Owner = person };
         context.Add(pet);
 
         var changes = await context.GetChangesAsync(_computedExpression, default, static c => c.ValueChange());
@@ -41,10 +41,10 @@ public class CollectionTests
     [Fact]
     public async Task TestCollectionElementModified()
     {
-        using var context = await TestDbContext.Create<PersonDbContext>();
+        using var context = await TestDbContextFactory.Create<PersonDbContext>();
 
         var pet = context!.Set<Pet>().Find(PersonDbContext.PersonAPet1Id)!;
-        pet.Type = PetType.Other;
+        pet.Color = PetColor.Other;
 
         var changes = await context.GetChangesAsync(_computedExpression, default, static c => c.ValueChange());
         changes.Should().BeEmpty();
@@ -53,7 +53,7 @@ public class CollectionTests
     [Fact]
     public async Task TestCollectionElementRemoved()
     {
-        using var context = await TestDbContext.Create<PersonDbContext>();
+        using var context = await TestDbContextFactory.Create<PersonDbContext>();
 
         var person = context!.Set<Person>().Find(PersonDbContext.PersonAId)!;
         var pet = context!.Set<Pet>().Find(PersonDbContext.PersonAPet1Id)!;
@@ -68,7 +68,7 @@ public class CollectionTests
     [Fact]
     public async Task TestCollectionElementRemovedInverse()
     {
-        using var context = await TestDbContext.Create<PersonDbContext>();
+        using var context = await TestDbContextFactory.Create<PersonDbContext>();
 
         var person = context!.Set<Person>().Find(PersonDbContext.PersonAId)!;
         var pet = context!.Set<Pet>().Find(PersonDbContext.PersonAPet1Id)!;

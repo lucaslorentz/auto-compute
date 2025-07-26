@@ -1,59 +1,17 @@
-﻿using Microsoft.Data.Sqlite;
-using Microsoft.EntityFrameworkCore;
-using Microsoft.EntityFrameworkCore.Infrastructure;
+﻿using Microsoft.EntityFrameworkCore;
 
 namespace LLL.AutoCompute.EFCore.Tests;
 
-public static class TestDbContext
+public class TestDbContext(DbContextOptions options) : DbContext(options), ITestDbContext<TestDbContext>
 {
-    public static async Task<TDbContext> Create<TDbContext>(
-        Func<DbContext, Task>? seedData = null,
-        bool useLazyLoadingProxies = true
-    ) where TDbContext : DbContext, ICreatableTestDbContext<TDbContext>
+    public object? ConfigurationKey => "key";
+
+    public static TestDbContext Create(DbContextOptions options)
     {
-        return await Create(TDbContext.Create, seedData, useLazyLoadingProxies);
+        return new TestDbContext(options);
     }
 
-    public static async Task<TDbContext> Create<TDbContext>(
-        Func<DbContextOptions, TDbContext> factory,
-        Func<DbContext, Task>? seedData = null,
-        bool useLazyLoadingProxies = true
-    ) where TDbContext : DbContext, ITestDbContext
+    public void SeedData()
     {
-        var connection = new SqliteConnection("Filename=:memory:");
-        await connection.OpenAsync();
-
-        var contextOptions = new DbContextOptionsBuilder<TDbContext>()
-            .UseSqlite(connection)
-            .UseLazyLoadingProxies(useLazyLoadingProxies)
-            .UseAutoCompute()
-            .ReplaceService<IModelCacheKeyFactory, CustomizedModelCacheKeyFactory>()
-            .Options;
-
-        using (var context = factory(contextOptions))
-        {
-            await context.Database.EnsureCreatedAsync();
-
-            context.SeedData();
-            await context.SaveChangesAsync();
-
-            if (seedData is not null)
-            {
-                await seedData(context);
-                await context.SaveChangesAsync();
-            }
-        }
-
-        return factory(contextOptions);
-    }
-
-    class CustomizedModelCacheKeyFactory : IModelCacheKeyFactory
-    {
-        public object Create(DbContext context, bool designTime)
-        {
-            return context is ITestDbContext testContext
-            ? (context.GetType(), testContext.ConfigurationKey, designTime)
-            : (object)context.GetType();
-        }
     }
 }

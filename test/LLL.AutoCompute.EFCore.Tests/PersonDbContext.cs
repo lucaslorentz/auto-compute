@@ -1,6 +1,4 @@
 ﻿using Microsoft.EntityFrameworkCore;
-using Microsoft.EntityFrameworkCore.Infrastructure;
-using Microsoft.Extensions.Logging;
 
 namespace LLL.AutoCompute.EFCore.Tests;
 
@@ -21,31 +19,34 @@ public class Person
     public virtual IList<RelativesJoin> RelativesInverseJoin { get; protected set; } = [];
 
     public virtual string? FullName { get; protected set; }
-    public virtual int NumberOfCats { get; protected set; }
-    public virtual bool HasCats { get; protected set; }
-    public virtual int NumberOfDogs { get; protected set; }
-    public virtual bool HasDogs { get; protected set; }
+    public virtual int NumberOfOrangePets { get; protected set; }
+    public virtual bool HasOrangePets { get; protected set; }
+    public virtual int NumberOfBlackPets { get; protected set; }
+    public virtual bool HasBlackPets { get; protected set; }
     public virtual int NumberOfPets { get; protected set; }
-    public virtual int NumberOfCatsAndDogsConcat { get; protected set; }
+    public virtual int NumberOfOrangeAndBlackPets { get; protected set; }
     public virtual string? Description { get; protected set; }
     public virtual int FriendsCount { get; protected set; }
     public virtual int RelativesCount { get; protected set; }
     public virtual int DistinctFriendRelativesCount { get; protected set; }
 }
 
-public class Pet
+public abstract class Pet
 {
     public virtual required string Id { get; set; }
-    public virtual string? Color { get; set; }
-    public virtual PetType? Type { get; set; }
+    public virtual PetColor? Color { get; set; }
     public virtual Person? Owner { get; set; }
     public virtual Person? FavoritePetInverse { get; set; }
 }
 
-public enum PetType
+public class Cat : Pet { }
+public class Dog : Pet { }
+
+public enum PetColor
 {
-    Cat,
-    Dog,
+    Orange,
+    Black,
+    White,
     Other
 }
 
@@ -70,7 +71,7 @@ record class PersonDbContextParams
 class PersonDbContext(
     DbContextOptions options,
     PersonDbContextParams parameters
-) : DbContext(options), ITestDbContext, ICreatableTestDbContext<PersonDbContext>
+) : DbContext(options), ITestDbContext<PersonDbContext>
 {
     public const string PersonAId = "A";
     public const string PersonAPet1Id = "A.Pet.1";
@@ -107,13 +108,13 @@ class PersonDbContext(
             p => p.FirstName + " " + p.LastName);
 
         personBuilder.ComputedProperty(
-            p => p.NumberOfCats,
-            p => p.Pets.Count(x => x.Type == PetType.Cat),
+            p => p.NumberOfOrangePets,
+            p => p.Pets.Count(x => x.Color == PetColor.Orange),
             c => parameters.UseIncrementalComputation ? c.NumberIncremental() : c.CurrentValue());
 
         personBuilder.ComputedProperty(
-            p => p.NumberOfDogs,
-            p => p.Pets.Count(x => x.Type == PetType.Dog),
+            p => p.NumberOfBlackPets,
+            p => p.Pets.Count(x => x.Color == PetColor.Black),
             c => parameters.UseIncrementalComputation ? c.NumberIncremental() : c.CurrentValue());
 
         personBuilder.ComputedProperty(
@@ -122,21 +123,26 @@ class PersonDbContext(
             c => parameters.UseIncrementalComputation ? c.NumberIncremental() : c.CurrentValue());
 
         personBuilder.ComputedProperty(
-            p => p.HasCats,
-            p => p.NumberOfCats > 0);
+            p => p.HasOrangePets,
+            p => p.NumberOfOrangePets > 0);
 
         personBuilder.ComputedProperty(
-            p => p.HasDogs,
-            p => p.NumberOfDogs > 0);
+            p => p.HasBlackPets,
+            p => p.NumberOfBlackPets > 0);
 
         personBuilder.ComputedProperty(
-            p => p.NumberOfCatsAndDogsConcat,
-            p => p.Pets.Where(x => x.Type == PetType.Cat)
-                .Concat(p.Pets.Where(x => x.Type == PetType.Dog))
+            p => p.NumberOfOrangeAndBlackPets,
+            p => p.Pets.Where(x => x.Color == PetColor.Orange)
+                .Concat(p.Pets.Where(x => x.Color == PetColor.Black))
                 .Count(),
             c => parameters.UseIncrementalComputation ? c.NumberIncremental() : c.CurrentValue());
 
         personBuilder.ComputedProperty(p => p.Description, p => p.FullName + " (" + p.NumberOfPets + " pets)");
+
+        var petBuilder = modelBuilder.Entity<Pet>();
+        petBuilder.HasDiscriminator<string>("Type")
+            .HasValue<Cat>("Cat")
+            .HasValue<Dog>("Dog");
 
         parameters.SetupObservers?.Invoke(modelBuilder);
     }
@@ -149,7 +155,7 @@ class PersonDbContext(
             FirstName = "John",
             LastName = "Doe",
             Pets = {
-                new Pet { Id = PersonAPet1Id, Type = PetType.Cat }
+                new Cat { Id = PersonAPet1Id, Color = PetColor.Orange }
             },
         };
 

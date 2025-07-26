@@ -31,17 +31,17 @@ public class ComputedPropertyTests
 
         VerifyInitialStatePersonA(person);
 
-        var pet = new Pet { Id = "New", Type = PetType.Cat };
+        var pet = new Cat { Id = "New", Color = PetColor.Orange };
         person.Pets.Add(pet);
 
         await context.SaveChangesAsync();
 
-        person.NumberOfCats.Should().Be(2);
-        person.HasCats.Should().BeTrue();
-        person.NumberOfDogs.Should().Be(0);
-        person.HasDogs.Should().BeFalse();
+        person.NumberOfOrangePets.Should().Be(2);
+        person.HasOrangePets.Should().BeTrue();
+        person.NumberOfBlackPets.Should().Be(0);
+        person.HasBlackPets.Should().BeFalse();
         person.NumberOfPets.Should().Be(2);
-        person.NumberOfCatsAndDogsConcat.Should().Be(2);
+        person.NumberOfOrangeAndBlackPets.Should().Be(2);
         person.Description.Should().Be("John Doe (2 pets)");
     }
 
@@ -54,17 +54,17 @@ public class ComputedPropertyTests
 
         VerifyInitialStatePersonA(person);
 
-        var pet = new Pet { Id = "New", Type = PetType.Cat, Owner = person };
+        var pet = new Cat { Id = "New", Color = PetColor.Orange, Owner = person };
         context.Add(pet);
 
         await context.SaveChangesAsync();
 
-        person.NumberOfCats.Should().Be(2);
-        person.HasCats.Should().BeTrue();
-        person.NumberOfDogs.Should().Be(0);
-        person.HasDogs.Should().BeFalse();
+        person.NumberOfOrangePets.Should().Be(2);
+        person.HasOrangePets.Should().BeTrue();
+        person.NumberOfBlackPets.Should().Be(0);
+        person.HasBlackPets.Should().BeFalse();
         person.NumberOfPets.Should().Be(2);
-        person.NumberOfCatsAndDogsConcat.Should().Be(2);
+        person.NumberOfOrangeAndBlackPets.Should().Be(2);
         person.Description.Should().Be("John Doe (2 pets)");
         context.Entry(person).Navigation(nameof(Person.Pets)).IsLoaded.Should().BeTrue();
     }
@@ -79,16 +79,16 @@ public class ComputedPropertyTests
         VerifyInitialStatePersonA(person);
 
         var pet = context!.Set<Pet>().Find(PersonDbContext.PersonAPet1Id)!;
-        pet.Type = PetType.Dog;
+        pet.Color = PetColor.Black;
 
         await context.SaveChangesAsync();
 
-        person.NumberOfCats.Should().Be(0);
-        person.HasCats.Should().BeFalse();
-        person.NumberOfDogs.Should().Be(1);
-        person.HasDogs.Should().BeTrue();
+        person.NumberOfOrangePets.Should().Be(0);
+        person.HasOrangePets.Should().BeFalse();
+        person.NumberOfBlackPets.Should().Be(1);
+        person.HasBlackPets.Should().BeTrue();
         person.NumberOfPets.Should().Be(1);
-        person.NumberOfCatsAndDogsConcat.Should().Be(1);
+        person.NumberOfOrangeAndBlackPets.Should().Be(1);
         person.Description.Should().Be("John Doe (1 pets)");
         context.Entry(person).Navigation(nameof(Person.Pets)).IsLoaded.Should().BeTrue();
     }
@@ -107,12 +107,12 @@ public class ComputedPropertyTests
 
         await context.SaveChangesAsync();
         
-        person.NumberOfCats.Should().Be(0);
-        person.HasCats.Should().BeFalse();
-        person.NumberOfDogs.Should().Be(0);
-        person.HasDogs.Should().BeFalse();
+        person.NumberOfOrangePets.Should().Be(0);
+        person.HasOrangePets.Should().BeFalse();
+        person.NumberOfBlackPets.Should().Be(0);
+        person.HasBlackPets.Should().BeFalse();
         person.NumberOfPets.Should().Be(0);
-        person.NumberOfCatsAndDogsConcat.Should().Be(0);
+        person.NumberOfOrangeAndBlackPets.Should().Be(0);
         person.Description.Should().Be("John Doe (0 pets)");
         context.Entry(person).Navigation(nameof(Person.Pets)).IsLoaded.Should().BeTrue();
     }
@@ -131,30 +131,30 @@ public class ComputedPropertyTests
 
         await context.SaveChangesAsync();
         
-        person.NumberOfCats.Should().Be(0);
-        person.HasCats.Should().BeFalse();
-        person.NumberOfDogs.Should().Be(0);
-        person.HasDogs.Should().BeFalse();
+        person.NumberOfOrangePets.Should().Be(0);
+        person.HasOrangePets.Should().BeFalse();
+        person.NumberOfBlackPets.Should().Be(0);
+        person.HasBlackPets.Should().BeFalse();
         person.NumberOfPets.Should().Be(0);
-        person.NumberOfCatsAndDogsConcat.Should().Be(0);
+        person.NumberOfOrangeAndBlackPets.Should().Be(0);
         person.Description.Should().Be("John Doe (0 pets)");
         context.Entry(person).Navigation(nameof(Person.Pets)).IsLoaded.Should().BeTrue();
     }
 
     private static async Task<PersonDbContext> GetDbContextAsync()
     {
-        return await TestDbContext.Create<PersonDbContext>();
+        return await TestDbContextFactory.Create<PersonDbContext>();
     }
 
     private static void VerifyInitialStatePersonA(Person person)
     {
         person.FullName.Should().Be("John Doe");
-        person.NumberOfCats.Should().Be(1);
-        person.HasCats.Should().BeTrue();
-        person.NumberOfDogs.Should().Be(0);
-        person.HasDogs.Should().BeFalse();
+        person.NumberOfOrangePets.Should().Be(1);
+        person.HasOrangePets.Should().BeTrue();
+        person.NumberOfBlackPets.Should().Be(0);
+        person.HasBlackPets.Should().BeFalse();
         person.NumberOfPets.Should().Be(1);
-        person.NumberOfCatsAndDogsConcat.Should().Be(1);
+        person.NumberOfOrangeAndBlackPets.Should().Be(1);
         person.Description.Should().Be("John Doe (1 pets)");
     }
 }

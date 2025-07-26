@@ -6,12 +6,12 @@ namespace LLL.AutoCompute.EFCore.Tests.Changes;
 
 public class OneToOneInverseTests
 {
-    private static readonly Expression<Func<Pet, string?>> _computedExpression = (Pet pet) => pet.FavoritePetInverse != null ? pet.FavoritePetInverse.FirstName : null;
+    private static readonly Expression<Func<Pet, string?>> _computedExpression = pet => pet.FavoritePetInverse != null ? pet.FavoritePetInverse.FirstName : null;
 
     [Fact]
     public async Task TestReferenceSet()
     {
-        using var context = await TestDbContext.Create<PersonDbContext>();
+        using var context = await TestDbContextFactory.Create<PersonDbContext>();
 
         var person = context!.Set<Person>().Find(PersonDbContext.PersonAId)!;
         var pet = context!.Set<Pet>().Find(PersonDbContext.PersonAPet1Id)!;
@@ -26,7 +26,7 @@ public class OneToOneInverseTests
     [Fact]
     public async Task TestInverseReferenceSet()
     {
-        using var context = await TestDbContext.Create<PersonDbContext>();
+        using var context = await TestDbContextFactory.Create<PersonDbContext>();
 
         var person = context!.Set<Person>().Find(PersonDbContext.PersonAId)!;
         var pet = context!.Set<Pet>().Find(PersonDbContext.PersonAPet1Id)!;
@@ -41,7 +41,7 @@ public class OneToOneInverseTests
     [Fact]
     public async Task TestReferencedEntityModified()
     {
-        using var context = await TestDbContext.Create<PersonDbContext>();
+        using var context = await TestDbContextFactory.Create<PersonDbContext>();
 
         var person = context!.Set<Person>().Find(PersonDbContext.PersonAId)!;
         var pet = context!.Set<Pet>().Find(PersonDbContext.PersonAPet1Id)!;
@@ -59,7 +59,7 @@ public class OneToOneInverseTests
     [Fact]
     public async Task TestReferenceUnset()
     {
-        using var context = await TestDbContext.Create<PersonDbContext>();
+        using var context = await TestDbContextFactory.Create<PersonDbContext>();
 
         var person = context!.Set<Person>().Find(PersonDbContext.PersonAId)!;
         var pet = context!.Set<Pet>().Find(PersonDbContext.PersonAPet1Id)!;
@@ -77,7 +77,7 @@ public class OneToOneInverseTests
     [Fact]
     public async Task TestReferenceUnsetInverse()
     {
-        using var context = await TestDbContext.Create<PersonDbContext>();
+        using var context = await TestDbContextFactory.Create<PersonDbContext>();
 
         var person = context!.Set<Person>().Find(PersonDbContext.PersonAId)!;
         var pet = context!.Set<Pet>().Find(PersonDbContext.PersonAPet1Id)!;

@@ -80,7 +80,7 @@ public class ComputedCollectionTests
 
     private static async Task<CommerceDbContext> GetDbContextAsync()
     {
-        return await TestDbContext.Create<CommerceDbContext>();
+        return await TestDbContextFactory.Create<CommerceDbContext>();
     }
 
     private static void VerifyInitialStateCustomerA(Customer customerA)
