@@ -244,7 +244,7 @@ public class LinqMethodsEntityContextPropagator(Lazy<IObservedEntityTypeResolver
                             analysis.AddContext(
                                 node,
                                 EntityContextKeys.Element,
-                                new RootEntityContext(node, observedEntityType)
+                                new EmptyEntityContext(node, observedEntityType)
                             );
                         }
                         break;
