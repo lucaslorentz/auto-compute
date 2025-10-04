@@ -1,6 +1,8 @@
+using System.Linq.Expressions;
+
 namespace LLL.AutoCompute.EntityContexts;
 
-public abstract class EntityContext
+public abstract class EntityContext(Expression expression)
 {
     private readonly HashSet<IObservedMember> _observedMembers = [];
     private readonly IList<EntityContext> _childContexts = [];
@@ -11,6 +13,7 @@ public abstract class EntityContext
     public abstract IObservedEntityType EntityType { get; }
     public abstract bool IsTrackingChanges { get; }
     public Guid Id { get; } = Guid.NewGuid();
+    public Expression Expression => expression;
 
     public void RegisterObservedMember(IObservedMember member)
     {

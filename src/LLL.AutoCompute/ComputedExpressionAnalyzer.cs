@@ -101,7 +101,7 @@ public class ComputedExpressionAnalyzer<TInput> : IComputedExpressionAnalyzer<TI
     {
         var analysis = new ComputedExpressionAnalysis();
 
-        var entityContext = new RootEntityContext(entityType);
+        var entityContext = new RootEntityContext(computedExpression.Parameters[0], entityType);
         analysis.AddContext(computedExpression.Parameters[0], EntityContextKeys.None, entityContext);
 
         new PropagateEntityContextsVisitor(

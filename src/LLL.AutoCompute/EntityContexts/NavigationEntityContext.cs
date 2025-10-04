@@ -1,4 +1,6 @@
-﻿namespace LLL.AutoCompute.EntityContexts;
+﻿using System.Linq.Expressions;
+
+namespace LLL.AutoCompute.EntityContexts;
 
 public class NavigationEntityContext : EntityContext
 {
@@ -7,8 +9,10 @@ public class NavigationEntityContext : EntityContext
     private bool _shouldLoadAll;
 
     public NavigationEntityContext(
+        Expression expression,
         EntityContext parent,
         IObservedNavigation navigation)
+        : base(expression)
     {
         _parent = parent;
         _navigation = navigation;

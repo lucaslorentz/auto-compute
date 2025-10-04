@@ -1,13 +1,20 @@
-﻿namespace LLL.AutoCompute.EntityContexts;
+﻿using System.Linq.Expressions;
+
+namespace LLL.AutoCompute.EntityContexts;
 
 public class CompositeEntityContext : EntityContext
 {
-    private readonly IList<EntityContext> _parents;
+    private readonly IReadOnlyList<EntityContext> _parents;
 
     public override IObservedEntityType EntityType { get; }
     public override bool IsTrackingChanges { get; }
 
-    public CompositeEntityContext(IList<EntityContext> parents)
+    public IReadOnlyList<EntityContext> Parents => _parents;
+
+    public CompositeEntityContext(
+        Expression expression,
+        IReadOnlyList<EntityContext> parents)
+        : base(expression)
     {
         EntityType = parents[0].EntityType;
         IsTrackingChanges = parents.Any(c => c.IsTrackingChanges);
@@ -16,11 +23,6 @@ public class CompositeEntityContext : EntityContext
             parent.RegisterChildContext(this);
 
         _parents = parents;
-    }
-
-    public void AddParent(EntityContext parent)
-    {
-        _parents.Add(parent);
     }
 
     public override async Task<IReadOnlyCollection<object>> GetParentAffectedEntities(object input, IncrementalContext incrementalContext)

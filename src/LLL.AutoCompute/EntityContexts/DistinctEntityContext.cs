@@ -1,11 +1,14 @@
 
+using System.Linq.Expressions;
+
 namespace LLL.AutoCompute.EntityContexts;
 
 public class DistinctEntityContext : EntityContext
 {
     private readonly EntityContext _parent;
 
-    public DistinctEntityContext(EntityContext parent)
+    public DistinctEntityContext(Expression expression, EntityContext parent)
+        : base(expression)
     {
         _parent = parent;
         EntityType = parent.EntityType;

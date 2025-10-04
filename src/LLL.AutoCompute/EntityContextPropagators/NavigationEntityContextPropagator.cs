@@ -1,5 +1,5 @@
 ﻿using System.Linq.Expressions;
-using LLL.AutoCompute.EntityContexts;
+using LLL.AutoCompute.EntityContextTransformers;
 
 namespace LLL.AutoCompute.EntityContextPropagators;
 
@@ -23,7 +23,7 @@ public class NavigationEntityContextPropagator(
                     EntityContextKeys.None,
                     node,
                     toKey,
-                    entityContext => new NavigationEntityContext(entityContext, navigationAccess.Navigation));
+                    new NavigationEntityContextTransformer(navigationAccess.Navigation));
             }
         }
     }

@@ -1,11 +1,16 @@
 
+using System.Linq.Expressions;
+
 namespace LLL.AutoCompute.EntityContexts;
 
 public class ScopedEntityContext : EntityContext
 {
     private readonly EntityContext _parent;
 
-    public ScopedEntityContext(EntityContext parent)
+    public ScopedEntityContext(
+        Expression expression,
+        EntityContext parent)
+        : base(expression)
     {
         _parent = parent;
         EntityType = parent.EntityType;

@@ -1,6 +1,11 @@
-﻿namespace LLL.AutoCompute.EntityContexts;
+﻿using System.Linq.Expressions;
 
-public class RootEntityContext(IObservedEntityType entityType) : EntityContext
+namespace LLL.AutoCompute.EntityContexts;
+
+public class RootEntityContext(
+    Expression expression,
+    IObservedEntityType entityType)
+    : EntityContext(expression)
 {
     public override IObservedEntityType EntityType => entityType;
     public override bool IsTrackingChanges => true;

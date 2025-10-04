@@ -1,15 +1,21 @@
-﻿namespace LLL.AutoCompute.EntityContexts;
+﻿using System.Linq.Expressions;
+
+namespace LLL.AutoCompute.EntityContexts;
 
 public class ChangeTrackingEntityContext : EntityContext
 {
-    private readonly EntityContext? _parent;
+    private readonly EntityContext _parent;
 
-    public ChangeTrackingEntityContext(IObservedEntityType entityType, bool trackChanges, EntityContext? parent)
+    public ChangeTrackingEntityContext(
+        Expression expression,
+        EntityContext parent,
+        bool trackChanges)
+        : base(expression)
     {
-        EntityType = entityType;
-        IsTrackingChanges = trackChanges;
+        EntityType = parent.EntityType;
         _parent = parent;
-        parent?.RegisterChildContext(this);
+        parent.RegisterChildContext(this);
+        IsTrackingChanges = trackChanges;
     }
 
     public override IObservedEntityType EntityType { get; }

@@ -14,7 +14,11 @@ public class KeyValuePairEntityContextPropagator : IEntityContextPropagator
                 && memberExpression.Member.Name == "Key"
                 && memberExpression.Expression != null)
             {
-                analysis.PropagateEntityContext(memberExpression.Expression, EntityContextKeys.Key, node, EntityContextKeys.None);
+                analysis.PropagateEntityContext(
+                    memberExpression.Expression,
+                    EntityContextKeys.Key,
+                    node,
+                    EntityContextKeys.None);
             }
             else if (memberExpression.Member.DeclaringType != null
                 && memberExpression.Member.DeclaringType.IsConstructedGenericType
@@ -22,7 +26,11 @@ public class KeyValuePairEntityContextPropagator : IEntityContextPropagator
                 && memberExpression.Member.Name == "Value"
                 && memberExpression.Expression != null)
             {
-                analysis.PropagateEntityContext(memberExpression.Expression, EntityContextKeys.Value, node, EntityContextKeys.None);
+                analysis.PropagateEntityContext(
+                    memberExpression.Expression,
+                    EntityContextKeys.Value,
+                    node,
+                    EntityContextKeys.None);
             }
         }
     }

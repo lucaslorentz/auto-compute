@@ -1,5 +1,5 @@
 ﻿using System.Linq.Expressions;
-using LLL.AutoCompute.EntityContexts;
+using LLL.AutoCompute.EntityContextTransformers;
 
 namespace LLL.AutoCompute.EntityContextPropagators;
 
@@ -17,7 +17,7 @@ public class ChangeTrackingEntityContextPropagator : IEntityContextPropagator
                     EntityContextKeys.None,
                     node,
                     EntityContextKeys.None,
-                    (e) => new ChangeTrackingEntityContext(e.EntityType, false, e));
+                    new ChangeTrackingEntityContextTransformer(false));
             }
             else if (methodCallExpression.Method.Name == nameof(ChangeTrackingExtensions.AsComputedTracked))
             {
@@ -26,7 +26,7 @@ public class ChangeTrackingEntityContextPropagator : IEntityContextPropagator
                     EntityContextKeys.None,
                     node,
                     EntityContextKeys.None,
-                    (e) => new ChangeTrackingEntityContext(e.EntityType, true, e));
+                    new ChangeTrackingEntityContextTransformer(true));
             }
         }
     }

@@ -1,5 +1,6 @@
 ﻿using System.Linq.Expressions;
 using LLL.AutoCompute.EntityContexts;
+using LLL.AutoCompute.EntityContextTransformers;
 
 namespace LLL.AutoCompute.EntityContextPropagators;
 
@@ -25,7 +26,7 @@ public class LinqMethodsEntityContextPropagator(Lazy<IObservedEntityTypeResolver
                                 EntityContextKeys.Element,
                                 param,
                                 EntityContextKeys.None,
-                                e => new ScopedEntityContext(e)
+                                new ScopedEntityContextTransformer()
                             );
                         }
                     }
@@ -77,7 +78,7 @@ public class LinqMethodsEntityContextPropagator(Lazy<IObservedEntityTypeResolver
                             EntityContextKeys.Element,
                             node,
                             EntityContextKeys.Element,
-                            e => new DistinctEntityContext(e)
+                            new DistinctEntityContextTransformer()
                         );
                         break;
 
@@ -243,7 +244,7 @@ public class LinqMethodsEntityContextPropagator(Lazy<IObservedEntityTypeResolver
                             analysis.AddContext(
                                 node,
                                 EntityContextKeys.Element,
-                                new ChangeTrackingEntityContext(observedEntityType, false, null)
+                                new RootEntityContext(node, observedEntityType)
                             );
                         }
                         break;

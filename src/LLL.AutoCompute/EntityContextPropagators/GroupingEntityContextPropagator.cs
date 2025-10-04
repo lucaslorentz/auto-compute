@@ -14,7 +14,11 @@ public class GroupingEntityContextPropagator : IEntityContextPropagator
                 && memberExpression.Member.Name == "Key"
                 && memberExpression.Expression != null)
             {
-                analysis.PropagateEntityContext(memberExpression.Expression, EntityContextKeys.Key, node, EntityContextKeys.None);
+                analysis.PropagateEntityContext(
+                    memberExpression.Expression,
+                    EntityContextKeys.Key,
+                    node,
+                    EntityContextKeys.None);
             }
         }
     }
