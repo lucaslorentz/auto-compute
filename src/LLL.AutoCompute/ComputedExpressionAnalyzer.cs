@@ -109,7 +109,7 @@ public class ComputedExpressionAnalyzer<TInput> : IComputedExpressionAnalyzer<TI
             analysis
         ).Visit(computedExpression);
 
-        analysis.RunPropagations();
+        analysis.PrepareEntityContexts();
 
         new CollectObservedMembersVisitor(
             analysis,

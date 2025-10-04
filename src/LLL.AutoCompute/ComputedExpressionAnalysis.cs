@@ -6,10 +6,8 @@ namespace LLL.AutoCompute;
 
 public class ComputedExpressionAnalysis : IComputedExpressionAnalysis
 {
-    private record Propagation(Expression FromNode, string FromKey, Expression ToNode, string ToKey, Func<EntityContext, EntityContext>? Mapper);
-
-    private readonly ConcurrentDictionary<Expression, ConcurrentDictionary<string, EntityContext>> _contexts = new();
-    private readonly ConcurrentDictionary<Expression, ConcurrentBag<Propagation>> _toPropagations = new();
+    private readonly ConcurrentDictionary<Expression, ConcurrentBag<Func<IReadOnlyDictionary<string, EntityContext>>>> _contextsDefinitions = new();
+    private readonly ConcurrentDictionary<Expression, IReadOnlyDictionary<string, EntityContext>> _contexts = new();
     private readonly ConcurrentBag<Action> _actions = [];
 
     public EntityContext ResolveEntityContext(Expression node, string key)
@@ -25,8 +23,12 @@ public class ComputedExpressionAnalysis : IComputedExpressionAnalysis
         string key,
         EntityContext context)
     {
-        var nodeContexts = _contexts.GetOrAdd(node, static k => []);
-        AddNodeContext(nodeContexts, key, context);
+        _contextsDefinitions
+            .GetOrAdd(node, static _ => [])
+            .Add(() => new Dictionary<string, EntityContext>
+            {
+                [key] = context
+            });
     }
 
     public void PropagateEntityContext(
@@ -36,11 +38,37 @@ public class ComputedExpressionAnalysis : IComputedExpressionAnalysis
         string toKey,
         Func<EntityContext, EntityContext>? mapper = null)
     {
-        var propagation = new Propagation(fromNode, fromKey, toNode, toKey, mapper);
-        _toPropagations.GetOrAdd(toNode, static _ => []).Add(propagation);
+        _contextsDefinitions
+            .GetOrAdd(toNode, static _ => [])
+            .Add(() =>
+            {
+                var entityContexts = new ConcurrentDictionary<string, EntityContext>();
+
+                var fromContexts = RunNodeDefinitions(fromNode);
+
+                foreach (var (key, entityContext) in fromContexts)
+                {
+                    var mappedKey = MapKey(key, fromKey, toKey);
+                    if (mappedKey is null)
+                        continue;
+
+                    var mappedContext = mapper is not null
+                        ? mapper(entityContext)
+                        : entityContext;
+
+                    if (!entityContexts.TryAdd(mappedKey, mappedContext))
+                        throw new Exception("Key is being added to entity contexts multiple times");
+                }
+
+                return entityContexts;
+            });
     }
 
-    public void PropagateEntityContext((Expression fromNode, string fromKey)[] fromNodesKeys, Expression toNode, string toKey, Func<EntityContext, EntityContext>? mapper = null)
+    public void PropagateEntityContext(
+        (Expression fromNode, string fromKey)[] fromNodesKeys,
+        Expression toNode,
+        string toKey,
+        Func<EntityContext, EntityContext>? mapper = null)
     {
         foreach (var (fromNode, fromKey) in fromNodesKeys)
         {
@@ -83,64 +111,32 @@ public class ComputedExpressionAnalysis : IComputedExpressionAnalysis
             action();
     }
 
-    internal void RunPropagations()
+    internal void PrepareEntityContexts()
     {
-        foreach (var key in _toPropagations.Keys)
-            PropagateToNode(key);
+        foreach (var key in _contextsDefinitions.Keys)
+            RunNodeDefinitions(key);
     }
 
-    private IReadOnlyDictionary<string, EntityContext> PropagateToNode(Expression node)
+    private IReadOnlyDictionary<string, EntityContext> RunNodeDefinitions(Expression node)
     {
         return _contexts.GetOrAdd(
             node,
             (node) =>
             {
-                var entityContexts = new ConcurrentDictionary<string, EntityContext>();
+                var definitions = _contextsDefinitions.GetValueOrDefault(node, []);
 
-                foreach (var propagation in _toPropagations.GetValueOrDefault(node, []))
-                {
-                    var fromContexts = PropagateToNode(propagation.FromNode);
-
-                    foreach (var (key, entityContext) in fromContexts)
+                var entityContexts = definitions
+                    .SelectMany(d => d())
+                    .GroupBy(kv => kv.Key, kv => kv.Value)
+                    .ToDictionary(g => g.Key, g =>
                     {
-                        var mappedKey = MapKey(key, propagation.FromKey, propagation.ToKey);
-                        if (mappedKey is null)
-                            continue;
-
-                        var mappedContext = propagation.Mapper is not null
-                            ? propagation.Mapper(entityContext)
-                            : entityContext;
-
-                        AddNodeContext(entityContexts, mappedKey, mappedContext);
-                    }
-                }
+                        if (g.Count() > 1)
+                            return new CompositeEntityContext(g.ToArray());
+                        else
+                            return g.First();
+                    });
 
                 return entityContexts;
             });
-    }
-
-    private static void AddNodeContext(ConcurrentDictionary<string, EntityContext> nodeContexts, string key, EntityContext context)
-    {
-        nodeContexts.AddOrUpdate(
-            key,
-            static (key, context) => context,
-            static (key, existing, context) =>
-            {
-                if (existing is CompositeEntityContext compositeEntityContext)
-                {
-                    compositeEntityContext.AddParent(context);
-                    return compositeEntityContext;
-                }
-                else if (existing is not null)
-                {
-                    return new CompositeEntityContext([existing, context]);
-                }
-                else
-                {
-                    return context;
-                }
-            },
-            context
-        );
     }
 }

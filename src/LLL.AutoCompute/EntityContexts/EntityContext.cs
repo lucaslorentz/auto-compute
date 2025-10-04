@@ -10,6 +10,7 @@ public abstract class EntityContext
 
     public abstract IObservedEntityType EntityType { get; }
     public abstract bool IsTrackingChanges { get; }
+    public Guid Id { get; } = Guid.NewGuid();
 
     public void RegisterObservedMember(IObservedMember member)
     {

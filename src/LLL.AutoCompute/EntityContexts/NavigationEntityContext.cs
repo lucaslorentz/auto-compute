@@ -17,6 +17,7 @@ public class NavigationEntityContext : EntityContext
     }
 
     public override IObservedEntityType EntityType => _navigation.TargetEntityType;
+    public IObservedNavigation Navigation => _navigation;
     public override bool IsTrackingChanges { get; }
 
     public override async Task<IReadOnlyCollection<object>> GetParentAffectedEntities(object input, IncrementalContext incrementalContext)
