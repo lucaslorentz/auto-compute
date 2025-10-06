@@ -26,7 +26,7 @@ public class LinqMethodsEntityContextPropagator(Lazy<IObservedEntityTypeResolver
                                 EntityContextKeys.Element,
                                 param,
                                 EntityContextKeys.None,
-                                new ScopedEntityContextTransformer()
+                                new ScopedEntityContextTransformer(methodCallExpression)
                             );
                         }
                     }
@@ -78,7 +78,7 @@ public class LinqMethodsEntityContextPropagator(Lazy<IObservedEntityTypeResolver
                             EntityContextKeys.Element,
                             node,
                             EntityContextKeys.Element,
-                            new DistinctEntityContextTransformer()
+                            new DistinctEntityContextTransformer(node)
                         );
                         break;
 

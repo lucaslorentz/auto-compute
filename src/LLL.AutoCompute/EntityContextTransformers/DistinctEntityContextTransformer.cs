@@ -3,11 +3,11 @@ using LLL.AutoCompute.EntityContexts;
 
 namespace LLL.AutoCompute.EntityContextTransformers;
 
-public record class DistinctEntityContextTransformer
+public record class DistinctEntityContextTransformer(Expression Expression)
     : IEntityContextTransformer
 {
-    public EntityContext Transform(EntityContext context, Expression newNode)
+    public EntityContext Transform(EntityContext context)
     {
-        return new DistinctEntityContext(newNode, context);
+        return new DistinctEntityContext(Expression, context);
     }
 }

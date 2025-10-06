@@ -17,7 +17,7 @@ public class ChangeTrackingEntityContextPropagator : IEntityContextPropagator
                     EntityContextKeys.None,
                     node,
                     EntityContextKeys.None,
-                    new ChangeTrackingEntityContextTransformer(false));
+                    new ChangeTrackingEntityContextTransformer(node, false));
             }
             else if (methodCallExpression.Method.Name == nameof(ChangeTrackingExtensions.AsComputedTracked))
             {
@@ -26,7 +26,7 @@ public class ChangeTrackingEntityContextPropagator : IEntityContextPropagator
                     EntityContextKeys.None,
                     node,
                     EntityContextKeys.None,
-                    new ChangeTrackingEntityContextTransformer(true));
+                    new ChangeTrackingEntityContextTransformer(node, true));
             }
         }
     }

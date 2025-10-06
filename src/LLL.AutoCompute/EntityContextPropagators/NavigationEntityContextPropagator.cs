@@ -23,7 +23,7 @@ public class NavigationEntityContextPropagator(
                     EntityContextKeys.None,
                     node,
                     toKey,
-                    new NavigationEntityContextTransformer(navigationAccess.Navigation));
+                    new NavigationEntityContextTransformer(node, navigationAccess.Navigation));
             }
         }
     }

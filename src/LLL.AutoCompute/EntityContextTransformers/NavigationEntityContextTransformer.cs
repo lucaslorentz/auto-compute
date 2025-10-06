@@ -3,11 +3,13 @@ using LLL.AutoCompute.EntityContexts;
 
 namespace LLL.AutoCompute.EntityContextTransformers;
 
-public record class NavigationEntityContextTransformer(IObservedNavigation navigation)
-    : IEntityContextTransformer
+public record class NavigationEntityContextTransformer(
+    Expression Expression,
+    IObservedNavigation navigation
+) : IEntityContextTransformer
 {
-    public EntityContext Transform(EntityContext context, Expression newNode)
+    public EntityContext Transform(EntityContext context)
     {
-        return new NavigationEntityContext(newNode, context, navigation);
+        return new NavigationEntityContext(Expression, context, navigation);
     }
 }

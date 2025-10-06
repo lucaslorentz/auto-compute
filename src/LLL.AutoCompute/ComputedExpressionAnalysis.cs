@@ -6,7 +6,7 @@ namespace LLL.AutoCompute;
 
 public class ComputedExpressionAnalysis : IComputedExpressionAnalysis
 {
-    private readonly ConcurrentDictionary<Expression, HashSet<IEntityContextDefinition>> _contextsDefinitions = new(ReferenceEqualityComparer.Instance);
+    private readonly ConcurrentDictionary<Expression, ConcurrentBag<IEntityContextDefinition>> _contextsDefinitions = new(ReferenceEqualityComparer.Instance);
     private readonly ConcurrentDictionary<Expression, IReadOnlyDictionary<string, EntityContext>> _contexts = new(ReferenceEqualityComparer.Instance);
     private readonly ConcurrentBag<Action> _actions = [];
 
@@ -119,7 +119,7 @@ public class ComputedExpressionAnalysis : IComputedExpressionAnalysis
                     continue;
 
                 var mappedContext = Transformer is not null
-                    ? Transformer.Transform(entityContext, ToNode)
+                    ? Transformer.Transform(entityContext)
                     : entityContext;
 
                 if (!entityContexts.TryAdd(mappedKey, mappedContext))

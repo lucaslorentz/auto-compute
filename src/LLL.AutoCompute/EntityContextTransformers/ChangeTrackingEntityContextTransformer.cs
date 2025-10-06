@@ -3,11 +3,13 @@ using LLL.AutoCompute.EntityContexts;
 
 namespace LLL.AutoCompute.EntityContextTransformers;
 
-public record class ChangeTrackingEntityContextTransformer(bool TrackChanges)
-    : IEntityContextTransformer
+public record class ChangeTrackingEntityContextTransformer(
+    Expression Expression,
+    bool TrackChanges
+) : IEntityContextTransformer
 {
-    public EntityContext Transform(EntityContext context, Expression newNode)
+    public EntityContext Transform(EntityContext context)
     {
-        return new ChangeTrackingEntityContext(newNode, context, TrackChanges);
+        return new ChangeTrackingEntityContext(Expression, context, TrackChanges);
     }
 }
