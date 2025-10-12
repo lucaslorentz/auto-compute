@@ -2,9 +2,11 @@
 
 namespace LLL.AutoCompute.EntityContextPropagators;
 
-public class KeyValuePairEntityContextPropagator : IEntityContextPropagator
+public class KeyValuePairEntityContextRule : IEntityContextNodeRule
 {
-    public void PropagateEntityContext(Expression node, IComputedExpressionAnalysis analysis)
+    public void Apply(
+        Expression node,
+        IEntityContextRegistry entityContextRegistry)
     {
         if (node is MemberExpression memberExpression)
         {
@@ -14,7 +16,7 @@ public class KeyValuePairEntityContextPropagator : IEntityContextPropagator
                 && memberExpression.Member.Name == "Key"
                 && memberExpression.Expression != null)
             {
-                analysis.PropagateEntityContext(
+                entityContextRegistry.RegisterPropagation(
                     memberExpression.Expression,
                     EntityContextKeys.Key,
                     node,
@@ -26,7 +28,7 @@ public class KeyValuePairEntityContextPropagator : IEntityContextPropagator
                 && memberExpression.Member.Name == "Value"
                 && memberExpression.Expression != null)
             {
-                analysis.PropagateEntityContext(
+                entityContextRegistry.RegisterPropagation(
                     memberExpression.Expression,
                     EntityContextKeys.Value,
                     node,

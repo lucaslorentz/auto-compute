@@ -5,42 +5,42 @@ namespace LLL.AutoCompute;
 
 public static class ChangeCalculationsExtensions
 {
-    public static VoidChangeCalculation<TValue> Void<TValue>(
-        this IChangeCalculations<TValue> _)
+    public static VoidChangeCalculator<TValue> Void<TValue>(
+        this IChangeCalculators<TValue> _)
     {
-        return new VoidChangeCalculation<TValue>();
+        return new VoidChangeCalculator<TValue>();
     }
 
-    public static CurrentValueChangeCalculation<TValue> CurrentValue<TValue>(
-        this IChangeCalculations<TValue> _)
+    public static CurrentValueChangeCalculator<TValue> CurrentValue<TValue>(
+        this IChangeCalculators<TValue> _)
     {
-        return new CurrentValueChangeCalculation<TValue>(false);
+        return new CurrentValueChangeCalculator<TValue>(false);
     }
 
-    public static CurrentValueChangeCalculation<TValue> CurrentValueIncremental<TValue>(
-        this IChangeCalculations<TValue> _)
+    public static CurrentValueChangeCalculator<TValue> CurrentValueIncremental<TValue>(
+        this IChangeCalculators<TValue> _)
     {
-        return new CurrentValueChangeCalculation<TValue>(true);
+        return new CurrentValueChangeCalculator<TValue>(true);
     }
 
-    public static ValueChangeCalculation<TValue> ValueChange<TValue>(
-        this IChangeCalculations<TValue> _,
+    public static ValueChangeCalculator<TValue> ValueChange<TValue>(
+        this IChangeCalculators<TValue> _,
         IEqualityComparer<TValue>? comparer = null)
     {
-        return new ValueChangeCalculation<TValue>(comparer ?? EqualityComparer<TValue>.Default);
+        return new ValueChangeCalculator<TValue>(comparer ?? EqualityComparer<TValue>.Default);
     }
 
-    public static NumberChangeCalculation<TValue> NumberIncremental<TValue>(
-        this IChangeCalculations<TValue> _)
+    public static NumberChangeCalculator<TValue> NumberIncremental<TValue>(
+        this IChangeCalculators<TValue> _)
         where TValue : INumber<TValue>
     {
-        return new NumberChangeCalculation<TValue>(true);
+        return new NumberChangeCalculator<TValue>(true);
     }
 
-    public static SetChangeCalculation<TElement> SetIncremental<TElement>(
-        this IChangeCalculations<IEnumerable<TElement>> _,
+    public static SetChangeCalculator<TElement> SetIncremental<TElement>(
+        this IChangeCalculators<IEnumerable<TElement>> _,
         IEqualityComparer<TElement>? comparer = null)
     {
-        return new SetChangeCalculation<TElement>(true, comparer ?? EqualityComparer<TElement>.Default);
+        return new SetChangeCalculator<TElement>(true, comparer ?? EqualityComparer<TElement>.Default);
     }
 }

@@ -1,8 +1,8 @@
 
 namespace LLL.AutoCompute.ChangeCalculations;
 
-public record class VoidChangeCalculation<TValue>
-    : IChangeCalculation<TValue, VoidChange>
+public record class VoidChangeCalculator<TValue>
+    : IChangeCalculator<TValue, VoidChange>
 {
     public bool IsIncremental => false;
     public bool PreLoadEntities => false;

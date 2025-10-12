@@ -1,8 +1,8 @@
 
 namespace LLL.AutoCompute.ChangeCalculations;
 
-public record class CurrentValueChangeCalculation<TValue>(bool IsIncremental)
-    : IChangeCalculation<TValue, TValue>
+public record class CurrentValueChangeCalculator<TValue>(bool IsIncremental)
+    : IChangeCalculator<TValue, TValue>
 {
     public bool PreLoadEntities => true;
 

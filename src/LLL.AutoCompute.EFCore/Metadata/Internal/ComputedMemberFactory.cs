@@ -13,7 +13,7 @@ public class ComputedMemberFactory
 {
     public static ComputedMemberFactory<IProperty> CreateComputedPropertyFactory<TEntity, TProperty>(
         Expression<Func<TEntity, TProperty>> computedExpression,
-        IChangeCalculation<TProperty, TProperty> changeCalculation)
+        IChangeCalculator<TProperty, TProperty> changeCalculation)
         where TEntity : class
     {
         return (analyzer, property) =>
@@ -45,7 +45,7 @@ public class ComputedMemberFactory
 
     public static ComputedMemberFactory<INavigationBase> CreateComputedNavigationFactory<TEntity, TProperty>(
         Expression<Func<TEntity, TProperty>> computedExpression,
-        IChangeCalculation<TProperty, TProperty> changeCalculation,
+        IChangeCalculator<TProperty, TProperty> changeCalculation,
         Action<IComputedNavigationBuilder<TEntity, TProperty>>? configure)
         where TEntity : class
         where TProperty : class

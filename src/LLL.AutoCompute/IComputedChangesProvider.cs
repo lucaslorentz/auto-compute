@@ -9,14 +9,14 @@ public interface IComputedChangesProvider
     LambdaExpression Expression { get; }
     EntityContext EntityContext { get; }
     IReadOnlySet<IObservedMember> ObservedMembers { get; }
-    IChangeCalculation ChangeCalculation { get; }
+    IChangeCalculator ChangeCalculation { get; }
 }
 
 public interface IComputedChangesProvider<TInput, TEntity, TChange>
     : IComputedChangesProvider
     where TEntity : class
 {
-    IChangeCalculation IComputedChangesProvider.ChangeCalculation => ChangeCalculation;
-    new IChangeCalculation<TChange> ChangeCalculation { get; }
+    IChangeCalculator IComputedChangesProvider.ChangeCalculation => ChangeCalculation;
+    new IChangeCalculator<TChange> ChangeCalculation { get; }
     Task<IReadOnlyDictionary<TEntity, TChange>> GetChangesAsync(TInput input, ChangeMemory<TEntity, TChange>? memory);
 }

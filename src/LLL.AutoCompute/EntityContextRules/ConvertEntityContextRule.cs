@@ -2,12 +2,12 @@
 
 namespace LLL.AutoCompute.EntityContextPropagators;
 
-public class ConvertEntityContextPropagator
-    : IEntityContextPropagator
+public class ConvertEntityContextRule
+    : IEntityContextNodeRule
 {
-    public void PropagateEntityContext(
+    public void Apply(
         Expression node,
-        IComputedExpressionAnalysis analysis)
+        IEntityContextRegistry entityContextRegistry)
     {
         if (node is UnaryExpression unaryExpression
             && (
@@ -15,7 +15,7 @@ public class ConvertEntityContextPropagator
                 || unaryExpression.NodeType == ExpressionType.ConvertChecked
             ))
         {
-            analysis.PropagateEntityContext(
+            entityContextRegistry.RegisterPropagation(
                 unaryExpression.Operand,
                 EntityContextKeys.None,
                 node,

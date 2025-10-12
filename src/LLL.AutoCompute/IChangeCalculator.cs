@@ -1,19 +1,19 @@
 namespace LLL.AutoCompute;
 
-public interface IChangeCalculation
+public interface IChangeCalculator
 {
     bool IsIncremental { get; }
     bool PreLoadEntities { get; }
 }
 
-public interface IChangeCalculation<TChange> : IChangeCalculation
+public interface IChangeCalculator<TChange> : IChangeCalculator
 {
     bool IsNoChange(TChange result);
     TChange DeltaChange(TChange previous, TChange current);
     TChange ApplyChange(TChange original, TChange change);
 }
 
-public interface IChangeCalculation<in TValue, TChange> : IChangeCalculation<TChange>
+public interface IChangeCalculator<in TValue, TChange> : IChangeCalculator<TChange>
 {
     TChange GetChange(IComputedValues<TValue> computedValues);
 }

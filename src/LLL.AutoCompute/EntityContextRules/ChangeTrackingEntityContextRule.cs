@@ -1,32 +1,34 @@
 ﻿using System.Linq.Expressions;
-using LLL.AutoCompute.EntityContextTransformers;
+using LLL.AutoCompute.EntityContexts;
 
 namespace LLL.AutoCompute.EntityContextPropagators;
 
-public class ChangeTrackingEntityContextPropagator : IEntityContextPropagator
+public class ChangeTrackingEntityContextRule : IEntityContextNodeRule
 {
-    public void PropagateEntityContext(Expression node, IComputedExpressionAnalysis analysis)
+    public void Apply(
+        Expression node,
+        IEntityContextRegistry entityContextRegistry)
     {
         if (node is MethodCallExpression methodCallExpression
             && methodCallExpression.Method.DeclaringType == typeof(ChangeTrackingExtensions))
         {
             if (methodCallExpression.Method.Name == nameof(ChangeTrackingExtensions.AsComputedUntracked))
             {
-                analysis.PropagateEntityContext(
+                entityContextRegistry.RegisterPropagation(
                     methodCallExpression.Arguments[0],
                     EntityContextKeys.None,
                     node,
                     EntityContextKeys.None,
-                    new ChangeTrackingEntityContextTransformer(node, false));
+                    context => new ChangeTrackingEntityContext(node, context, false));
             }
             else if (methodCallExpression.Method.Name == nameof(ChangeTrackingExtensions.AsComputedTracked))
             {
-                analysis.PropagateEntityContext(
+                entityContextRegistry.RegisterPropagation(
                     methodCallExpression.Arguments[0],
                     EntityContextKeys.None,
                     node,
                     EntityContextKeys.None,
-                    new ChangeTrackingEntityContextTransformer(node, true));
+                    context => new ChangeTrackingEntityContext(node, context, true));
             }
         }
     }

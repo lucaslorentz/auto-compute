@@ -2,16 +2,16 @@
 
 namespace LLL.AutoCompute.EntityContextPropagators;
 
-public class ConditionalEntityContextPropagator
-    : IEntityContextPropagator
+public class ConditionalEntityContextRule
+    : IEntityContextNodeRule
 {
-    public void PropagateEntityContext(
+    public void Apply(
         Expression node,
-        IComputedExpressionAnalysis analysis)
+        IEntityContextRegistry entityContextRegistry)
     {
         if (node is ConditionalExpression conditionalExpression)
         {
-            analysis.PropagateEntityContext(
+            entityContextRegistry.RegisterPropagation(
                 [
                     (conditionalExpression.IfTrue, EntityContextKeys.None),
                     (conditionalExpression.IfFalse, EntityContextKeys.None),

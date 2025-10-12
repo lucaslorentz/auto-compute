@@ -9,11 +9,11 @@ public static class PropertyBuilderExtensions
     public static PropertyBuilder<TProperty> AutoCompute<TEntity, TProperty>(
         this PropertyBuilder<TProperty> propertyBuilder,
         Expression<Func<TEntity, TProperty>> computedExpression,
-        ChangeCalculationSelector<TProperty, TProperty>? calculationSelector = null)
+        ChangeCalculatorSelector<TProperty, TProperty>? calculationSelector = null)
         where TEntity : class
     {
-        var changeCalculation = calculationSelector?.Invoke(ChangeCalculations<TProperty>.Instance)
-            ?? ChangeCalculations<TProperty>.Instance.CurrentValue();
+        var changeCalculation = calculationSelector?.Invoke(ChangeCalculators<TProperty>.Instance)
+            ?? ChangeCalculators<TProperty>.Instance.CurrentValue();
 
         propertyBuilder.Metadata.SetComputedFactory(
             ComputedMemberFactory.CreateComputedPropertyFactory(

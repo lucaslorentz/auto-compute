@@ -1,15 +1,14 @@
 ﻿using System.Linq.Expressions;
 using LLL.AutoCompute.EntityContexts;
-using LLL.AutoCompute.EntityContextTransformers;
 
 namespace LLL.AutoCompute.EntityContextPropagators;
 
-public class LinqMethodsEntityContextPropagator(Lazy<IObservedEntityTypeResolver?> entityTypeResolver)
-    : IEntityContextPropagator
+public class LinqMethodsEntityContextRule(Lazy<IObservedEntityTypeResolver?> entityTypeResolver)
+    : IEntityContextNodeRule
 {
-    public void PropagateEntityContext(
+    public void Apply(
         Expression node,
-        IComputedExpressionAnalysis analysis)
+        IEntityContextRegistry entityContextRegistry)
     {
         if (node is MethodCallExpression methodCallExpression)
         {
@@ -21,13 +20,12 @@ public class LinqMethodsEntityContextPropagator(Lazy<IObservedEntityTypeResolver
                     {
                         foreach (var param in lambda.Parameters)
                         {
-                            analysis.PropagateEntityContext(
+                            entityContextRegistry.RegisterPropagation(
                                 methodCallExpression.Arguments[0],
                                 EntityContextKeys.Element,
                                 param,
                                 EntityContextKeys.None,
-                                new ScopedEntityContextTransformer(methodCallExpression)
-                            );
+                                context => new ScopedEntityContext(methodCallExpression, context));
                         }
                     }
                 }
@@ -37,11 +35,10 @@ public class LinqMethodsEntityContextPropagator(Lazy<IObservedEntityTypeResolver
                     case nameof(Enumerable.All):
                     case nameof(Enumerable.Any):
                     case nameof(Enumerable.Contains):
-                        analysis.AddAction(() =>
-                        {
-                            var entityContext = analysis.ResolveEntityContext(methodCallExpression.Arguments[0], EntityContextKeys.Element);
-                            entityContext.MarkNavigationToLoadAll();
-                        });
+                        entityContextRegistry.RegisterModifier(
+                            methodCallExpression.Arguments[0],
+                            EntityContextKeys.Element,
+                            entityContext => entityContext.MarkNavigationToLoadAll());
                         break;
 
                     case nameof(Enumerable.AsEnumerable):
@@ -63,7 +60,7 @@ public class LinqMethodsEntityContextPropagator(Lazy<IObservedEntityTypeResolver
                     case nameof(Enumerable.ToArray):
                     case nameof(Enumerable.ToList):
                     case nameof(Enumerable.ToHashSet):
-                        analysis.PropagateEntityContext(
+                        entityContextRegistry.RegisterPropagation(
                             methodCallExpression.Arguments[0],
                             EntityContextKeys.Element,
                             node,
@@ -73,18 +70,17 @@ public class LinqMethodsEntityContextPropagator(Lazy<IObservedEntityTypeResolver
 
                     case nameof(Enumerable.Distinct):
                     case nameof(Enumerable.DistinctBy):
-                        analysis.PropagateEntityContext(
+                        entityContextRegistry.RegisterPropagation(
                             methodCallExpression.Arguments[0],
                             EntityContextKeys.Element,
                             node,
                             EntityContextKeys.Element,
-                            new DistinctEntityContextTransformer(node)
-                        );
+                            context => new DistinctEntityContext(node, context));
                         break;
 
                     case nameof(Enumerable.Where):
                         {
-                            analysis.PropagateEntityContext(
+                            entityContextRegistry.RegisterPropagation(
                                 methodCallExpression.Arguments[0],
                                 EntityContextKeys.Element,
                                 node,
@@ -101,7 +97,7 @@ public class LinqMethodsEntityContextPropagator(Lazy<IObservedEntityTypeResolver
                     case nameof(Enumerable.LastOrDefault):
                     case nameof(Enumerable.Single):
                     case nameof(Enumerable.SingleOrDefault):
-                        analysis.PropagateEntityContext(
+                        entityContextRegistry.RegisterPropagation(
                             methodCallExpression.Arguments[0],
                             EntityContextKeys.Element,
                             node,
@@ -110,7 +106,7 @@ public class LinqMethodsEntityContextPropagator(Lazy<IObservedEntityTypeResolver
                         break;
 
                     case nameof(Enumerable.Append):
-                        analysis.PropagateEntityContext(
+                        entityContextRegistry.RegisterPropagation(
                             [
                                 (methodCallExpression.Arguments[0], EntityContextKeys.Element),
                                 (methodCallExpression.Arguments[1], EntityContextKeys.None),
@@ -125,7 +121,7 @@ public class LinqMethodsEntityContextPropagator(Lazy<IObservedEntityTypeResolver
                     case nameof(Enumerable.ExceptBy):
                     case nameof(Enumerable.Intersect):
                     case nameof(Enumerable.IntersectBy):
-                        analysis.PropagateEntityContext(
+                        entityContextRegistry.RegisterPropagation(
                             [
                                 (methodCallExpression.Arguments[0], EntityContextKeys.Element),
                                 (methodCallExpression.Arguments[1], EntityContextKeys.Element),
@@ -140,7 +136,7 @@ public class LinqMethodsEntityContextPropagator(Lazy<IObservedEntityTypeResolver
                             if (methodCallExpression.Arguments is [_, var keySelector, ..]
                                 && GetLambda(keySelector) is LambdaExpression lambda)
                             {
-                                analysis.PropagateEntityContext(
+                                entityContextRegistry.RegisterPropagation(
                                     lambda.Body,
                                     EntityContextKeys.None,
                                     node,
@@ -151,7 +147,7 @@ public class LinqMethodsEntityContextPropagator(Lazy<IObservedEntityTypeResolver
                             if (methodCallExpression.Arguments is [_, _, var valueSelector, ..]
                                 && GetLambda(valueSelector) is LambdaExpression valueLambda)
                             {
-                                analysis.PropagateEntityContext(
+                                entityContextRegistry.RegisterPropagation(
                                     valueLambda.Body,
                                     EntityContextKeys.Element,
                                     node,
@@ -160,7 +156,7 @@ public class LinqMethodsEntityContextPropagator(Lazy<IObservedEntityTypeResolver
                             }
                             else if (methodCallExpression.Arguments is [var source, ..])
                             {
-                                analysis.PropagateEntityContext(
+                                entityContextRegistry.RegisterPropagation(
                                     source,
                                     EntityContextKeys.Element,
                                     node,
@@ -176,7 +172,7 @@ public class LinqMethodsEntityContextPropagator(Lazy<IObservedEntityTypeResolver
                             if (methodCallExpression.Arguments is [_, var keySelector, ..]
                                 && GetLambda(keySelector) is LambdaExpression lambda)
                             {
-                                analysis.PropagateEntityContext(
+                                entityContextRegistry.RegisterPropagation(
                                     lambda.Body,
                                     EntityContextKeys.None,
                                     node,
@@ -187,7 +183,7 @@ public class LinqMethodsEntityContextPropagator(Lazy<IObservedEntityTypeResolver
                             if (methodCallExpression.Arguments is [_, _, var valueSelector, ..]
                                 && GetLambda(valueSelector) is LambdaExpression valueLambda)
                             {
-                                analysis.PropagateEntityContext(
+                                entityContextRegistry.RegisterPropagation(
                                     valueLambda.Body,
                                     EntityContextKeys.None,
                                     node,
@@ -196,7 +192,7 @@ public class LinqMethodsEntityContextPropagator(Lazy<IObservedEntityTypeResolver
                             }
                             else if (methodCallExpression.Arguments is [var source, ..])
                             {
-                                analysis.PropagateEntityContext(
+                                entityContextRegistry.RegisterPropagation(
                                     source,
                                     EntityContextKeys.Element,
                                     node,
@@ -211,7 +207,7 @@ public class LinqMethodsEntityContextPropagator(Lazy<IObservedEntityTypeResolver
                             if (methodCallExpression.Arguments is [_, var selector, ..]
                                 && GetLambda(selector) is LambdaExpression selectorLambda)
                             {
-                                analysis.PropagateEntityContext(
+                                entityContextRegistry.RegisterPropagation(
                                     selectorLambda.Body,
                                     EntityContextKeys.None,
                                     node,
@@ -226,7 +222,7 @@ public class LinqMethodsEntityContextPropagator(Lazy<IObservedEntityTypeResolver
                             if (methodCallExpression.Arguments is [_, var selector, ..]
                                 && GetLambda(selector) is LambdaExpression selectorLambda)
                             {
-                                analysis.PropagateEntityContext(
+                                entityContextRegistry.RegisterPropagation(
                                     selectorLambda.Body,
                                     EntityContextKeys.Element,
                                     node,
@@ -241,7 +237,7 @@ public class LinqMethodsEntityContextPropagator(Lazy<IObservedEntityTypeResolver
                         var observedEntityType = entityTypeResolver.Value?.Resolve(elementType);
                         if (observedEntityType is not null)
                         {
-                            analysis.AddContext(
+                            entityContextRegistry.RegisterContext(
                                 node,
                                 EntityContextKeys.Element,
                                 new EmptyEntityContext(node, observedEntityType)

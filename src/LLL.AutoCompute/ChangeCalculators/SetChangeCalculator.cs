@@ -1,10 +1,10 @@
 
 namespace LLL.AutoCompute.ChangeCalculations;
 
-public record class SetChangeCalculation<TElement>(
+public record class SetChangeCalculator<TElement>(
     bool IsIncremental,
     IEqualityComparer<TElement> Comparer)
-    : IChangeCalculation<IEnumerable<TElement>, SetChange<TElement>>
+    : IChangeCalculator<IEnumerable<TElement>, SetChange<TElement>>
 {
     public bool PreLoadEntities => true;
 

@@ -2,16 +2,16 @@
 
 namespace LLL.AutoCompute.EntityContextPropagators;
 
-public class ArrayEntityContextPropagator
-    : IEntityContextPropagator
+public class ArrayEntityContextRule
+    : IEntityContextNodeRule
 {
-    public void PropagateEntityContext(
+    public void Apply(
         Expression node,
-        IComputedExpressionAnalysis analysis)
+        IEntityContextRegistry entityContextBuilder)
     {
         if (node is NewArrayExpression newArrayExpression)
         {
-            analysis.PropagateEntityContext(
+            entityContextBuilder.RegisterPropagation(
                 newArrayExpression.Expressions
                     .Select(e => (e, EntityContextKeys.None))
                     .ToArray(),

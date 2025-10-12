@@ -13,7 +13,7 @@ public class ComputedObserverFactory
     public static ComputedObserverFactory<IEntityType> CreateObserverFactory<TEntity, TValue, TChange>(
         Expression<Func<TEntity, TValue>> computedExpression,
         Expression<Func<TEntity, bool>>? filterExpression,
-        IChangeCalculation<TValue, TChange> changeCalculation,
+        IChangeCalculator<TValue, TChange> changeCalculation,
         Func<ComputedChangeEventData<TEntity, TChange>, Task> callback)
         where TEntity : class
     {

@@ -9,13 +9,13 @@ public static class NavigationBuilderExtensions
     public static NavigationBuilder<TEntity, TProperty> AutoCompute<TEntity, TProperty>(
         this NavigationBuilder<TEntity, TProperty> navigationBuilder,
         Expression<Func<TEntity, TProperty?>> computedExpression,
-        ChangeCalculationSelector<TProperty, TProperty>? calculationSelector = null,
+        ChangeCalculatorSelector<TProperty, TProperty>? calculationSelector = null,
         Action<IComputedNavigationBuilder<TEntity, TProperty>>? configure = null)
         where TEntity : class
         where TProperty : class
     {
-        var changeCalculation = calculationSelector?.Invoke(ChangeCalculations<TProperty>.Instance)
-            ?? ChangeCalculations<TProperty>.Instance.CurrentValue();
+        var changeCalculation = calculationSelector?.Invoke(ChangeCalculators<TProperty>.Instance)
+            ?? ChangeCalculators<TProperty>.Instance.CurrentValue();
 
         navigationBuilder.Metadata.SetComputedFactory(
             ComputedMemberFactory.CreateComputedNavigationFactory(

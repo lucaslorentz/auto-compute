@@ -2,17 +2,17 @@
 
 namespace LLL.AutoCompute.Internal.ExpressionVisitors;
 
-internal class PropagateEntityContextsVisitor(
-    IList<IEntityContextPropagator> propagators,
-    IComputedExpressionAnalysis analysis
+internal class ApplyEntityContextNodeRulesVisitor(
+    IList<IEntityContextNodeRule> rules,
+    IEntityContextRegistry entityContextBuilder
 ) : ExpressionVisitor
 {
     public override Expression? Visit(Expression? node)
     {
         if (node is not null)
         {
-            foreach (var propagator in propagators)
-                propagator.PropagateEntityContext(node, analysis);
+            foreach (var rule in rules)
+                rule.Apply(node, entityContextBuilder);
         }
 
         return base.Visit(node);

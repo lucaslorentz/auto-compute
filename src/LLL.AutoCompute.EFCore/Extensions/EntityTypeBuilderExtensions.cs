@@ -10,7 +10,7 @@ public static class EntityTypeBuilderExtensions
         this EntityTypeBuilder<TEntity> entityTypeBuilder,
         Expression<Func<TEntity, TProperty>> propertyExpression,
         Expression<Func<TEntity, TProperty>> computedExpression,
-        ChangeCalculationSelector<TProperty, TProperty>? calculationSelector = null)
+        ChangeCalculatorSelector<TProperty, TProperty>? calculationSelector = null)
         where TEntity : class
     {
         return entityTypeBuilder.Property(propertyExpression)
@@ -21,7 +21,7 @@ public static class EntityTypeBuilderExtensions
         this EntityTypeBuilder<TEntity> entityTypeBuilder,
         Expression<Func<TEntity, TProperty>> navigationExpression,
         Expression<Func<TEntity, TProperty>> computedExpression,
-        ChangeCalculationSelector<TProperty, TProperty>? calculationSelector = null,
+        ChangeCalculatorSelector<TProperty, TProperty>? calculationSelector = null,
         Action<IComputedNavigationBuilder<TEntity, TProperty>>? configure = null)
         where TEntity : class
         where TProperty : class
@@ -34,7 +34,7 @@ public static class EntityTypeBuilderExtensions
         this EntityTypeBuilder<TEntity> entityTypeBuilder,
         Expression<Func<TEntity, TValue>> computedExpression,
         Expression<Func<TEntity, bool>>? filterExpression,
-        ChangeCalculationSelector<TValue, TChange> calculationSelector,
+        ChangeCalculatorSelector<TValue, TChange> calculationSelector,
         Func<TEntity, TChange, Task> callback)
         where TEntity : class
     {
@@ -57,11 +57,11 @@ public static class EntityTypeBuilderExtensions
         this EntityTypeBuilder<TEntity> entityTypeBuilder,
         Expression<Func<TEntity, TValue>> computedExpression,
         Expression<Func<TEntity, bool>>? filterExpression,
-        ChangeCalculationSelector<TValue, TChange> calculationSelector,
+        ChangeCalculatorSelector<TValue, TChange> calculationSelector,
         Func<ComputedChangeEventData<TEntity, TChange>, Task> callback)
         where TEntity : class
     {
-        var changeCalculation = calculationSelector(ChangeCalculations<TValue>.Instance);
+        var changeCalculation = calculationSelector(ChangeCalculators<TValue>.Instance);
 
         entityTypeBuilder.Metadata.AddObserverFactory(
             ComputedObserverFactory.CreateObserverFactory(

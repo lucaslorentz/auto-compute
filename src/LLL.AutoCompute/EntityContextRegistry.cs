@@ -4,21 +4,13 @@ using LLL.AutoCompute.EntityContexts;
 
 namespace LLL.AutoCompute;
 
-public class ComputedExpressionAnalysis : IComputedExpressionAnalysis
+public class EntityContextRegistry : IEntityContextRegistry
 {
     private readonly ConcurrentDictionary<Expression, ConcurrentBag<IEntityContextDefinition>> _contextsDefinitions = new(ReferenceEqualityComparer.Instance);
     private readonly ConcurrentDictionary<Expression, IReadOnlyDictionary<string, EntityContext>> _contexts = new(ReferenceEqualityComparer.Instance);
     private readonly ConcurrentBag<Action> _actions = [];
 
-    public EntityContext ResolveEntityContext(Expression node, string key)
-    {
-        return _contexts.TryGetValue(node, out var nodeContexts)
-            && nodeContexts.TryGetValue(key, out var entityContext)
-            ? entityContext
-            : throw new Exception($"No entity context found for node '{node}' with key '{key}'");
-    }
-
-    public void AddContext(
+    public void RegisterContext(
         Expression node,
         string key,
         EntityContext context)
@@ -28,48 +20,57 @@ public class ComputedExpressionAnalysis : IComputedExpressionAnalysis
             .Add(new StaticEntityContextDefinition(key, context));
     }
 
-    public void PropagateEntityContext(
+    public void RegisterPropagation(
         Expression fromNode,
         string fromKey,
         Expression toNode,
         string toKey,
-        IEntityContextTransformer? transformer = null)
+        Func<EntityContext, EntityContext>? transform = null)
     {
         _contextsDefinitions
             .GetOrAdd(toNode, static _ => [])
-            .Add(new PropagateEntityContextDefinition(this, fromNode, fromKey, toNode, toKey, transformer));
+            .Add(new PropagateEntityContextDefinition(this, fromNode, fromKey, toNode, toKey, transform));
     }
 
-    public void PropagateEntityContext(
+    public void RegisterPropagation(
         (Expression fromNode, string fromKey)[] fromNodesKeys,
         Expression toNode,
         string toKey,
-        IEntityContextTransformer? transformer = null)
+        Func<EntityContext, EntityContext>? transform = null)
     {
         foreach (var (fromNode, fromKey) in fromNodesKeys)
         {
-            PropagateEntityContext(fromNode, fromKey, toNode, toKey, transformer);
+            RegisterPropagation(fromNode, fromKey, toNode, toKey, transform);
         }
     }
 
-    public void AddAction(Action action)
+    public void RegisterModifier(Expression node, string key, Action<EntityContext> modifier)
     {
-        _actions.Add(action);
-    }
-
-    public void RunActions()
-    {
-        foreach (var action in _actions)
-            action();
+        _actions.Add(() =>
+        {
+            var entityContext = GetEntityContext(node, key);
+            modifier(entityContext);
+        });
     }
 
     internal void PrepareEntityContexts()
     {
         foreach (var node in _contextsDefinitions.Keys)
             GetEntityContexts(node);
+
+        foreach (var action in _actions)
+            action();
     }
 
-    public IReadOnlyDictionary<string, EntityContext> GetEntityContexts(Expression node)
+    private EntityContext GetEntityContext(Expression node, string key)
+    {
+        return _contexts.TryGetValue(node, out var nodeContexts)
+            && nodeContexts.TryGetValue(key, out var entityContext)
+            ? entityContext
+            : throw new Exception($"No entity context found for node '{node}' with key '{key}'");
+    }
+
+    private IReadOnlyDictionary<string, EntityContext> GetEntityContexts(Expression node)
     {
         return _contexts.GetOrAdd(
             node,
@@ -98,19 +99,19 @@ public class ComputedExpressionAnalysis : IComputedExpressionAnalysis
     }
 
     private record PropagateEntityContextDefinition(
-        ComputedExpressionAnalysis Analysis,
+        EntityContextRegistry Builder,
         Expression FromNode,
         string FromKey,
         Expression ToNode,
         string ToKey,
-        IEntityContextTransformer? Transformer = null)
+        Func<EntityContext, EntityContext>? Transform = null)
         : IEntityContextDefinition
     {
         public IReadOnlyDictionary<string, EntityContext> GetContexts()
         {
             var entityContexts = new ConcurrentDictionary<string, EntityContext>();
 
-            var fromContexts = Analysis.GetEntityContexts(FromNode);
+            var fromContexts = Builder.GetEntityContexts(FromNode);
 
             foreach (var (key, entityContext) in fromContexts)
             {
@@ -118,8 +119,8 @@ public class ComputedExpressionAnalysis : IComputedExpressionAnalysis
                 if (mappedKey is null)
                     continue;
 
-                var mappedContext = Transformer is not null
-                    ? Transformer.Transform(entityContext)
+                var mappedContext = Transform is not null
+                    ? Transform(entityContext)
                     : entityContext;
 
                 if (!entityContexts.TryAdd(mappedKey, mappedContext))

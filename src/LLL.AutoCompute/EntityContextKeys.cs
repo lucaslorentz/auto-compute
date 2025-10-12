@@ -6,5 +6,4 @@ public static class EntityContextKeys
     public const string Element = "/element";
     public const string Key = "/key";
     public const string Value = "/value";
-    public const string Hidden = "/hidden";
 }

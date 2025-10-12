@@ -29,7 +29,7 @@ public static class DbContextExtensions
         this DbContext dbContext,
         Expression<Func<TEntity, TValue>> computedExpression,
         Expression<Func<TEntity, bool>>? filterExpression,
-        ChangeCalculationSelector<TValue, TChange> calculationSelector)
+        ChangeCalculatorSelector<TValue, TChange> calculationSelector)
         where TEntity : class
     {
         var changesProvider = dbContext.GetChangesProvider(
@@ -44,12 +44,12 @@ public static class DbContextExtensions
         this DbContext dbContext,
         Expression<Func<TEntity, TValue>> computedExpression,
         Expression<Func<TEntity, bool>>? filterExpression,
-        ChangeCalculationSelector<TValue, TChange> calculationSelector)
+        ChangeCalculatorSelector<TValue, TChange> calculationSelector)
         where TEntity : class
     {
         filterExpression ??= static e => true;
 
-        var changeCalculation = calculationSelector(ChangeCalculations<TValue>.Instance);
+        var changeCalculation = calculationSelector(ChangeCalculators<TValue>.Instance);
 
         var key = (
             ComputedExpression: new ExpressionCacheKey(computedExpression, ExpressionEqualityComparer.Instance),

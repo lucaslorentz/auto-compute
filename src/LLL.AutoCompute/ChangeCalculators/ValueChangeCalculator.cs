@@ -1,9 +1,9 @@
 
 namespace LLL.AutoCompute.ChangeCalculations;
 
-public record class ValueChangeCalculation<TValue>(
+public record class ValueChangeCalculator<TValue>(
     IEqualityComparer<TValue> Comparer)
-    : IChangeCalculation<TValue, ValueChange<TValue>>
+    : IChangeCalculator<TValue, ValueChange<TValue>>
 {
     public bool IsIncremental => false;
     public bool PreLoadEntities => true;

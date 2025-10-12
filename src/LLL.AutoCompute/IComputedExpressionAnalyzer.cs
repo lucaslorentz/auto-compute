@@ -8,7 +8,7 @@ public interface IComputedExpressionAnalyzer<TInput>
         IObservedEntityType<TInput> entityType,
         Expression<Func<TEntity, TValue>> computedExpression,
         Expression<Func<TEntity, bool>> filterExpression,
-        IChangeCalculation<TValue, TChange> changeCalculation)
+        IChangeCalculator<TValue, TChange> changeCalculation)
         where TEntity : class;
 
     Expression RunExpressionModifiers(Expression expression);

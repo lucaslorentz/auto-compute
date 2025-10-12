@@ -2,8 +2,8 @@ using System.Numerics;
 
 namespace LLL.AutoCompute.ChangeCalculations;
 
-public record class NumberChangeCalculation<TValue>(bool IsIncremental)
-    : IChangeCalculation<TValue, TValue>
+public record class NumberChangeCalculator<TValue>(bool IsIncremental)
+    : IChangeCalculator<TValue, TValue>
     where TValue : INumber<TValue>
 {
     public bool PreLoadEntities => true;

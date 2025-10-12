@@ -8,7 +8,7 @@ public class ComputedChangesProvider<TInput, TEntity, TValue, TChange>(
     EntityContext entityContext,
     Func<TEntity, bool> filter,
     EntityContext filterEntityContext,
-    IChangeCalculation<TValue, TChange> changeCalculation,
+    IChangeCalculator<TValue, TChange> changeCalculation,
     ComputedValueAccessors<TInput, TEntity, TValue> computedValueAccessors
 ) : IComputedChangesProvider<TInput, TEntity, TChange>
     where TEntity : class
@@ -17,7 +17,7 @@ public class ComputedChangesProvider<TInput, TEntity, TValue, TChange>(
     public Expression<Func<TEntity, TValue>> Expression => expression;
     public EntityContext EntityContext => entityContext;
     public IReadOnlySet<IObservedMember> ObservedMembers { get; } = entityContext.GetAllObservedMembers().ToHashSet();
-    public IChangeCalculation<TChange> ChangeCalculation => changeCalculation;
+    public IChangeCalculator<TChange> ChangeCalculation => changeCalculation;
 
     public async Task<IReadOnlyDictionary<TEntity, TChange>> GetChangesAsync(
         TInput input,

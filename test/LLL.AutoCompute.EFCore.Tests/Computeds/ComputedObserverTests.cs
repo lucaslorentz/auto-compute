@@ -128,7 +128,7 @@ public class ComputedObserverTests
 
     private static Task<PersonDbContext> CreateContextWithObserver<TEntity, TChange, TValue>(
         Expression<Func<TEntity, TChange>> observerExpression,
-        ChangeCalculationSelector<TChange, TValue> calculationSelector,
+        ChangeCalculatorSelector<TChange, TValue> calculationSelector,
         out List<(TEntity, TValue?)> observedChanges)
         where TEntity : class
     {
