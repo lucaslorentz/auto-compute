@@ -30,7 +30,7 @@ internal class MemberEntityContextRule(
                         context => new NavigationEntityContext(node, context, navigationAccess.Navigation));
                 }
 
-                entityContextRegistry.RegisterModifier(
+                entityContextRegistry.RegisterRequiredModifier(
                     memberAccess.FromExpression,
                     EntityContextKeys.None,
                     entityContext =>

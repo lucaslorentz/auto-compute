@@ -17,5 +17,7 @@ public interface IEntityContextRegistry
         Expression toNode,
         string toKey,
         Func<EntityContext, EntityContext>? transform = null);
-    void RegisterModifier(Expression node, string key, Action<EntityContext> modifier);
+    void RegisterRequiredModifier(Expression node, string key, Action<EntityContext> modifier);
+    void RegisterOptionalModifier(Expression node, string key, Action<EntityContext> modifier);
+    void RegisterModifier(Expression node, Action<IReadOnlyDictionary<string, EntityContext>> modifier);
 }

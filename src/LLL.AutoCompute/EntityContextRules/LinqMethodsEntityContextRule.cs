@@ -35,7 +35,7 @@ public class LinqMethodsEntityContextRule(Lazy<IObservedEntityTypeResolver?> ent
                     case nameof(Enumerable.All):
                     case nameof(Enumerable.Any):
                     case nameof(Enumerable.Contains):
-                        entityContextRegistry.RegisterModifier(
+                        entityContextRegistry.RegisterOptionalModifier(
                             methodCallExpression.Arguments[0],
                             EntityContextKeys.Element,
                             entityContext => entityContext.MarkNavigationToLoadAll());

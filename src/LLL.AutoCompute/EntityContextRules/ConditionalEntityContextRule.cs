@@ -1,4 +1,5 @@
 ﻿using System.Linq.Expressions;
+using LLL.AutoCompute.Internal.ExpressionVisitors;
 
 namespace LLL.AutoCompute.EntityContextPropagators;
 
@@ -19,6 +20,18 @@ public class ConditionalEntityContextRule
                 node,
                 EntityContextKeys.None
             );
+
+            foreach (var expression in CollectExpressionsVisitor.Collect(conditionalExpression.Test))
+            {
+                entityContextRegistry.RegisterModifier(
+                    expression,
+                    entityContexts =>
+                    {
+                        foreach (var entityContext in entityContexts.Values)
+                            entityContext.MarkNavigationToLoadAll();
+                    }
+                );
+            }
         }
     }
 }

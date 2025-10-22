@@ -44,12 +44,42 @@ public class EntityContextRegistry : IEntityContextRegistry
         }
     }
 
-    public void RegisterModifier(Expression node, string key, Action<EntityContext> modifier)
+    public void RegisterRequiredModifier(
+        Expression node,
+        string key,
+        Action<EntityContext> modifier)
+    {
+        RegisterModifier(node, (entityContexts) =>
+        {
+            if (!entityContexts.TryGetValue(key, out var entityContext))
+                throw new Exception($"No entity context found for node '{node}' with key '{key}'");
+
+            modifier(entityContext);
+        });
+    }
+
+    public void RegisterOptionalModifier(
+        Expression node,
+        string key,
+        Action<EntityContext> modifier)
+    {
+        RegisterModifier(node, (entityContexts) =>
+        {
+            if (entityContexts.TryGetValue(key, out var entityContext))
+            {
+                modifier(entityContext);
+            }
+        });
+    }
+
+    public void RegisterModifier(
+        Expression node,
+        Action<IReadOnlyDictionary<string, EntityContext>> modifier)
     {
         _actions.Add(() =>
         {
-            var entityContext = GetEntityContext(node, key);
-            modifier(entityContext);
+            var entityContexts = GetEntityContexts(node);
+            modifier(entityContexts);
         });
     }
 
@@ -60,14 +90,6 @@ public class EntityContextRegistry : IEntityContextRegistry
 
         foreach (var action in _actions)
             action();
-    }
-
-    private EntityContext GetEntityContext(Expression node, string key)
-    {
-        return _contexts.TryGetValue(node, out var nodeContexts)
-            && nodeContexts.TryGetValue(key, out var entityContext)
-            ? entityContext
-            : throw new Exception($"No entity context found for node '{node}' with key '{key}'");
     }
 
     private IReadOnlyDictionary<string, EntityContext> GetEntityContexts(Expression node)
