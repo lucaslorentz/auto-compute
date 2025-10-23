@@ -12,12 +12,11 @@ public class NavigationEntityContext : EntityContext
         Expression expression,
         EntityContext parent,
         IObservedNavigation navigation)
-        : base(expression)
+        : base(expression, [parent])
     {
         _parent = parent;
         _navigation = navigation;
         IsTrackingChanges = parent.IsTrackingChanges;
-        parent.RegisterChildContext(this);
     }
 
     public override IObservedEntityType EntityType => _navigation.TargetEntityType;

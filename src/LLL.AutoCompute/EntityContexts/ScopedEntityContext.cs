@@ -10,12 +10,11 @@ public class ScopedEntityContext : EntityContext
     public ScopedEntityContext(
         Expression expression,
         EntityContext parent)
-        : base(expression)
+        : base(expression, [parent])
     {
         _parent = parent;
         EntityType = parent.EntityType;
         IsTrackingChanges = parent.IsTrackingChanges;
-        parent.RegisterChildContext(this);
     }
 
 
@@ -25,15 +24,5 @@ public class ScopedEntityContext : EntityContext
     public override async Task<IReadOnlyCollection<object>> GetParentAffectedEntities(object input, IncrementalContext incrementalContext)
     {
         return await GetAffectedEntitiesAsync(input, incrementalContext);
-    }
-
-    public override async Task EnrichIncrementalContextTowardsRootAsync(object input, IReadOnlyCollection<object> entities, IncrementalContext incrementalContext)
-    {
-        await _parent.EnrichIncrementalContextTowardsRootAsync(input, entities, incrementalContext);
-    }
-
-    public override void MarkNavigationToLoadAll()
-    {
-        _parent.MarkNavigationToLoadAll();
     }
 }

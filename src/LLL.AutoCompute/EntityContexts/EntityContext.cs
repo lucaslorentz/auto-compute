@@ -2,18 +2,30 @@ using System.Linq.Expressions;
 
 namespace LLL.AutoCompute.EntityContexts;
 
-public abstract class EntityContext(Expression expression)
+public abstract class EntityContext
 {
+    private readonly Expression _expression;
+    private readonly IReadOnlyList<EntityContext> _parents;
     private readonly HashSet<IObservedMember> _observedMembers = [];
     private readonly IList<EntityContext> _childContexts = [];
 
+    public EntityContext(Expression expression, IReadOnlyList<EntityContext> parents)
+    {
+        _expression = expression;
+        _parents = parents;
+
+        foreach (var parent in parents)
+            parent._childContexts.Add(this);
+    }
+
+    public IReadOnlyList<EntityContext> Parents => _parents;
     public IReadOnlySet<IObservedMember> ObservedMembers => _observedMembers;
     public IEnumerable<EntityContext> ChildContexts => _childContexts;
 
     public abstract IObservedEntityType EntityType { get; }
     public abstract bool IsTrackingChanges { get; }
     public Guid Id { get; } = Guid.NewGuid();
-    public Expression Expression => expression;
+    public Expression Expression => _expression;
 
     public void RegisterObservedMember(IObservedMember member)
     {
@@ -32,11 +44,6 @@ public abstract class EntityContext(Expression expression)
                 yield return om;
             }
         }
-    }
-
-    public virtual void RegisterChildContext(EntityContext context)
-    {
-        _childContexts.Add(context);
     }
 
     public async Task<IReadOnlyCollection<object>> GetAffectedEntitiesAsync(object input, IncrementalContext incrementalContext)
@@ -107,7 +114,11 @@ public abstract class EntityContext(Expression expression)
         await EnrichIncrementalContextAsync(input, parentEntities, incrementalContext);
     }
 
-    public abstract Task EnrichIncrementalContextTowardsRootAsync(object input, IReadOnlyCollection<object> entities, IncrementalContext incrementalContext);
+    public virtual async Task EnrichIncrementalContextTowardsRootAsync(object input, IReadOnlyCollection<object> entities, IncrementalContext incrementalContext)
+    {
+        foreach (var parent in Parents)
+            await parent.EnrichIncrementalContextTowardsRootAsync(input, entities, incrementalContext);
+    }
 
     public virtual async Task PreLoadNavigationsAsync(object input, IReadOnlyCollection<object> entities)
     {
@@ -120,7 +131,11 @@ public abstract class EntityContext(Expression expression)
         await PreLoadNavigationsAsync(input, parentEntities);
     }
 
-    public abstract void MarkNavigationToLoadAll();
+    public virtual void MarkNavigationToLoadAll()
+    {
+        foreach (var parent in Parents)
+            parent.MarkNavigationToLoadAll();
+    }
 
     public void ValidateAll()
     {

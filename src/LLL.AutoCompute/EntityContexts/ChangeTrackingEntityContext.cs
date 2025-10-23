@@ -10,11 +10,10 @@ public class ChangeTrackingEntityContext : EntityContext
         Expression expression,
         EntityContext parent,
         bool trackChanges)
-        : base(expression)
+        : base(expression, [parent])
     {
         EntityType = parent.EntityType;
         _parent = parent;
-        parent.RegisterChildContext(this);
         IsTrackingChanges = trackChanges;
     }
 
@@ -24,16 +23,5 @@ public class ChangeTrackingEntityContext : EntityContext
     public override async Task<IReadOnlyCollection<object>> GetParentAffectedEntities(object input, IncrementalContext incrementalContext)
     {
         return await GetAffectedEntitiesAsync(input, incrementalContext);
-    }
-
-    public override async Task EnrichIncrementalContextTowardsRootAsync(object input, IReadOnlyCollection<object> entities, IncrementalContext incrementalContext)
-    {
-        if (_parent is not null)
-            await _parent.EnrichIncrementalContextTowardsRootAsync(input, entities, incrementalContext);
-    }
-
-    public override void MarkNavigationToLoadAll()
-    {
-        _parent?.MarkNavigationToLoadAll();
     }
 }
