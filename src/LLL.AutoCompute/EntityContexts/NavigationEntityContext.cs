@@ -75,8 +75,9 @@ public class NavigationEntityContext : EntityContext
             foreach (var ent in ents)
             {
                 entities.Add(ent);
-                incrementalContext.SetShouldLoadAll(ent);
                 incrementalContext.AddOriginalEntity(parent, _navigation, ent);
+                if (incrementalContext.ShouldLoadAll(parent))
+                    incrementalContext.SetShouldLoadAll(ent);
             }
         }
 
@@ -85,8 +86,9 @@ public class NavigationEntityContext : EntityContext
             foreach (var ent in ents)
             {
                 entities.Add(ent);
-                incrementalContext.SetShouldLoadAll(ent);
                 incrementalContext.AddCurrentEntity(parent, _navigation, ent);
+                if (incrementalContext.ShouldLoadAll(parent))
+                    incrementalContext.SetShouldLoadAll(ent);
             }
         }
 
