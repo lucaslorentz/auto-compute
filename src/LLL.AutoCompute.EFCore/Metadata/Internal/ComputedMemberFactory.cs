@@ -6,7 +6,7 @@ using Microsoft.EntityFrameworkCore.Metadata;
 namespace LLL.AutoCompute.EFCore.Metadata.Internal;
 
 public delegate ComputedMember ComputedMemberFactory<in TTarget>(
-    IComputedExpressionAnalyzer<EFCoreComputedInput> analyzer,
+    IComputedExpressionAnalyzer<IEFCoreComputedInput> analyzer,
     TTarget target);
 
 public class ComputedMemberFactory

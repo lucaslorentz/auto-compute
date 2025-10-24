@@ -13,7 +13,7 @@ public class ComputedChangesProvider<TInput, TEntity, TValue, TChange>(
     Func<TInput, TEntity, TValue> currentValueGetter
 ) : IComputedChangesProvider<TInput, TEntity, TChange>
     where TEntity : class
-    where TInput : ComputedInput
+    where TInput : IComputedInput
 {
     LambdaExpression IComputedChangesProvider.Expression => expression;
     public Expression<Func<TEntity, TValue>> Expression => expression;

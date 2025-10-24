@@ -10,7 +10,7 @@ public class RootEntityContext(
     public override IObservedEntityType EntityType => entityType;
     public override bool IsTrackingChanges => true;
 
-    public override async Task<IReadOnlyCollection<object>> GetParentAffectedEntities(ComputedInput input)
+    public override async Task<IReadOnlyCollection<object>> GetParentAffectedEntities(IComputedInput input)
     {
         throw new InvalidOperationException("Can't call GetParentAffectedEntities on RootEntityContext");
     }

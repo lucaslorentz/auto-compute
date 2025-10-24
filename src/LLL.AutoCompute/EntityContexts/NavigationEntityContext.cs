@@ -23,7 +23,7 @@ public class NavigationEntityContext : EntityContext
     public IObservedNavigation Navigation => _navigation;
     public override bool IsTrackingChanges { get; }
 
-    public override async Task<IReadOnlyCollection<object>> GetParentAffectedEntities(ComputedInput input)
+    public override async Task<IReadOnlyCollection<object>> GetParentAffectedEntities(IComputedInput input)
     {
         // Short circuit to avoid requiring inverse navigation when no tracked property is accessed
         if (!GetAllObservedMembers().Any())
@@ -63,7 +63,7 @@ public class NavigationEntityContext : EntityContext
         return parentEntities;
     }
 
-    public override async Task EnrichIncrementalContextFromParentAsync(ComputedInput input, IReadOnlyCollection<object> parentEntities)
+    public override async Task EnrichIncrementalContextFromParentAsync(IComputedInput input, IReadOnlyCollection<object> parentEntities)
     {
         var entities = new HashSet<object>();
 
@@ -108,7 +108,7 @@ public class NavigationEntityContext : EntityContext
         await EnrichIncrementalContextAsync(input, entities);
     }
 
-    public override async Task EnrichIncrementalContextTowardsRootAsync(ComputedInput input, IReadOnlyCollection<object> entities)
+    public override async Task EnrichIncrementalContextTowardsRootAsync(IComputedInput input, IReadOnlyCollection<object> entities)
     {
         var incrementalContext = input.IncrementalContext
             ?? throw new InvalidOperationException("IncrementalContext is required to enrich towards root.");
@@ -138,7 +138,7 @@ public class NavigationEntityContext : EntityContext
         await _parent.EnrichIncrementalContextTowardsRootAsync(input, parentEntities);
     }
 
-    public override async Task PreLoadNavigationsFromParentAsync(ComputedInput input, IReadOnlyCollection<object> parentEntities)
+    public override async Task PreLoadNavigationsFromParentAsync(IComputedInput input, IReadOnlyCollection<object> parentEntities)
     {
         var entities = new HashSet<object>();
 

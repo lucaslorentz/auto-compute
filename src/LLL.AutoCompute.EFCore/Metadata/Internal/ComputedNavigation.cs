@@ -8,19 +8,19 @@ namespace LLL.AutoCompute.EFCore.Metadata.Internal;
 
 public class ComputedNavigation<TEntity, TProperty>(
     INavigationBase navigationBase,
-    IComputedChangesProvider<EFCoreComputedInput, TEntity, TProperty> changesProvider,
+    IComputedChangesProvider<IEFCoreComputedInput, TEntity, TProperty> changesProvider,
     IReadOnlySet<IPropertyBase> controlledMembers
 ) : ComputedMember<TEntity, TProperty>(changesProvider), IComputedNavigationBuilder<TEntity, TProperty>
     where TEntity : class
 {
     private readonly Func<TEntity, TProperty> _compiledExpression = ((Expression<Func<TEntity, TProperty>>)changesProvider.Expression).Compile();
 
-    public new IComputedChangesProvider<EFCoreComputedInput, TEntity, TProperty> ChangesProvider => changesProvider;
+    public new IComputedChangesProvider<IEFCoreComputedInput, TEntity, TProperty> ChangesProvider => changesProvider;
     public override INavigationBase Property => navigationBase;
     public IReadOnlySet<IPropertyBase> ControlledMembers => controlledMembers;
     public Delegate? ReuseKeySelector { get; set; }
 
-    public override async Task<EFCoreChangeset> Update(EFCoreComputedInput input)
+    public override async Task<EFCoreChangeset> Update(IEFCoreComputedInput input)
     {
         var updateChanges = new EFCoreChangeset();
         var changes = await changesProvider.GetChangesAsync(input, null);

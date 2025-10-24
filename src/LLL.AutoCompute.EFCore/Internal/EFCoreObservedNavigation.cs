@@ -9,7 +9,7 @@ namespace LLL.AutoCompute.EFCore.Internal;
 
 public class EFCoreObservedNavigation(
     INavigationBase navigation)
-    : EFCoreObservedMember, IObservedNavigation<EFCoreComputedInput>
+    : EFCoreObservedMember, IObservedNavigation<IEFCoreComputedInput>
 {
     public override INavigationBase Property => navigation;
     public INavigationBase Navigation => navigation;
@@ -36,7 +36,7 @@ public class EFCoreObservedNavigation(
     }
 
     public virtual async Task<IReadOnlyDictionary<object, IReadOnlyCollection<object>>> LoadOriginalAsync(
-        EFCoreComputedInput input,
+        IEFCoreComputedInput input,
         IReadOnlyCollection<object> sourceEntities)
     {
         await input.DbContext.BulkLoadAsync(sourceEntities, Navigation);
@@ -59,7 +59,7 @@ public class EFCoreObservedNavigation(
     }
 
     public async Task<IReadOnlyDictionary<object, IReadOnlyCollection<object>>> LoadCurrentAsync(
-        EFCoreComputedInput input,
+        IEFCoreComputedInput input,
         IReadOnlyCollection<object> sourceEntities)
     {
         await input.DbContext.BulkLoadAsync(sourceEntities, Navigation);
@@ -108,7 +108,7 @@ public class EFCoreObservedNavigation(
         );
     }
 
-    protected virtual object? GetOriginalValue(EFCoreComputedInput input, object ent)
+    protected virtual object? GetOriginalValue(IEFCoreComputedInput input, object ent)
     {
         var dbContext = input.DbContext;
 
@@ -145,7 +145,7 @@ public class EFCoreObservedNavigation(
         }
     }
 
-    protected virtual object? GetCurrentValue(EFCoreComputedInput input, object ent)
+    protected virtual object? GetCurrentValue(IEFCoreComputedInput input, object ent)
     {
         var dbContext = input.DbContext;
 
@@ -291,7 +291,7 @@ public class EFCoreObservedNavigation(
         }
     }
 
-    public async Task<ObservedNavigationChanges> GetChangesAsync(EFCoreComputedInput input)
+    public async Task<ObservedNavigationChanges> GetChangesAsync(IEFCoreComputedInput input)
     {
         return input.ChangesToProcess.GetOrCreateNavigationChanges(Navigation);
     }

@@ -12,15 +12,15 @@ public class ComputedOptionsExtension : IDbContextOptionsExtension
 {
     public DbContextOptionsExtensionInfo Info => new ComputedOptionsExtensionInfo(this);
 
-    public Func<IServiceProvider, IModel, IComputedExpressionAnalyzer<EFCoreComputedInput>>? AnalyzerFactory { get; set; }
+    public Func<IServiceProvider, IModel, IComputedExpressionAnalyzer<IEFCoreComputedInput>>? AnalyzerFactory { get; set; }
 
-    public List<Action<IServiceProvider, IModel, ComputedExpressionAnalyzer<EFCoreComputedInput>>> AnalyzerConfigurations { get; } = [];
+    public List<Action<IServiceProvider, IModel, ComputedExpressionAnalyzer<IEFCoreComputedInput>>> AnalyzerConfigurations { get; } = [];
 
     public IList<Func<LambdaExpression, LambdaExpression>> ExpressionModifiers { get; } = [];
 
     public void ApplyServices(IServiceCollection services)
     {
-        services.AddSingleton(s => new Func<IModel, IComputedExpressionAnalyzer<EFCoreComputedInput>>((model) =>
+        services.AddSingleton(s => new Func<IModel, IComputedExpressionAnalyzer<IEFCoreComputedInput>>((model) =>
         {
             return AnalyzerFactory is not null
                 ? AnalyzerFactory(s, model)
@@ -35,10 +35,10 @@ public class ComputedOptionsExtension : IDbContextOptionsExtension
     {
     }
 
-    private IComputedExpressionAnalyzer<EFCoreComputedInput> DefaultAnalyzerFactory(
+    private IComputedExpressionAnalyzer<IEFCoreComputedInput> DefaultAnalyzerFactory(
         IServiceProvider service, IModel model)
     {
-        var analyzer = new ComputedExpressionAnalyzer<EFCoreComputedInput>()
+        var analyzer = new ComputedExpressionAnalyzer<IEFCoreComputedInput>()
             .AddDefaults()
             .AddObservedMemberAccessLocator(new EFCoreObservedMemberAccessLocator(model))
             .SetObservedEntityTypeResolver(new EFCoreObservedEntityTypeResolver(model));

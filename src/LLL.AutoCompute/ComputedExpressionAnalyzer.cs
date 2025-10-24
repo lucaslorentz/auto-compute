@@ -10,7 +10,7 @@ using LLL.AutoCompute.Internal.ExpressionVisitors;
 namespace LLL.AutoCompute;
 
 public class ComputedExpressionAnalyzer<TInput> : IComputedExpressionAnalyzer<TInput>
-    where TInput : ComputedInput
+    where TInput : IComputedInput
 {
     private readonly IList<IEntityContextNodeRule> _entityContextRules = [];
     private readonly HashSet<IObservedMemberAccessLocator> _memberAccessLocators = [];

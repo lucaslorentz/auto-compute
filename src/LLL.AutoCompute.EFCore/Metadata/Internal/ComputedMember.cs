@@ -26,7 +26,7 @@ public abstract class ComputedMember(
         return $"{Property.DeclaringType.Name}.{Property.Name}";
     }
 
-    public abstract Task<EFCoreChangeset> Update(EFCoreComputedInput input);
+    public abstract Task<EFCoreChangeset> Update(IEFCoreComputedInput input);
 
     protected static void MaybeUpdateProperty(PropertyEntry propertyEntry, object? newValue, EFCoreChangeset? updateChanges)
     {

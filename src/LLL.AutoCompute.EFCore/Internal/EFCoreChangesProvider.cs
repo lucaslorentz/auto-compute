@@ -5,7 +5,7 @@ using Microsoft.EntityFrameworkCore;
 namespace LLL.AutoCompute.ChangesProviders;
 
 public class EFCoreChangesProvider<TEntity, TChange>(
-    IComputedChangesProvider<EFCoreComputedInput, TEntity, TChange> unboundChangesProvider,
+    IComputedChangesProvider<IEFCoreComputedInput, TEntity, TChange> unboundChangesProvider,
     DbContext dbContext)
     where TEntity : class
 {

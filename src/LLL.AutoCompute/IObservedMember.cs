@@ -16,7 +16,7 @@ public interface IObservedMember
 }
 
 public interface IObservedMember<in TInput> : IObservedMember
-    where TInput : ComputedInput
+    where TInput : IComputedInput
 {
     Type IObservedMember.InputType => typeof(TInput);
 }

@@ -20,7 +20,7 @@ public class ChangeTrackingEntityContext : EntityContext
     public override IObservedEntityType EntityType { get; }
     public override bool IsTrackingChanges { get; }
 
-    public override async Task<IReadOnlyCollection<object>> GetParentAffectedEntities(ComputedInput input)
+    public override async Task<IReadOnlyCollection<object>> GetParentAffectedEntities(IComputedInput input)
     {
         return await GetAffectedEntitiesAsync(input);
     }

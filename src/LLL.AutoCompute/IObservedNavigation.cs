@@ -12,7 +12,7 @@ public interface IObservedNavigation : IObservedMember
 }
 
 public interface IObservedNavigation<in TInput> : IObservedNavigation, IObservedMember<TInput>
-    where TInput : ComputedInput
+    where TInput : IComputedInput
 {
     Task<IReadOnlyDictionary<object, IReadOnlyCollection<object>>> LoadCurrentAsync(TInput input, IReadOnlyCollection<object> fromEntities);
 

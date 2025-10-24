@@ -4,11 +4,11 @@ using Microsoft.EntityFrameworkCore.Metadata;
 namespace LLL.AutoCompute.EFCore.Internal;
 
 public class EFCoreObservedEntityType(IEntityType entityType)
-    : IObservedEntityType<EFCoreComputedInput>
+    : IObservedEntityType<IEFCoreComputedInput>
 {
     public string Name => entityType.Name;
 
-    public ObservedEntityState GetEntityState(EFCoreComputedInput input, object entity)
+    public ObservedEntityState GetEntityState(IEFCoreComputedInput input, object entity)
     {
         return input.DbContext.Entry(entity).State switch
         {
