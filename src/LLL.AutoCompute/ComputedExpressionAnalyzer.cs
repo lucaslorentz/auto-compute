@@ -10,6 +10,7 @@ using LLL.AutoCompute.Internal.ExpressionVisitors;
 namespace LLL.AutoCompute;
 
 public class ComputedExpressionAnalyzer<TInput> : IComputedExpressionAnalyzer<TInput>
+    where TInput : ComputedInput
 {
     private readonly IList<IEntityContextNodeRule> _entityContextRules = [];
     private readonly HashSet<IObservedMemberAccessLocator> _memberAccessLocators = [];
@@ -107,46 +108,41 @@ public class ComputedExpressionAnalyzer<TInput> : IComputedExpressionAnalyzer<TI
         return entityContext;
     }
 
-    private Expression<Func<TInput, IncrementalContext?, TEntity, TValue>> GetOriginalValueExpression<TEntity, TValue>(
+    private Expression<Func<TInput, TEntity, TValue>> GetOriginalValueExpression<TEntity, TValue>(
         IObservedEntityType<TInput> entityType,
         Expression<Func<TEntity, TValue>> computedExpression)
     {
         return GetValueExpression(
             entityType,
             computedExpression,
-            (memberAccess, parameters) => memberAccess.CreateOriginalValueExpression(
-                parameters.Input,
-                parameters.IncrementalContext),
+            (memberAccess, inputParameter) => memberAccess.CreateOriginalValueExpression(inputParameter),
             ObservedEntityState.Added
         );
     }
 
-    private Expression<Func<TInput, IncrementalContext?, TEntity, TValue>> GetCurrentValueExpression<TEntity, TValue>(
+    private Expression<Func<TInput, TEntity, TValue>> GetCurrentValueExpression<TEntity, TValue>(
         IObservedEntityType<TInput> entityType,
         Expression<Func<TEntity, TValue>> computedExpression)
     {
         return GetValueExpression(
             entityType,
             computedExpression,
-            (memberAccess, parameters) => memberAccess.CreateCurrentValueExpression(
-                parameters.Input,
-                parameters.IncrementalContext),
+            (memberAccess, inputParameter) => memberAccess.CreateCurrentValueExpression(inputParameter),
             ObservedEntityState.Removed
         );
     }
 
-    private Expression<Func<TInput, IncrementalContext?, TEntity, TValue>> GetValueExpression<TEntity, TValue>(
+    private Expression<Func<TInput, TEntity, TValue>> GetValueExpression<TEntity, TValue>(
         IObservedEntityType<TInput> entityType,
         Expression<Func<TEntity, TValue>> computedExpression,
-        Func<IObservedMemberAccess, (ParameterExpression Input, ParameterExpression IncrementalContext), Expression> expressionModifier,
+        Func<IObservedMemberAccess, ParameterExpression, Expression> expressionModifier,
         ObservedEntityState defaultValueEntityState)
     {
         var inputParameter = Expression.Parameter(typeof(TInput), "input");
-        var incrementalContextParameter = Expression.Parameter(typeof(IncrementalContext), "incrementalContext");
 
         var newBody = new ReplaceObservedMemberAccessVisitor(
             _memberAccessLocators,
-            memberAccess => expressionModifier(memberAccess, (inputParameter, incrementalContextParameter))
+            memberAccess => expressionModifier(memberAccess, inputParameter)
         ).Visit(computedExpression.Body)!;
 
         newBody = PrepareComputedOutputExpression(computedExpression.ReturnType, newBody);
@@ -158,9 +154,8 @@ public class ComputedExpressionAnalyzer<TInput> : IComputedExpressionAnalyzer<TI
             newBody,
             defaultValueEntityState);
 
-        return (Expression<Func<TInput, IncrementalContext?, TEntity, TValue>>)Expression.Lambda(newBody, [
+        return (Expression<Func<TInput, TEntity, TValue>>)Expression.Lambda(newBody, [
             inputParameter,
-            incrementalContextParameter,
             .. computedExpression.Parameters
         ]);
     }

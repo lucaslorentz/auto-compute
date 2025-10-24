@@ -9,10 +9,11 @@ public class ComputedChangesProvider<TInput, TEntity, TValue, TChange>(
     Func<TEntity, bool> filter,
     EntityContext filterEntityContext,
     IChangeCalculator<TValue, TChange> changeCalculation,
-    Func<TInput, IncrementalContext?, TEntity, TValue> originalValueGetter,
-    Func<TInput, IncrementalContext?, TEntity, TValue> currentValueGetter
+    Func<TInput, TEntity, TValue> originalValueGetter,
+    Func<TInput, TEntity, TValue> currentValueGetter
 ) : IComputedChangesProvider<TInput, TEntity, TChange>
     where TEntity : class
+    where TInput : ComputedInput
 {
     LambdaExpression IComputedChangesProvider.Expression => expression;
     public Expression<Func<TEntity, TValue>> Expression => expression;
@@ -24,11 +25,11 @@ public class ComputedChangesProvider<TInput, TEntity, TValue, TChange>(
         TInput input,
         ChangeMemory<TEntity, TChange>? changeMemory)
     {
-        var incrementalContext = changeCalculation.IsIncremental
+        input.IncrementalContext = changeCalculation.IsIncremental
             ? new IncrementalContext()
             : null;
 
-        var affectedEntities = (await entityContext.GetAffectedEntitiesAsync(input!, incrementalContext))
+        var affectedEntities = (await entityContext.GetAffectedEntitiesAsync(input))
             .OfType<TEntity>()
             .ToArray();
 
@@ -39,8 +40,8 @@ public class ComputedChangesProvider<TInput, TEntity, TValue, TChange>(
                 && filter(e))
             .ToArray();
 
-        if (incrementalContext is not null)
-            await entityContext.EnrichIncrementalContextAsync(input!, affectedEntities, incrementalContext);
+        if (input.IncrementalContext is not null)
+            await entityContext.EnrichIncrementalContextAsync(input!, affectedEntities);
         else if (changeCalculation.PreLoadEntities)
             await entityContext.PreLoadNavigationsAsync(input!, affectedEntities);
 
@@ -48,7 +49,7 @@ public class ComputedChangesProvider<TInput, TEntity, TValue, TChange>(
 
         foreach (var entity in affectedEntities)
         {
-            changes[entity] = await GetChangeAsync(input, entity, incrementalContext, changeMemory);
+            changes[entity] = await GetChangeAsync(input, entity, changeMemory);
         }
 
         if (changeMemory is not null)
@@ -58,7 +59,7 @@ public class ComputedChangesProvider<TInput, TEntity, TValue, TChange>(
                 if (changes.ContainsKey(entity))
                     continue;
 
-                changes[entity] = await GetChangeAsync(input, entity, incrementalContext, changeMemory);
+                changes[entity] = await GetChangeAsync(input, entity, changeMemory);
                 changeMemory.Remove(entity);
             }
         }
@@ -72,10 +73,9 @@ public class ComputedChangesProvider<TInput, TEntity, TValue, TChange>(
     private async Task<TChange> GetChangeAsync(
         TInput input,
         TEntity entity,
-        IncrementalContext? incrementalContext,
         ChangeMemory<TEntity, TChange>? changeMemory)
     {
-        var valueChange = changeCalculation.GetChange(CreateComputedValues(input, entity, incrementalContext));
+        var valueChange = changeCalculation.GetChange(CreateComputedValues(input, entity));
         return DeltaChange(changeMemory, entity, valueChange);
     }
 
@@ -93,11 +93,10 @@ public class ComputedChangesProvider<TInput, TEntity, TValue, TChange>(
         return delta;
     }
 
-    private ComputedValues<TInput, TEntity, TValue> CreateComputedValues(TInput input, TEntity entity, IncrementalContext? incrementalContext)
+    private ComputedValues<TInput, TEntity, TValue> CreateComputedValues(TInput input, TEntity entity)
     {
         return new ComputedValues<TInput, TEntity, TValue>(
             input,
-            incrementalContext,
             entity,
             originalValueGetter,
             currentValueGetter);

@@ -8,16 +8,16 @@ namespace LLL.AutoCompute.EFCore.Metadata.Internal;
 
 public class ComputedProperty<TEntity, TProperty>(
     IProperty property,
-    IComputedChangesProvider<IEFCoreComputedInput, TEntity, TProperty> changesProvider
+    IComputedChangesProvider<EFCoreComputedInput, TEntity, TProperty> changesProvider
 ) : ComputedMember<TEntity, TProperty>(changesProvider)
     where TEntity : class
 {
     private readonly Func<TEntity, TProperty> _compiledExpression = ((Expression<Func<TEntity, TProperty>>)changesProvider.Expression).Compile();
 
-    public new IComputedChangesProvider<IEFCoreComputedInput, TEntity, TProperty> ChangesProvider => changesProvider;
+    public new IComputedChangesProvider<EFCoreComputedInput, TEntity, TProperty> ChangesProvider => changesProvider;
     public override IProperty Property => property;
 
-    public override async Task<EFCoreChangeset> Update(IEFCoreComputedInput input)
+    public override async Task<EFCoreChangeset> Update(EFCoreComputedInput input)
     {
         var updateChanges = new EFCoreChangeset();
         var changes = await changesProvider.GetChangesAsync(input, null);

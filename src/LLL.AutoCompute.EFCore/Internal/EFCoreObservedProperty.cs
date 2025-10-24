@@ -8,7 +8,7 @@ namespace LLL.AutoCompute.EFCore.Internal;
 
 public class EFCoreObservedProperty(
     IProperty property)
-    : EFCoreObservedMember, IObservedProperty<IEFCoreComputedInput>
+    : EFCoreObservedMember, IObservedProperty<EFCoreComputedInput>
 {
     public override IProperty Property => property;
     public override string Name => Property.Name;
@@ -21,8 +21,7 @@ public class EFCoreObservedProperty(
 
     public override Expression CreateOriginalValueExpression(
         IObservedMemberAccess memberAccess,
-        Expression inputExpression,
-        Expression incrementalContextExpression)
+        Expression inputExpression)
     {
         return Expression.Convert(
             Expression.Call(
@@ -37,8 +36,7 @@ public class EFCoreObservedProperty(
 
     public override Expression CreateCurrentValueExpression(
         IObservedMemberAccess memberAccess,
-        Expression inputExpression,
-        Expression incrementalContextExpression)
+        Expression inputExpression)
     {
         return Expression.Convert(
             Expression.Call(
@@ -51,7 +49,7 @@ public class EFCoreObservedProperty(
         );
     }
 
-    protected virtual object? GetOriginalValue(IEFCoreComputedInput input, object ent)
+    protected virtual object? GetOriginalValue(EFCoreComputedInput input, object ent)
     {
         var dbContext = input.DbContext;
 
@@ -63,7 +61,7 @@ public class EFCoreObservedProperty(
         return entityEntry.Property(Property).OriginalValue;
     }
 
-    protected virtual object? GetCurrentValue(IEFCoreComputedInput input, object ent)
+    protected virtual object? GetCurrentValue(EFCoreComputedInput input, object ent)
     {
         var dbContext = input.DbContext;
 
@@ -99,7 +97,7 @@ public class EFCoreObservedProperty(
         }
     }
 
-    public async Task<ObservedPropertyChanges> GetChangesAsync(IEFCoreComputedInput input)
+    public async Task<ObservedPropertyChanges> GetChangesAsync(EFCoreComputedInput input)
     {
         return input.ChangesToProcess.GetOrCreatePropertyChanges(Property);
     }

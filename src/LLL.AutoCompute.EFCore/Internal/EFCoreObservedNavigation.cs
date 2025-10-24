@@ -9,7 +9,7 @@ namespace LLL.AutoCompute.EFCore.Internal;
 
 public class EFCoreObservedNavigation(
     INavigationBase navigation)
-    : EFCoreObservedMember, IObservedNavigation<IEFCoreComputedInput>
+    : EFCoreObservedMember, IObservedNavigation<EFCoreComputedInput>
 {
     public override INavigationBase Property => navigation;
     public INavigationBase Navigation => navigation;
@@ -36,7 +36,7 @@ public class EFCoreObservedNavigation(
     }
 
     public virtual async Task<IReadOnlyDictionary<object, IReadOnlyCollection<object>>> LoadOriginalAsync(
-        IEFCoreComputedInput input,
+        EFCoreComputedInput input,
         IReadOnlyCollection<object> sourceEntities)
     {
         await input.DbContext.BulkLoadAsync(sourceEntities, Navigation);
@@ -59,7 +59,7 @@ public class EFCoreObservedNavigation(
     }
 
     public async Task<IReadOnlyDictionary<object, IReadOnlyCollection<object>>> LoadCurrentAsync(
-        IEFCoreComputedInput input,
+        EFCoreComputedInput input,
         IReadOnlyCollection<object> sourceEntities)
     {
         await input.DbContext.BulkLoadAsync(sourceEntities, Navigation);
@@ -80,16 +80,14 @@ public class EFCoreObservedNavigation(
 
     public override Expression CreateOriginalValueExpression(
         IObservedMemberAccess memberAccess,
-        Expression inputExpression,
-        Expression incrementalContextExpression)
+        Expression inputExpression)
     {
         return Expression.Convert(
             Expression.Call(
                 Expression.Constant(this),
                 GetType().GetMethod(nameof(GetOriginalValue), BindingFlags.Instance | BindingFlags.NonPublic | BindingFlags.FlattenHierarchy)!,
                 inputExpression,
-                memberAccess.FromExpression,
-                incrementalContextExpression
+                memberAccess.FromExpression
             ),
             Navigation.ClrType
         );
@@ -97,22 +95,20 @@ public class EFCoreObservedNavigation(
 
     public override Expression CreateCurrentValueExpression(
         IObservedMemberAccess memberAccess,
-        Expression inputExpression,
-        Expression incrementalContextExpression)
+        Expression inputExpression)
     {
         return Expression.Convert(
             Expression.Call(
                 Expression.Constant(this),
                 GetType().GetMethod(nameof(GetCurrentValue), BindingFlags.Instance | BindingFlags.NonPublic | BindingFlags.FlattenHierarchy)!,
                 inputExpression,
-                memberAccess.FromExpression,
-                incrementalContextExpression
+                memberAccess.FromExpression
             ),
             Navigation.ClrType
         );
     }
 
-    protected virtual object? GetOriginalValue(IEFCoreComputedInput input, object ent, IncrementalContext incrementalContext)
+    protected virtual object? GetOriginalValue(EFCoreComputedInput input, object ent)
     {
         var dbContext = input.DbContext;
 
@@ -121,9 +117,9 @@ public class EFCoreObservedNavigation(
         if (entityEntry.State == EntityState.Added)
             throw new Exception($"Cannot access navigation '{Navigation.DeclaringType.ShortName()}.{Navigation.Name}' original value for an added entity");
 
-        if (incrementalContext is not null)
+        if (input.IncrementalContext is not null)
         {
-            var incrementalEntities = incrementalContext.GetOriginalEntities(ent, this);
+            var incrementalEntities = input.IncrementalContext.GetOriginalEntities(ent, this);
 
             if (Navigation.IsCollection)
             {
@@ -149,7 +145,7 @@ public class EFCoreObservedNavigation(
         }
     }
 
-    protected virtual object? GetCurrentValue(IEFCoreComputedInput input, object ent, IncrementalContext incrementalContext)
+    protected virtual object? GetCurrentValue(EFCoreComputedInput input, object ent)
     {
         var dbContext = input.DbContext;
 
@@ -158,9 +154,9 @@ public class EFCoreObservedNavigation(
         if (entityEntry.State == EntityState.Deleted)
             throw new Exception($"Cannot access navigation '{Navigation.DeclaringType.ShortName()}.{Navigation.Name}' current value for a deleted entity");
 
-        if (incrementalContext is not null)
+        if (input.IncrementalContext is not null)
         {
-            var incrementalEntities = incrementalContext.GetCurrentEntities(ent, this);
+            var incrementalEntities = input.IncrementalContext.GetCurrentEntities(ent, this);
 
             if (Navigation.IsCollection)
             {
@@ -295,7 +291,7 @@ public class EFCoreObservedNavigation(
         }
     }
 
-    public async Task<ObservedNavigationChanges> GetChangesAsync(IEFCoreComputedInput input)
+    public async Task<ObservedNavigationChanges> GetChangesAsync(EFCoreComputedInput input)
     {
         return input.ChangesToProcess.GetOrCreateNavigationChanges(Navigation);
     }

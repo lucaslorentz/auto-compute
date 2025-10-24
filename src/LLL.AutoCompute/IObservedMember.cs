@@ -9,15 +9,14 @@ public interface IObservedMember
     string ToDebugString();
     Expression CreateOriginalValueExpression(
         IObservedMemberAccess memberAccess,
-        Expression inputExpression,
-        Expression incrementalContextExpression);
+        Expression inputExpression);
     Expression CreateCurrentValueExpression(
         IObservedMemberAccess memberAccess,
-        Expression inputExpression,
-        Expression incrementalContextExpression);
+        Expression inputExpression);
 }
 
 public interface IObservedMember<in TInput> : IObservedMember
+    where TInput : ComputedInput
 {
     Type IObservedMember.InputType => typeof(TInput);
 }

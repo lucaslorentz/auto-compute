@@ -46,11 +46,11 @@ public abstract class EntityContext
         }
     }
 
-    public async Task<IReadOnlyCollection<object>> GetAffectedEntitiesAsync(
-        object input,
-        IncrementalContext? incrementalContext)
+    public async Task<IReadOnlyCollection<object>> GetAffectedEntitiesAsync(ComputedInput input)
     {
         var entities = new HashSet<object>();
+
+        var incrementalContext = input.IncrementalContext;
 
         foreach (var member in _observedMembers)
         {
@@ -93,7 +93,7 @@ public abstract class EntityContext
 
         foreach (var childContext in _childContexts)
         {
-            var ents = await childContext.GetParentAffectedEntities(input, incrementalContext);
+            var ents = await childContext.GetParentAffectedEntities(input);
             foreach (var ent in ents)
             {
                 if (!EntityType.IsInstanceOfType(ent))
@@ -106,32 +106,32 @@ public abstract class EntityContext
         return entities;
     }
 
-    public abstract Task<IReadOnlyCollection<object>> GetParentAffectedEntities(object input, IncrementalContext? incrementalContext);
+    public abstract Task<IReadOnlyCollection<object>> GetParentAffectedEntities(ComputedInput input);
 
-    public virtual async Task EnrichIncrementalContextAsync(object input, IReadOnlyCollection<object> entities, IncrementalContext incrementalContext)
+    public virtual async Task EnrichIncrementalContextAsync(ComputedInput input, IReadOnlyCollection<object> entities)
     {
         foreach (var childContext in _childContexts)
-            await childContext.EnrichIncrementalContextFromParentAsync(input, entities, incrementalContext);
+            await childContext.EnrichIncrementalContextFromParentAsync(input, entities);
     }
 
-    public virtual async Task EnrichIncrementalContextFromParentAsync(object input, IReadOnlyCollection<object> parentEntities, IncrementalContext incrementalContext)
+    public virtual async Task EnrichIncrementalContextFromParentAsync(ComputedInput input, IReadOnlyCollection<object> parentEntities)
     {
-        await EnrichIncrementalContextAsync(input, parentEntities, incrementalContext);
+        await EnrichIncrementalContextAsync(input, parentEntities);
     }
 
-    public virtual async Task EnrichIncrementalContextTowardsRootAsync(object input, IReadOnlyCollection<object> entities, IncrementalContext incrementalContext)
+    public virtual async Task EnrichIncrementalContextTowardsRootAsync(ComputedInput input, IReadOnlyCollection<object> entities)
     {
         foreach (var parent in Parents)
-            await parent.EnrichIncrementalContextTowardsRootAsync(input, entities, incrementalContext);
+            await parent.EnrichIncrementalContextTowardsRootAsync(input, entities);
     }
 
-    public virtual async Task PreLoadNavigationsAsync(object input, IReadOnlyCollection<object> entities)
+    public virtual async Task PreLoadNavigationsAsync(ComputedInput input, IReadOnlyCollection<object> entities)
     {
         foreach (var childContext in _childContexts)
             await childContext.PreLoadNavigationsFromParentAsync(input, entities);
     }
 
-    public virtual async Task PreLoadNavigationsFromParentAsync(object input, IReadOnlyCollection<object> parentEntities)
+    public virtual async Task PreLoadNavigationsFromParentAsync(ComputedInput input, IReadOnlyCollection<object> parentEntities)
     {
         await PreLoadNavigationsAsync(input, parentEntities);
     }

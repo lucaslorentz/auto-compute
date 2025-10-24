@@ -6,23 +6,23 @@ public abstract class ComputedObserver(
     IComputedChangesProvider changesProvider)
     : ComputedBase(changesProvider)
 {
-    public abstract Task<Func<Task>?> CreateObserverNotifier(IEFCoreComputedInput input);
+    public abstract Task<Func<Task>?> CreateObserverNotifier(EFCoreComputedInput input);
 }
 
 public class ComputedObserver<TEntity, TChange>(
-    IComputedChangesProvider<IEFCoreComputedInput, TEntity, TChange> changesProvider,
+    IComputedChangesProvider<EFCoreComputedInput, TEntity, TChange> changesProvider,
     Func<ComputedChangeEventData<TEntity, TChange>, Task> callback
 ) : ComputedObserver(changesProvider)
     where TEntity : class
 {
-    public new IComputedChangesProvider<IEFCoreComputedInput, TEntity, TChange> ChangesProvider => changesProvider;
+    public new IComputedChangesProvider<EFCoreComputedInput, TEntity, TChange> ChangesProvider => changesProvider;
 
     public override string ToDebugString()
     {
         return "ComputedObserver";
     }
 
-    public override async Task<Func<Task>?> CreateObserverNotifier(IEFCoreComputedInput input)
+    public override async Task<Func<Task>?> CreateObserverNotifier(EFCoreComputedInput input)
     {
         var changes = await changesProvider.GetChangesAsync(input, null);
         if (changes.Count == 0)

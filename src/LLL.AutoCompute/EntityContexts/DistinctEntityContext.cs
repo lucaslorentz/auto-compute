@@ -18,14 +18,14 @@ public class DistinctEntityContext : EntityContext
     public override IObservedEntityType EntityType { get; }
     public override bool IsTrackingChanges { get; }
 
-    public override async Task<IReadOnlyCollection<object>> GetParentAffectedEntities(object input, IncrementalContext? incrementalContext)
+    public override async Task<IReadOnlyCollection<object>> GetParentAffectedEntities(ComputedInput input)
     {
-        return await GetAffectedEntitiesAsync(input, incrementalContext);
+        return await GetAffectedEntitiesAsync(input);
     }
 
-    public override async Task EnrichIncrementalContextAsync(object input, IReadOnlyCollection<object> entities, IncrementalContext incrementalContext)
+    public override async Task EnrichIncrementalContextAsync(ComputedInput input, IReadOnlyCollection<object> entities)
     {
-        await base.EnrichIncrementalContextAsync(input, entities, incrementalContext);
-        await EnrichIncrementalContextTowardsRootAsync(input, entities, incrementalContext);
+        await base.EnrichIncrementalContextAsync(input, entities);
+        await EnrichIncrementalContextTowardsRootAsync(input, entities);
     }
 }

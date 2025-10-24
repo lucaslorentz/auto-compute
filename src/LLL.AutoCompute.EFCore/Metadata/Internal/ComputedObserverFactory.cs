@@ -5,7 +5,7 @@ using Microsoft.EntityFrameworkCore.Metadata;
 namespace LLL.AutoCompute.EFCore.Metadata.Internal;
 
 public delegate ComputedObserver ComputedObserverFactory<in TTarget>(
-    IComputedExpressionAnalyzer<IEFCoreComputedInput> analyzer,
+    IComputedExpressionAnalyzer<EFCoreComputedInput> analyzer,
     TTarget target);
 
 public class ComputedObserverFactory

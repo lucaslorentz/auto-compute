@@ -8,6 +8,7 @@ public interface IObservedProperty : IObservedMember
 }
 
 public interface IObservedProperty<in TInput> : IObservedProperty, IObservedMember<TInput>
+    where TInput : ComputedInput
 {
     Task<ObservedPropertyChanges> GetChangesAsync(TInput input);
 

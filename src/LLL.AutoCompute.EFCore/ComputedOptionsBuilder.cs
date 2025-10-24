@@ -19,13 +19,13 @@ public class ComputedOptionsBuilder
         _optionsBuilder = optionsBuilder;
     }
 
-    public ComputedOptionsBuilder AnalyzerFactory(Func<IServiceProvider, IModel, ComputedExpressionAnalyzer<IEFCoreComputedInput>>? factory)
+    public ComputedOptionsBuilder AnalyzerFactory(Func<IServiceProvider, IModel, ComputedExpressionAnalyzer<EFCoreComputedInput>>? factory)
     {
         _extension.AnalyzerFactory = factory;
         return this;
     }
 
-    public ComputedOptionsBuilder ConfigureAnalyzer(Action<IServiceProvider, IModel, ComputedExpressionAnalyzer<IEFCoreComputedInput>> configuration)
+    public ComputedOptionsBuilder ConfigureAnalyzer(Action<IServiceProvider, IModel, ComputedExpressionAnalyzer<EFCoreComputedInput>> configuration)
     {
         _extension.AnalyzerConfigurations.Add(configuration);
         return this;

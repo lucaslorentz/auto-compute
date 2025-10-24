@@ -23,17 +23,19 @@ public class NavigationEntityContext : EntityContext
     public IObservedNavigation Navigation => _navigation;
     public override bool IsTrackingChanges { get; }
 
-    public override async Task<IReadOnlyCollection<object>> GetParentAffectedEntities(object input, IncrementalContext? incrementalContext)
+    public override async Task<IReadOnlyCollection<object>> GetParentAffectedEntities(ComputedInput input)
     {
         // Short circuit to avoid requiring inverse navigation when no tracked property is accessed
         if (!GetAllObservedMembers().Any())
             return [];
 
+        var incrementalContext = input.IncrementalContext;
+
         var inverseNavigation = _navigation.GetInverse();
 
         var sourceType = _navigation.SourceEntityType;
 
-        var entities = await GetAffectedEntitiesAsync(input, incrementalContext);
+        var entities = await GetAffectedEntitiesAsync(input);
 
         var parentEntities = new HashSet<object>();
         foreach (var (ent, parents) in await inverseNavigation.LoadOriginalAsync(input, entities))
@@ -61,9 +63,12 @@ public class NavigationEntityContext : EntityContext
         return parentEntities;
     }
 
-    public override async Task EnrichIncrementalContextFromParentAsync(object input, IReadOnlyCollection<object> parentEntities, IncrementalContext incrementalContext)
+    public override async Task EnrichIncrementalContextFromParentAsync(ComputedInput input, IReadOnlyCollection<object> parentEntities)
     {
         var entities = new HashSet<object>();
+
+        var incrementalContext = input.IncrementalContext
+            ?? throw new InvalidOperationException("IncrementalContext is required to enrich from parent.");
 
         var parentEntitiesByLoadAll = parentEntities
             .ToLookup(e => _shouldLoadAll || incrementalContext.ShouldLoadAll(e));
@@ -100,11 +105,14 @@ public class NavigationEntityContext : EntityContext
             }
         }
 
-        await EnrichIncrementalContextAsync(input, entities, incrementalContext);
+        await EnrichIncrementalContextAsync(input, entities);
     }
 
-    public override async Task EnrichIncrementalContextTowardsRootAsync(object input, IReadOnlyCollection<object> entities, IncrementalContext incrementalContext)
+    public override async Task EnrichIncrementalContextTowardsRootAsync(ComputedInput input, IReadOnlyCollection<object> entities)
     {
+        var incrementalContext = input.IncrementalContext
+            ?? throw new InvalidOperationException("IncrementalContext is required to enrich towards root.");
+
         var inverse = _navigation.GetInverse();
 
         var parentEntities = new HashSet<object>();
@@ -127,10 +135,10 @@ public class NavigationEntityContext : EntityContext
             }
         }
 
-        await _parent.EnrichIncrementalContextTowardsRootAsync(input, parentEntities, incrementalContext);
+        await _parent.EnrichIncrementalContextTowardsRootAsync(input, parentEntities);
     }
 
-    public override async Task PreLoadNavigationsFromParentAsync(object input, IReadOnlyCollection<object> parentEntities)
+    public override async Task PreLoadNavigationsFromParentAsync(ComputedInput input, IReadOnlyCollection<object> parentEntities)
     {
         var entities = new HashSet<object>();
 

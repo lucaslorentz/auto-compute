@@ -6,12 +6,12 @@ using Microsoft.EntityFrameworkCore.Metadata;
 
 namespace LLL.AutoCompute.EFCore.Internal;
 
-public abstract class EFCoreObservedMember : IObservedMember<IEFCoreComputedInput>
+public abstract class EFCoreObservedMember : IObservedMember<EFCoreComputedInput>
 {
     private readonly HashSet<ComputedMember> _dependentMembers = [];
 
     public abstract IPropertyBase Property { get; }
-    public Type InputType => typeof(IEFCoreComputedInput);
+    public Type InputType => typeof(EFCoreComputedInput);
 
     internal IReadOnlySet<ComputedMember> DependentMembers => _dependentMembers;
     internal bool AddDependentMember(ComputedMember computed)
@@ -23,12 +23,10 @@ public abstract class EFCoreObservedMember : IObservedMember<IEFCoreComputedInpu
     public abstract string ToDebugString();
     public abstract Expression CreateCurrentValueExpression(
         IObservedMemberAccess memberAccess,
-        Expression inputExpression,
-        Expression incrementalContextExpression);
+        Expression inputExpression);
     public abstract Expression CreateOriginalValueExpression(
         IObservedMemberAccess memberAccess,
-        Expression inputExpression,
-        Expression incrementalContextExpression);
+        Expression inputExpression);
     public abstract Task CollectChangesAsync(DbContext dbContext, EFCoreChangeset changes);
     public abstract Task CollectChangesAsync(EntityEntry entityEntry, EFCoreChangeset changes);
 }

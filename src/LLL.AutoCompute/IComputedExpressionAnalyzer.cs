@@ -3,6 +3,7 @@
 namespace LLL.AutoCompute;
 
 public interface IComputedExpressionAnalyzer<TInput>
+    where TInput : ComputedInput
 {
     IComputedChangesProvider<TInput, TEntity, TChange> CreateChangesProvider<TEntity, TValue, TChange>(
         IObservedEntityType<TInput> entityType,

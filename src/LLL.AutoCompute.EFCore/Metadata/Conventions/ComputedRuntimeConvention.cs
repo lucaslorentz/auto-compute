@@ -5,7 +5,7 @@ using Microsoft.EntityFrameworkCore.Metadata.Conventions;
 
 namespace LLL.AutoCompute.EFCore.Metadata.Conventions;
 
-class ComputedRuntimeConvention(Func<IModel, IComputedExpressionAnalyzer<IEFCoreComputedInput>> analyzerFactory)
+class ComputedRuntimeConvention(Func<IModel, IComputedExpressionAnalyzer<EFCoreComputedInput>> analyzerFactory)
     : IModelFinalizedConvention
 {
     public IModel ProcessModelFinalized(IModel model)
@@ -28,7 +28,7 @@ class ComputedRuntimeConvention(Func<IModel, IComputedExpressionAnalyzer<IEFCore
 
     private static IReadOnlyList<ComputedMember> CreateComputedMembers(
         IModel model,
-        IComputedExpressionAnalyzer<IEFCoreComputedInput> analyzer)
+        IComputedExpressionAnalyzer<EFCoreComputedInput> analyzer)
     {
         var allComputedMembers = new List<ComputedMember>();
 
@@ -74,7 +74,7 @@ class ComputedRuntimeConvention(Func<IModel, IComputedExpressionAnalyzer<IEFCore
 
     private static IReadOnlyList<ComputedObserver> CreateComputedObservers(
         IModel model,
-        IComputedExpressionAnalyzer<IEFCoreComputedInput> analyzer)
+        IComputedExpressionAnalyzer<EFCoreComputedInput> analyzer)
     {
         var allComputedObservers = new List<ComputedObserver>();
 
