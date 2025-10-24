@@ -9,15 +9,9 @@ public interface IObservedMember
     string ToDebugString();
     Expression CreateOriginalValueExpression(
         IObservedMemberAccess memberAccess,
-        Expression inputExpression);
-    Expression CreateCurrentValueExpression(
-        IObservedMemberAccess memberAccess,
-        Expression inputExpression);
-    Expression CreateIncrementalOriginalValueExpression(
-        IObservedMemberAccess memberAccess,
         Expression inputExpression,
         Expression incrementalContextExpression);
-    Expression CreateIncrementalCurrentValueExpression(
+    Expression CreateCurrentValueExpression(
         IObservedMemberAccess memberAccess,
         Expression inputExpression,
         Expression incrementalContextExpression);

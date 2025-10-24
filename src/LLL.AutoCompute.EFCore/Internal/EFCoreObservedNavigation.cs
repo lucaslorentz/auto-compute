@@ -80,14 +80,16 @@ public class EFCoreObservedNavigation(
 
     public override Expression CreateOriginalValueExpression(
         IObservedMemberAccess memberAccess,
-        Expression inputExpression)
+        Expression inputExpression,
+        Expression incrementalContextExpression)
     {
         return Expression.Convert(
             Expression.Call(
                 Expression.Constant(this),
                 GetType().GetMethod(nameof(GetOriginalValue), BindingFlags.Instance | BindingFlags.NonPublic | BindingFlags.FlattenHierarchy)!,
                 inputExpression,
-                memberAccess.FromExpression
+                memberAccess.FromExpression,
+                incrementalContextExpression
             ),
             Navigation.ClrType
         );
@@ -95,29 +97,14 @@ public class EFCoreObservedNavigation(
 
     public override Expression CreateCurrentValueExpression(
         IObservedMemberAccess memberAccess,
-        Expression inputExpression)
+        Expression inputExpression,
+        Expression incrementalContextExpression)
     {
         return Expression.Convert(
             Expression.Call(
                 Expression.Constant(this),
                 GetType().GetMethod(nameof(GetCurrentValue), BindingFlags.Instance | BindingFlags.NonPublic | BindingFlags.FlattenHierarchy)!,
                 inputExpression,
-                memberAccess.FromExpression
-            ),
-            Navigation.ClrType
-        );
-    }
-
-    public override Expression CreateIncrementalOriginalValueExpression(
-        IObservedMemberAccess memberAccess,
-        Expression inputExpression,
-        Expression incrementalContextExpression)
-    {
-        return Expression.Convert(
-            Expression.Call(
-                Expression.Constant(this),
-                GetType().GetMethod(nameof(GetIncrementalOriginalValue), BindingFlags.Instance | BindingFlags.NonPublic | BindingFlags.FlattenHierarchy)!,
-                inputExpression,
                 memberAccess.FromExpression,
                 incrementalContextExpression
             ),
@@ -125,24 +112,7 @@ public class EFCoreObservedNavigation(
         );
     }
 
-    public override Expression CreateIncrementalCurrentValueExpression(
-        IObservedMemberAccess memberAccess,
-        Expression inputExpression,
-        Expression incrementalContextExpression)
-    {
-        return Expression.Convert(
-            Expression.Call(
-                Expression.Constant(this),
-                GetType().GetMethod(nameof(GetIncrementalCurrentValue), BindingFlags.Instance | BindingFlags.NonPublic | BindingFlags.FlattenHierarchy)!,
-                inputExpression,
-                memberAccess.FromExpression,
-                incrementalContextExpression
-            ),
-            Navigation.ClrType
-        );
-    }
-
-    protected virtual object? GetOriginalValue(IEFCoreComputedInput input, object ent)
+    protected virtual object? GetOriginalValue(IEFCoreComputedInput input, object ent, IncrementalContext incrementalContext)
     {
         var dbContext = input.DbContext;
 
@@ -151,15 +121,35 @@ public class EFCoreObservedNavigation(
         if (entityEntry.State == EntityState.Added)
             throw new Exception($"Cannot access navigation '{Navigation.DeclaringType.ShortName()}.{Navigation.Name}' original value for an added entity");
 
-        var navigationEntry = entityEntry.Navigation(Navigation);
+        if (incrementalContext is not null)
+        {
+            var incrementalEntities = incrementalContext.GetOriginalEntities(ent, this);
 
-        if (!navigationEntry.IsLoaded && entityEntry.State != EntityState.Detached)
-            navigationEntry.Load();
+            if (Navigation.IsCollection)
+            {
+                var collectionAccessor = Navigation.GetCollectionAccessor()!;
+                var collection = collectionAccessor.Create();
+                foreach (var entity in incrementalEntities)
+                    collectionAccessor.AddStandalone(collection, entity);
+                return collection;
+            }
+            else
+            {
+                return incrementalEntities.FirstOrDefault();
+            }
+        }
+        else
+        {
+            var navigationEntry = entityEntry.Navigation(Navigation);
 
-        return navigationEntry.GetOriginalValue();
+            if (!navigationEntry.IsLoaded && entityEntry.State != EntityState.Detached)
+                navigationEntry.Load();
+
+            return navigationEntry.GetOriginalValue();
+        }
     }
 
-    protected virtual object? GetCurrentValue(IEFCoreComputedInput input, object ent)
+    protected virtual object? GetCurrentValue(IEFCoreComputedInput input, object ent, IncrementalContext incrementalContext)
     {
         var dbContext = input.DbContext;
 
@@ -168,56 +158,30 @@ public class EFCoreObservedNavigation(
         if (entityEntry.State == EntityState.Deleted)
             throw new Exception($"Cannot access navigation '{Navigation.DeclaringType.ShortName()}.{Navigation.Name}' current value for a deleted entity");
 
-        var navigationEntry = entityEntry.Navigation(Navigation);
-        if (!navigationEntry.IsLoaded && entityEntry.State != EntityState.Detached)
-            navigationEntry.Load();
-
-        return navigationEntry.GetCurrentValue();
-    }
-
-    protected virtual object? GetIncrementalOriginalValue(IEFCoreComputedInput input, object ent, IncrementalContext incrementalContext)
-    {
-        var entityEntry = input.DbContext.Entry(ent);
-
-        if (entityEntry.State == EntityState.Added)
-            throw new Exception($"Cannot access navigation '{Navigation.DeclaringType.ShortName()}.{Navigation.Name}' original value for an added entity");
-
-        var incrementalEntities = incrementalContext.GetOriginalEntities(ent, this);
-
-        if (Navigation.IsCollection)
+        if (incrementalContext is not null)
         {
-            var collectionAccessor = Navigation.GetCollectionAccessor()!;
-            var collection = collectionAccessor.Create();
-            foreach (var entity in incrementalEntities)
-                collectionAccessor.AddStandalone(collection, entity);
-            return collection;
+            var incrementalEntities = incrementalContext.GetCurrentEntities(ent, this);
+
+            if (Navigation.IsCollection)
+            {
+                var collectionAccessor = Navigation.GetCollectionAccessor()!;
+                var collection = collectionAccessor.Create();
+                foreach (var entity in incrementalEntities)
+                    collectionAccessor.AddStandalone(collection, entity);
+                return collection;
+            }
+            else
+            {
+                return incrementalEntities.FirstOrDefault();
+            }
         }
         else
         {
-            return incrementalEntities.FirstOrDefault();
-        }
-    }
+            var navigationEntry = entityEntry.Navigation(Navigation);
+            if (!navigationEntry.IsLoaded && entityEntry.State != EntityState.Detached)
+                navigationEntry.Load();
 
-    protected virtual object? GetIncrementalCurrentValue(IEFCoreComputedInput input, object ent, IncrementalContext incrementalContext)
-    {
-        var entityEntry = input.DbContext.Entry(ent);
-
-        if (entityEntry.State == EntityState.Deleted)
-            throw new Exception($"Cannot access navigation '{Navigation.DeclaringType.ShortName()}.{Navigation.Name}' current value for a deleted entity");
-
-        var incrementalEntities = incrementalContext.GetCurrentEntities(ent, this);
-
-        if (Navigation.IsCollection)
-        {
-            var collectionAccessor = Navigation.GetCollectionAccessor()!;
-            var collection = collectionAccessor.Create();
-            foreach (var entity in incrementalEntities)
-                collectionAccessor.AddStandalone(collection, entity);
-            return collection;
-        }
-        else
-        {
-            return incrementalEntities.FirstOrDefault();
+            return navigationEntry.GetCurrentValue();
         }
     }
 

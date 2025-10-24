@@ -68,14 +68,8 @@ public class ComputedExpressionAnalyzer<TInput> : IComputedExpressionAnalyzer<TI
 
         var computedEntityContext = GetEntityContext(entityType, computedExpression, changeCalculation.IsIncremental);
 
-        var computedValueAccessors = new ComputedValueAccessors<TInput, TEntity, TValue>(
-            changeCalculation.IsIncremental
-                ? GetIncrementalOriginalValueExpression(entityType, computedExpression).Compile()
-                : GetOriginalValueExpression(entityType, computedExpression).Compile(),
-            changeCalculation.IsIncremental
-                ? GetIncrementalCurrentValueExpression(entityType, computedExpression).Compile()
-                : GetCurrentValueExpression(entityType, computedExpression).Compile()
-        );
+        var originalValueGetter = GetOriginalValueExpression(entityType, computedExpression).Compile();
+        var currentValueGetter = GetCurrentValueExpression(entityType, computedExpression).Compile();
 
         var filterEntityContext = GetEntityContext(entityType, filterExpression, false);
 
@@ -85,7 +79,8 @@ public class ComputedExpressionAnalyzer<TInput> : IComputedExpressionAnalyzer<TI
             filterExpression.Compile(),
             filterEntityContext,
             changeCalculation,
-            computedValueAccessors
+            originalValueGetter,
+            currentValueGetter
         );
     }
 
@@ -112,55 +107,35 @@ public class ComputedExpressionAnalyzer<TInput> : IComputedExpressionAnalyzer<TI
         return entityContext;
     }
 
-    private Expression<Func<TInput, IncrementalContext, TEntity, TValue>> GetOriginalValueExpression<TEntity, TValue>(
+    private Expression<Func<TInput, IncrementalContext?, TEntity, TValue>> GetOriginalValueExpression<TEntity, TValue>(
         IObservedEntityType<TInput> entityType,
         Expression<Func<TEntity, TValue>> computedExpression)
     {
         return GetValueExpression(
             entityType,
             computedExpression,
-            (memberAccess, parameters) => memberAccess.CreateOriginalValueExpression(parameters.Input),
+            (memberAccess, parameters) => memberAccess.CreateOriginalValueExpression(
+                parameters.Input,
+                parameters.IncrementalContext),
             ObservedEntityState.Added
         );
     }
 
-    private Expression<Func<TInput, IncrementalContext, TEntity, TValue>> GetCurrentValueExpression<TEntity, TValue>(
+    private Expression<Func<TInput, IncrementalContext?, TEntity, TValue>> GetCurrentValueExpression<TEntity, TValue>(
         IObservedEntityType<TInput> entityType,
         Expression<Func<TEntity, TValue>> computedExpression)
     {
         return GetValueExpression(
             entityType,
             computedExpression,
-            (memberAccess, parameters) => memberAccess.CreateCurrentValueExpression(parameters.Input),
+            (memberAccess, parameters) => memberAccess.CreateCurrentValueExpression(
+                parameters.Input,
+                parameters.IncrementalContext),
             ObservedEntityState.Removed
         );
     }
 
-    private Expression<Func<TInput, IncrementalContext, TEntity, TValue>> GetIncrementalOriginalValueExpression<TEntity, TValue>(
-        IObservedEntityType<TInput> entityType,
-        Expression<Func<TEntity, TValue>> computedExpression)
-    {
-        return GetValueExpression(
-            entityType,
-            computedExpression,
-            (memberAccess, parameters) => memberAccess.CreateIncrementalOriginalValueExpression(parameters.Input, parameters.IncrementalContext),
-            ObservedEntityState.Added
-        );
-    }
-
-    private Expression<Func<TInput, IncrementalContext, TEntity, TValue>> GetIncrementalCurrentValueExpression<TEntity, TValue>(
-        IObservedEntityType<TInput> entityType,
-        Expression<Func<TEntity, TValue>> computedExpression)
-    {
-        return GetValueExpression(
-            entityType,
-            computedExpression,
-            (memberAccess, parameters) => memberAccess.CreateIncrementalCurrentValueExpression(parameters.Input, parameters.IncrementalContext),
-            ObservedEntityState.Removed
-        );
-    }
-
-    private Expression<Func<TInput, IncrementalContext, TEntity, TValue>> GetValueExpression<TEntity, TValue>(
+    private Expression<Func<TInput, IncrementalContext?, TEntity, TValue>> GetValueExpression<TEntity, TValue>(
         IObservedEntityType<TInput> entityType,
         Expression<Func<TEntity, TValue>> computedExpression,
         Func<IObservedMemberAccess, (ParameterExpression Input, ParameterExpression IncrementalContext), Expression> expressionModifier,
@@ -183,7 +158,7 @@ public class ComputedExpressionAnalyzer<TInput> : IComputedExpressionAnalyzer<TI
             newBody,
             defaultValueEntityState);
 
-        return (Expression<Func<TInput, IncrementalContext, TEntity, TValue>>)Expression.Lambda(newBody, [
+        return (Expression<Func<TInput, IncrementalContext?, TEntity, TValue>>)Expression.Lambda(newBody, [
             inputParameter,
             incrementalContextParameter,
             .. computedExpression.Parameters

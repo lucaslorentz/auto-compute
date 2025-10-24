@@ -12,27 +12,17 @@ public abstract class ObservedMemberAccess(
     public Expression FromExpression { get; } = fromExpression;
     public IObservedMember Member { get; } = value;
 
-    public Expression CreateOriginalValueExpression(Expression inputParameter)
-    {
-        return Member.CreateOriginalValueExpression(this, inputParameter);
-    }
-
-    public Expression CreateCurrentValueExpression(Expression inputParameter)
-    {
-        return Member.CreateCurrentValueExpression(this, inputParameter);
-    }
-
-    public Expression CreateIncrementalOriginalValueExpression(
+    public Expression CreateOriginalValueExpression(
         Expression inputParameter,
         Expression incrementalContextExpression)
     {
-        return Member.CreateIncrementalOriginalValueExpression(this, inputParameter, incrementalContextExpression);
+        return Member.CreateOriginalValueExpression(this, inputParameter, incrementalContextExpression);
     }
 
-    public Expression CreateIncrementalCurrentValueExpression(
+    public Expression CreateCurrentValueExpression(
         Expression inputParameter,
         Expression incrementalContextExpression)
     {
-        return Member.CreateIncrementalCurrentValueExpression(this, inputParameter, incrementalContextExpression);
+        return Member.CreateCurrentValueExpression(this, inputParameter, incrementalContextExpression);
     }
 }

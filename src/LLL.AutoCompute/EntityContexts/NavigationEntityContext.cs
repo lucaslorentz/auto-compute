@@ -23,7 +23,7 @@ public class NavigationEntityContext : EntityContext
     public IObservedNavigation Navigation => _navigation;
     public override bool IsTrackingChanges { get; }
 
-    public override async Task<IReadOnlyCollection<object>> GetParentAffectedEntities(object input, IncrementalContext incrementalContext)
+    public override async Task<IReadOnlyCollection<object>> GetParentAffectedEntities(object input, IncrementalContext? incrementalContext)
     {
         // Short circuit to avoid requiring inverse navigation when no tracked property is accessed
         if (!GetAllObservedMembers().Any())

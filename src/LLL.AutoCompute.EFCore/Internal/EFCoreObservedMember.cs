@@ -21,10 +21,14 @@ public abstract class EFCoreObservedMember : IObservedMember<IEFCoreComputedInpu
 
     public abstract string Name { get; }
     public abstract string ToDebugString();
-    public abstract Expression CreateCurrentValueExpression(IObservedMemberAccess memberAccess, Expression inputExpression);
-    public abstract Expression CreateIncrementalCurrentValueExpression(IObservedMemberAccess memberAccess, Expression inputExpression, Expression incrementalContextExpression);
-    public abstract Expression CreateIncrementalOriginalValueExpression(IObservedMemberAccess memberAccess, Expression inputExpression, Expression incrementalContextExpression);
-    public abstract Expression CreateOriginalValueExpression(IObservedMemberAccess memberAccess, Expression inputExpression);
+    public abstract Expression CreateCurrentValueExpression(
+        IObservedMemberAccess memberAccess,
+        Expression inputExpression,
+        Expression incrementalContextExpression);
+    public abstract Expression CreateOriginalValueExpression(
+        IObservedMemberAccess memberAccess,
+        Expression inputExpression,
+        Expression incrementalContextExpression);
     public abstract Task CollectChangesAsync(DbContext dbContext, EFCoreChangeset changes);
     public abstract Task CollectChangesAsync(EntityEntry entityEntry, EFCoreChangeset changes);
 }

@@ -8,12 +8,10 @@ public interface IObservedMemberAccess
     Expression FromExpression { get; }
     IObservedMember Member { get; }
 
-    Expression CreateOriginalValueExpression(Expression inputParameter);
-    Expression CreateCurrentValueExpression(Expression inputParameter);
-    Expression CreateIncrementalOriginalValueExpression(
+    Expression CreateOriginalValueExpression(
         Expression inputParameter,
         Expression incrementalContextExpression);
-    Expression CreateIncrementalCurrentValueExpression(
+    Expression CreateCurrentValueExpression(
         Expression inputParameter,
         Expression incrementalContextExpression);
 }

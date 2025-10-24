@@ -9,7 +9,8 @@ public class ComputedChangesProvider<TInput, TEntity, TValue, TChange>(
     Func<TEntity, bool> filter,
     EntityContext filterEntityContext,
     IChangeCalculator<TValue, TChange> changeCalculation,
-    ComputedValueAccessors<TInput, TEntity, TValue> computedValueAccessors
+    Func<TInput, IncrementalContext?, TEntity, TValue> originalValueGetter,
+    Func<TInput, IncrementalContext?, TEntity, TValue> currentValueGetter
 ) : IComputedChangesProvider<TInput, TEntity, TChange>
     where TEntity : class
 {
@@ -23,7 +24,9 @@ public class ComputedChangesProvider<TInput, TEntity, TValue, TChange>(
         TInput input,
         ChangeMemory<TEntity, TChange>? changeMemory)
     {
-        var incrementalContext = new IncrementalContext();
+        var incrementalContext = changeCalculation.IsIncremental
+            ? new IncrementalContext()
+            : null;
 
         var affectedEntities = (await entityContext.GetAffectedEntitiesAsync(input!, incrementalContext))
             .OfType<TEntity>()
@@ -36,7 +39,7 @@ public class ComputedChangesProvider<TInput, TEntity, TValue, TChange>(
                 && filter(e))
             .ToArray();
 
-        if (changeCalculation.IsIncremental)
+        if (incrementalContext is not null)
             await entityContext.EnrichIncrementalContextAsync(input!, affectedEntities, incrementalContext);
         else if (changeCalculation.PreLoadEntities)
             await entityContext.PreLoadNavigationsAsync(input!, affectedEntities);
@@ -69,7 +72,7 @@ public class ComputedChangesProvider<TInput, TEntity, TValue, TChange>(
     private async Task<TChange> GetChangeAsync(
         TInput input,
         TEntity entity,
-        IncrementalContext incrementalContext,
+        IncrementalContext? incrementalContext,
         ChangeMemory<TEntity, TChange>? changeMemory)
     {
         var valueChange = changeCalculation.GetChange(CreateComputedValues(input, entity, incrementalContext));
@@ -90,12 +93,13 @@ public class ComputedChangesProvider<TInput, TEntity, TValue, TChange>(
         return delta;
     }
 
-    private ComputedValues<TInput, TEntity, TValue> CreateComputedValues(TInput input, TEntity entity, IncrementalContext incrementalContext)
+    private ComputedValues<TInput, TEntity, TValue> CreateComputedValues(TInput input, TEntity entity, IncrementalContext? incrementalContext)
     {
         return new ComputedValues<TInput, TEntity, TValue>(
             input,
             incrementalContext,
             entity,
-            computedValueAccessors);
+            originalValueGetter,
+            currentValueGetter);
     }
 }

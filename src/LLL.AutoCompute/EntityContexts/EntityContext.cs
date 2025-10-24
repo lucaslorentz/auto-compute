@@ -46,7 +46,9 @@ public abstract class EntityContext
         }
     }
 
-    public async Task<IReadOnlyCollection<object>> GetAffectedEntitiesAsync(object input, IncrementalContext incrementalContext)
+    public async Task<IReadOnlyCollection<object>> GetAffectedEntitiesAsync(
+        object input,
+        IncrementalContext? incrementalContext)
     {
         var entities = new HashSet<object>();
 
@@ -72,15 +74,18 @@ public abstract class EntityContext
                         continue;
 
                     entities.Add(entity);
-                    foreach (var addedEntity in changes.Added)
+                    if (incrementalContext is not null)
                     {
-                        incrementalContext.SetShouldLoadAll(addedEntity);
-                        incrementalContext.AddCurrentEntity(entity, observedNavigation, addedEntity);
-                    }
-                    foreach (var removedEntity in changes.Removed)
-                    {
-                        incrementalContext.SetShouldLoadAll(removedEntity);
-                        incrementalContext.AddOriginalEntity(entity, observedNavigation, removedEntity);
+                        foreach (var addedEntity in changes.Added)
+                        {
+                            incrementalContext.SetShouldLoadAll(addedEntity);
+                            incrementalContext.AddCurrentEntity(entity, observedNavigation, addedEntity);
+                        }
+                        foreach (var removedEntity in changes.Removed)
+                        {
+                            incrementalContext.SetShouldLoadAll(removedEntity);
+                            incrementalContext.AddOriginalEntity(entity, observedNavigation, removedEntity);
+                        }
                     }
                 }
             }
@@ -101,7 +106,7 @@ public abstract class EntityContext
         return entities;
     }
 
-    public abstract Task<IReadOnlyCollection<object>> GetParentAffectedEntities(object input, IncrementalContext incrementalContext);
+    public abstract Task<IReadOnlyCollection<object>> GetParentAffectedEntities(object input, IncrementalContext? incrementalContext);
 
     public virtual async Task EnrichIncrementalContextAsync(object input, IReadOnlyCollection<object> entities, IncrementalContext incrementalContext)
     {

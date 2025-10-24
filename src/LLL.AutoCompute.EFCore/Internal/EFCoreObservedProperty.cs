@@ -21,7 +21,8 @@ public class EFCoreObservedProperty(
 
     public override Expression CreateOriginalValueExpression(
         IObservedMemberAccess memberAccess,
-        Expression inputExpression)
+        Expression inputExpression,
+        Expression incrementalContextExpression)
     {
         return Expression.Convert(
             Expression.Call(
@@ -36,7 +37,8 @@ public class EFCoreObservedProperty(
 
     public override Expression CreateCurrentValueExpression(
         IObservedMemberAccess memberAccess,
-        Expression inputExpression)
+        Expression inputExpression,
+        Expression incrementalContextExpression)
     {
         return Expression.Convert(
             Expression.Call(
@@ -47,22 +49,6 @@ public class EFCoreObservedProperty(
             ),
             Property.ClrType
         );
-    }
-
-    public override Expression CreateIncrementalOriginalValueExpression(
-        IObservedMemberAccess memberAccess,
-        Expression inputExpression,
-        Expression incrementalContextExpression)
-    {
-        return CreateOriginalValueExpression(memberAccess, inputExpression);
-    }
-
-    public override Expression CreateIncrementalCurrentValueExpression(
-        IObservedMemberAccess memberAccess,
-        Expression inputExpression,
-        Expression incrementalContextExpression)
-    {
-        return CreateCurrentValueExpression(memberAccess, inputExpression);
     }
 
     protected virtual object? GetOriginalValue(IEFCoreComputedInput input, object ent)

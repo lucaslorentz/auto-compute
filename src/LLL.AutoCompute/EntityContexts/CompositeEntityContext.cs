@@ -16,7 +16,7 @@ public class CompositeEntityContext : EntityContext
         IsTrackingChanges = parents.Any(c => c.IsTrackingChanges);
     }
 
-    public override async Task<IReadOnlyCollection<object>> GetParentAffectedEntities(object input, IncrementalContext incrementalContext)
+    public override async Task<IReadOnlyCollection<object>> GetParentAffectedEntities(object input, IncrementalContext? incrementalContext)
     {
         return await GetAffectedEntitiesAsync(input, incrementalContext);
     }
