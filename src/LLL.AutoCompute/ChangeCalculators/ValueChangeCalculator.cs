@@ -5,7 +5,7 @@ public record class ValueChangeCalculator<TValue>(
     IEqualityComparer<TValue> Comparer)
     : IChangeCalculator<TValue, ValueChange<TValue>>
 {
-    public ComputedValuesMode ComputedValuesMode => ComputedValuesMode.Full;
+    public ComputedValueStrategy ValueStrategy => ComputedValueStrategy.Full;
 
     public ValueChange<TValue> GetChange(IComputedValues<TValue> computedValues)
     {

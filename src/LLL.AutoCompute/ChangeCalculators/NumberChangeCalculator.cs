@@ -6,9 +6,9 @@ public record class NumberChangeCalculator<TValue>(bool IsIncremental)
     : IChangeCalculator<TValue, TValue>
     where TValue : INumber<TValue>
 {
-    public ComputedValuesMode ComputedValuesMode => IsIncremental
-        ? ComputedValuesMode.Incremental
-        : ComputedValuesMode.Full;
+    public ComputedValueStrategy ValueStrategy => IsIncremental
+        ? ComputedValueStrategy.Incremental
+        : ComputedValueStrategy.Full;
 
     public TValue GetChange(IComputedValues<TValue> computedValues)
     {

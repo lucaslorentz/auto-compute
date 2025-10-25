@@ -1,8 +1,8 @@
 namespace LLL.AutoCompute;
 
-public enum ComputedValuesMode
+public enum ComputedValueStrategy
 {
-    None,
+    NoValue,
     Incremental,
     Full,
 }

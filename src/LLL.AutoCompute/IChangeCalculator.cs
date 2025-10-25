@@ -2,7 +2,7 @@ namespace LLL.AutoCompute;
 
 public interface IChangeCalculator
 {
-    ComputedValuesMode ComputedValuesMode { get; }
+    ComputedValueStrategy ValueStrategy { get; }
 }
 
 public interface IChangeCalculator<TChange> : IChangeCalculator

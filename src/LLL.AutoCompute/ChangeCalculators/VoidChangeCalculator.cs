@@ -4,7 +4,7 @@ namespace LLL.AutoCompute.ChangeCalculations;
 public record class VoidChangeCalculator<TValue>
     : IChangeCalculator<TValue, VoidChange>
 {
-    public ComputedValuesMode ComputedValuesMode => ComputedValuesMode.None;
+    public ComputedValueStrategy ValueStrategy => ComputedValueStrategy.NoValue;
 
     public VoidChange GetChange(IComputedValues<TValue> computedValues)
     {

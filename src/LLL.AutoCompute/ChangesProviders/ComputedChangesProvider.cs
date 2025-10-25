@@ -25,7 +25,7 @@ public class ComputedChangesProvider<TInput, TEntity, TValue, TChange>(
         TInput input,
         ChangeMemory<TEntity, TChange>? changeMemory)
     {
-        input.IncrementalContext = changeCalculation.ComputedValuesMode == ComputedValuesMode.Incremental
+        input.IncrementalContext = changeCalculation.ValueStrategy == ComputedValueStrategy.Incremental
             ? new IncrementalContext()
             : null;
 
@@ -40,12 +40,12 @@ public class ComputedChangesProvider<TInput, TEntity, TValue, TChange>(
                 && filter(e))
             .ToArray();
 
-        switch (changeCalculation.ComputedValuesMode)
+        switch (changeCalculation.ValueStrategy)
         {
-            case ComputedValuesMode.Incremental:
+            case ComputedValueStrategy.Incremental:
                 await entityContext.EnrichIncrementalContextAsync(input!, affectedEntities);
                 break;
-            case ComputedValuesMode.Full:
+            case ComputedValueStrategy.Full:
                 await entityContext.PreLoadNavigationsAsync(input!, affectedEntities);
                 break;
         }

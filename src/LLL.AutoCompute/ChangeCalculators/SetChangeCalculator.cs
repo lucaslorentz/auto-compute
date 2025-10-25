@@ -6,9 +6,9 @@ public record class SetChangeCalculator<TElement>(
     IEqualityComparer<TElement> Comparer)
     : IChangeCalculator<IEnumerable<TElement>, SetChange<TElement>>
 {
-    public ComputedValuesMode ComputedValuesMode => IsIncremental
-        ? ComputedValuesMode.Incremental
-        : ComputedValuesMode.Full;
+    public ComputedValueStrategy ValueStrategy => IsIncremental
+        ? ComputedValueStrategy.Incremental
+        : ComputedValueStrategy.Full;
 
     public SetChange<TElement> GetChange(IComputedValues<IEnumerable<TElement>> computedValues)
     {
