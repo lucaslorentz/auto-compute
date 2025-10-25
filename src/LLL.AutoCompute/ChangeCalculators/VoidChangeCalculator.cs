@@ -4,8 +4,7 @@ namespace LLL.AutoCompute.ChangeCalculations;
 public record class VoidChangeCalculator<TValue>
     : IChangeCalculator<TValue, VoidChange>
 {
-    public bool IsIncremental => false;
-    public bool PreLoadEntities => false;
+    public ComputedValuesMode ComputedValuesMode => ComputedValuesMode.None;
 
     public VoidChange GetChange(IComputedValues<TValue> computedValues)
     {

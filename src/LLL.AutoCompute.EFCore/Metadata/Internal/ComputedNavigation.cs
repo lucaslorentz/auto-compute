@@ -31,11 +31,9 @@ public class ComputedNavigation<TEntity, TProperty>(
 
             var originalValue = GetOriginalValue(navigationEntry);
 
-            var newValue = ChangesProvider.ChangeCalculation.IsIncremental
-                ? ChangesProvider.ChangeCalculation.ApplyChange(
-                    originalValue,
-                    change)
-                : change;
+            var newValue = ChangesProvider.ChangeCalculation.ApplyChange(
+                originalValue,
+                change);
 
             if (!navigationEntry.IsLoaded && entityEntry.State != EntityState.Detached)
                 await navigationEntry.LoadAsync();

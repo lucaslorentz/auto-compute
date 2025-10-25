@@ -26,11 +26,9 @@ public class ComputedProperty<TEntity, TProperty>(
             var entityEntry = input.DbContext.Entry(entity);
             var propertyEntry = entityEntry.Property(Property);
 
-            var newValue = ChangesProvider.ChangeCalculation.IsIncremental
-                ? ChangesProvider.ChangeCalculation.ApplyChange(
-                    GetOriginalValue(propertyEntry),
-                    change)
-                : change;
+            var newValue = ChangesProvider.ChangeCalculation.ApplyChange(
+                GetOriginalValue(propertyEntry),
+                change);
 
             MaybeUpdateProperty(propertyEntry, newValue, updateChanges);
         }

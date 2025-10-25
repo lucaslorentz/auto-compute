@@ -6,7 +6,9 @@ public record class SetChangeCalculator<TElement>(
     IEqualityComparer<TElement> Comparer)
     : IChangeCalculator<IEnumerable<TElement>, SetChange<TElement>>
 {
-    public bool PreLoadEntities => true;
+    public ComputedValuesMode ComputedValuesMode => IsIncremental
+        ? ComputedValuesMode.Incremental
+        : ComputedValuesMode.Full;
 
     public SetChange<TElement> GetChange(IComputedValues<IEnumerable<TElement>> computedValues)
     {

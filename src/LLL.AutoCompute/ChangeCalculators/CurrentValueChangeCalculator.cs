@@ -4,7 +4,9 @@ namespace LLL.AutoCompute.ChangeCalculations;
 public record class CurrentValueChangeCalculator<TValue>(bool IsIncremental)
     : IChangeCalculator<TValue, TValue>
 {
-    public bool PreLoadEntities => true;
+    public ComputedValuesMode ComputedValuesMode => IsIncremental
+        ? ComputedValuesMode.Incremental
+        : ComputedValuesMode.Full;
 
     public TValue GetChange(IComputedValues<TValue> computedValues)
     {

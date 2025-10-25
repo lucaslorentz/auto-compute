@@ -2,8 +2,7 @@ namespace LLL.AutoCompute;
 
 public interface IChangeCalculator
 {
-    bool IsIncremental { get; }
-    bool PreLoadEntities { get; }
+    ComputedValuesMode ComputedValuesMode { get; }
 }
 
 public interface IChangeCalculator<TChange> : IChangeCalculator

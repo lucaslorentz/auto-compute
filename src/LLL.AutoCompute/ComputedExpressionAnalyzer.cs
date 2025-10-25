@@ -67,12 +67,12 @@ public class ComputedExpressionAnalyzer<TInput> : IComputedExpressionAnalyzer<TI
 
         computedExpression = (Expression<Func<TEntity, TValue>>)RunExpressionModifiers(computedExpression);
 
-        var computedEntityContext = GetEntityContext(entityType, computedExpression, changeCalculation.IsIncremental);
+        var computedEntityContext = GetEntityContext(entityType, computedExpression);
 
         var originalValueGetter = GetOriginalValueExpression(entityType, computedExpression).Compile();
         var currentValueGetter = GetCurrentValueExpression(entityType, computedExpression).Compile();
 
-        var filterEntityContext = GetEntityContext(entityType, filterExpression, false);
+        var filterEntityContext = GetEntityContext(entityType, filterExpression);
 
         return new ComputedChangesProvider<TInput, TEntity, TValue, TChange>(
             computedExpression,
@@ -87,8 +87,7 @@ public class ComputedExpressionAnalyzer<TInput> : IComputedExpressionAnalyzer<TI
 
     private RootEntityContext GetEntityContext<TEntity, TValue>(
         IObservedEntityType entityType,
-        Expression<Func<TEntity, TValue>> computedExpression,
-        bool isIncremental)
+        Expression<Func<TEntity, TValue>> computedExpression)
         where TEntity : class
     {
         var entityContext = new RootEntityContext(computedExpression.Parameters[0], entityType);

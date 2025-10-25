@@ -5,8 +5,7 @@ public record class ValueChangeCalculator<TValue>(
     IEqualityComparer<TValue> Comparer)
     : IChangeCalculator<TValue, ValueChange<TValue>>
 {
-    public bool IsIncremental => false;
-    public bool PreLoadEntities => true;
+    public ComputedValuesMode ComputedValuesMode => ComputedValuesMode.Full;
 
     public ValueChange<TValue> GetChange(IComputedValues<TValue> computedValues)
     {
