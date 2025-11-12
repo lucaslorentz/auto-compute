@@ -22,4 +22,12 @@ public static class PropertyBuilderExtensions
 
         return propertyBuilder;
     }
+
+    public static void ConsistencyCheck<TEntity, TProperty>(
+        this PropertyBuilder<TProperty> propertyBuilder,
+        Expression<Func<TEntity, bool>> check)
+        where TEntity : class
+    {
+        propertyBuilder.Metadata.SetConsistencyCheck(check);
+    }
 }

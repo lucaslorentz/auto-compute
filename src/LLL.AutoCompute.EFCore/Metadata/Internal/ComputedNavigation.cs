@@ -64,7 +64,7 @@ public class ComputedNavigation<TEntity, TProperty>(
         return (TProperty)navigationEntry.GetOriginalValue()!;
     }
 
-    protected override Expression CreateIsValueInconsistentExpression(
+    protected override Expression CreateIsValueConsistentExpression(
         Expression computedValue,
         Expression storedValue)
     {
@@ -118,7 +118,7 @@ public class ComputedNavigation<TEntity, TProperty>(
                         );
                     }
 
-                    var hasQuantityMismatch = Expression.NotEqual(
+                    var quantityMatches = Expression.Equal(
                         Expression.Call(
                             typeof(Enumerable), nameof(Enumerable.Count), [elementType],
                             computedValue
@@ -129,7 +129,7 @@ public class ComputedNavigation<TEntity, TProperty>(
                         )
                     );
 
-                    var hasNonStoredComputed = Expression.Call(
+                    var allValuesAreStored = Expression.Not(Expression.Call(
                         typeof(Enumerable), nameof(Enumerable.Any), [storedItemParameter.Type],
                         storedValue,
                         Expression.Lambda(
@@ -145,11 +145,11 @@ public class ComputedNavigation<TEntity, TProperty>(
                             ),
                             storedItemParameter
                         )
-                    );
+                    ));
 
-                    return Expression.Or(
-                        hasQuantityMismatch,
-                        hasNonStoredComputed
+                    return Expression.And(
+                        quantityMatches,
+                        allValuesAreStored
                     );
                 }
             );
@@ -165,11 +165,11 @@ public class ComputedNavigation<TEntity, TProperty>(
             storedValue = AddPropertyAccess(storedValue, principalKeyProperty);
         }
 
-        return Expression.Not(Expression.Call(
+        return Expression.Call(
             typeof(object), nameof(object.Equals), [],
             Expression.Convert(computedValue, typeof(object)),
             Expression.Convert(storedValue, typeof(object))
-        ));
+        );
     }
 
     private static Expression AddPropertyAccess(Expression expression, IProperty property)

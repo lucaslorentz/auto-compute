@@ -155,4 +155,14 @@ public static class ComputedAnnotationAccessors
     {
         entityType[ComputedAnnotationNames.ConsistencyFilter] = filter;
     }
+
+    public static LambdaExpression? GetConsistencyCheck(this IReadOnlyPropertyBase target)
+    {
+        return target[ComputedAnnotationNames.ConsistencyCheck] as LambdaExpression;
+    }
+
+    internal static void SetConsistencyCheck(this IMutableProperty propertyBase, LambdaExpression check)
+    {
+        propertyBase[ComputedAnnotationNames.ConsistencyCheck] = check;
+    }
 }

@@ -7,6 +7,7 @@ using LLL.AutoCompute.Internal.ExpressionVisitors;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.ChangeTracking;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Query;
 
 namespace LLL.AutoCompute.EFCore.Metadata.Internal;
 
@@ -18,7 +19,7 @@ public abstract class ComputedMember(
     public abstract IPropertyBase Property { get; }
     public abstract Task<ComputedMemberConsistency> CheckConsistencyAsync(DbContext dbContext, DateTime since);
     public abstract IQueryable QueryInconsistentEntities(DbContext dbContext, DateTime since);
-    public abstract LambdaExpression CreateIsEntityInconsistentLambda();
+    public abstract LambdaExpression GetIsMemberConsistentLambda(DbContext dbContext);
     public abstract Task FixAsync(object entity, DbContext dbContext);
 
     public override string ToDebugString()
@@ -168,14 +169,14 @@ public abstract class ComputedMember<TEntity, TMember>(
     public override async Task<ComputedMemberConsistency> CheckConsistencyAsync(DbContext dbContext, DateTime since)
     {
         var result = await dbContext.CreateConsistencyQuery<TEntity>(EntityType, since)
-            .GroupBy(CreateIsEntityInconsistentLambda())
+            .GroupBy(GetIsMemberConsistentLambda(dbContext))
             .ToDictionaryAsync(x => x.Key, x => x.Count());
 
-        if (!result.TryGetValue(false, out var consistent))
-            consistent = 0;
-
-        if (!result.TryGetValue(true, out var inconsistent))
+        if (!result.TryGetValue(false, out var inconsistent))
             inconsistent = 0;
+
+        if (!result.TryGetValue(true, out var consistent))
+            consistent = 0;
 
         return new ComputedMemberConsistency(consistent, inconsistent);
     }
@@ -183,11 +184,18 @@ public abstract class ComputedMember<TEntity, TMember>(
     public override IQueryable<TEntity> QueryInconsistentEntities(DbContext dbContext, DateTime since)
     {
         return dbContext.CreateConsistencyQuery<TEntity>(EntityType, since)
-            .Where(CreateIsEntityInconsistentLambda());
+            .Where(GetIsMemberConsistentLambda(dbContext));
     }
 
-    public override Expression<Func<TEntity, bool>> CreateIsEntityInconsistentLambda()
+    public override Expression<Func<TEntity, bool>> GetIsMemberConsistentLambda(DbContext dbContext)
     {
+        var consistencyCheck = Property.GetConsistencyCheck();
+        if (consistencyCheck is not null)
+        {
+            var analyzer = dbContext.Model.GetComputedExpressionAnalyzerOrThrow();
+            return (Expression<Func<TEntity, bool>>)analyzer.RunExpressionModifiers(consistencyCheck);
+        }
+
         var entParameter = ChangesProvider.Expression.Parameters.First();
 
         var computedValue = new RemoveChangeComputedTrackingVisitor().Visit(
@@ -197,12 +205,12 @@ public abstract class ComputedMember<TEntity, TMember>(
         var storedValue = CreateEFPropertyExpression(entParameter, Property);
 
         return Expression.Lambda<Func<TEntity, bool>>(
-            CreateIsValueInconsistentExpression(computedValue, storedValue),
+            CreateIsValueConsistentExpression(computedValue, storedValue),
             entParameter
         );
     }
 
-    protected abstract Expression CreateIsValueInconsistentExpression(Expression computedValue, Expression storedValue);
+    protected abstract Expression CreateIsValueConsistentExpression(Expression computedValue, Expression storedValue);
 
     private static readonly MethodInfo _efPropertyMethod = ((Func<object, string, object>)EF.Property<object>)
         .Method.GetGenericMethodDefinition();

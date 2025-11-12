@@ -14,4 +14,5 @@ public static class ComputedAnnotationNames
     public const string AllMembers = Prefix + "AllMembers";
     public const string AllObservers = Prefix + "AllObservers";
     public const string ConsistencyFilter = Prefix + "ConsistencyFilter";
+    public const string ConsistencyCheck = Prefix + "ConsistencyCheck";
 }
