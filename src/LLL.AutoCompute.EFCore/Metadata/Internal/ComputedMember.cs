@@ -7,7 +7,6 @@ using LLL.AutoCompute.Internal.ExpressionVisitors;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.ChangeTracking;
 using Microsoft.EntityFrameworkCore.Metadata;
-using Microsoft.EntityFrameworkCore.Query;
 
 namespace LLL.AutoCompute.EFCore.Metadata.Internal;
 
@@ -19,6 +18,7 @@ public abstract class ComputedMember(
     public abstract IPropertyBase Property { get; }
     public abstract Task<ComputedMemberConsistency> CheckConsistencyAsync(DbContext dbContext, DateTime since);
     public abstract IQueryable QueryInconsistentEntities(DbContext dbContext, DateTime since);
+    public abstract LambdaExpression GetIsMemberInconsistentLambda(DbContext dbContext);
     public abstract LambdaExpression GetIsMemberConsistentLambda(DbContext dbContext);
     public abstract Task FixAsync(object entity, DbContext dbContext);
 
@@ -184,7 +184,16 @@ public abstract class ComputedMember<TEntity, TMember>(
     public override IQueryable<TEntity> QueryInconsistentEntities(DbContext dbContext, DateTime since)
     {
         return dbContext.CreateConsistencyQuery<TEntity>(EntityType, since)
-            .Where(GetIsMemberConsistentLambda(dbContext));
+            .Where(GetIsMemberInconsistentLambda(dbContext));
+    }
+
+    public override Expression<Func<TEntity, bool>> GetIsMemberInconsistentLambda(DbContext dbContext)
+    {
+        var isMemberConsistentLambda = GetIsMemberConsistentLambda(dbContext);
+        return (Expression<Func<TEntity, bool>>)Expression.Lambda(
+            Expression.Not(isMemberConsistentLambda.Body),
+            isMemberConsistentLambda.Parameters
+        );
     }
 
     public override Expression<Func<TEntity, bool>> GetIsMemberConsistentLambda(DbContext dbContext)
