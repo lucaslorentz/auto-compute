@@ -168,15 +168,16 @@ public abstract class ComputedMember<TEntity, TMember>(
 {
     public override async Task<ComputedMemberConsistency> CheckConsistencyAsync(DbContext dbContext, DateTime since)
     {
-        var result = (await dbContext.CreateConsistencyQuery<TEntity>(EntityType, since)
+        var data = await dbContext.CreateConsistencyQuery<TEntity>(EntityType, since)
             .GroupBy(GetIsMemberConsistentLambda(dbContext))
             .Select(x => new
             {
-                x.Key,
+                IsConsistent = x.Key,
                 Count = x.Count()
             })
-            .ToArrayAsync())
-            .ToDictionary(x => x.Key, x => x.Count);
+            .ToArrayAsync();
+
+        var result = data.ToDictionary(x => x.IsConsistent, x => x.Count);
 
         if (!result.TryGetValue(false, out var inconsistent))
             inconsistent = 0;
