@@ -22,7 +22,7 @@ class RemoveComputedAnnotationsConvention : IModelFinalizingConvention
         {
             var computedAnnotations = annotatable
                 .GetAnnotations()
-                .Where(a => a.Name.StartsWith(ComputedAnnotationNames.Prefix))
+                .Where(a => a.Name.StartsWith(AutoComputeAnnotationNames.TempPrefix))
                 .ToArray();
 
             if (computedAnnotations.Length > 0)

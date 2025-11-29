@@ -4,12 +4,12 @@ using Microsoft.EntityFrameworkCore.Metadata;
 
 namespace LLL.AutoCompute.EFCore.Metadata.Internal;
 
-public static class ComputedAnnotationAccessors
+public static class AutoComputeAnnotationAccessors
 {
     internal static EFCoreObservedEntityType GetOrCreateObservedEntityType(this IEntityType entityType)
     {
         return entityType.GetOrAddRuntimeAnnotationValue(
-            ComputedAnnotationNames.ObservedEntityType,
+            AutoComputeAnnotationNames.ObservedEntityType,
             static (entityType) => new EFCoreObservedEntityType(entityType!),
             entityType);
     }
@@ -17,13 +17,13 @@ public static class ComputedAnnotationAccessors
     internal static EFCoreObservedEntityType? GetObservedEntityType(this IEntityType entityType)
     {
         return entityType.FindRuntimeAnnotationValue(
-            ComputedAnnotationNames.ObservedEntityType) as EFCoreObservedEntityType;
+            AutoComputeAnnotationNames.ObservedEntityType) as EFCoreObservedEntityType;
     }
 
     internal static EFCoreObservedProperty GetOrCreateObservedProperty(this IProperty property)
     {
         return property.GetOrAddRuntimeAnnotationValue(
-            ComputedAnnotationNames.ObservedMember,
+            AutoComputeAnnotationNames.ObservedMember,
             static (property) => new EFCoreObservedProperty(property!),
             property);
     }
@@ -31,13 +31,13 @@ public static class ComputedAnnotationAccessors
     internal static EFCoreObservedProperty? GetObservedProperty(this IProperty property)
     {
         return property.FindRuntimeAnnotationValue(
-            ComputedAnnotationNames.ObservedMember) as EFCoreObservedProperty;
+            AutoComputeAnnotationNames.ObservedMember) as EFCoreObservedProperty;
     }
 
     internal static EFCoreObservedNavigation GetOrCreateObservedNavigation(this INavigationBase navigation)
     {
         return navigation.GetOrAddRuntimeAnnotationValue(
-            ComputedAnnotationNames.ObservedMember,
+            AutoComputeAnnotationNames.ObservedMember,
             static (navigation) => new EFCoreObservedNavigation(navigation!),
             navigation);
     }
@@ -45,38 +45,38 @@ public static class ComputedAnnotationAccessors
     internal static EFCoreObservedNavigation? GetObservedNavigation(this INavigationBase navigation)
     {
         return navigation.FindRuntimeAnnotationValue(
-            ComputedAnnotationNames.ObservedMember) as EFCoreObservedNavigation;
+            AutoComputeAnnotationNames.ObservedMember) as EFCoreObservedNavigation;
     }
 
     internal static EFCoreObservedMember? GetObservedMember(this IPropertyBase member)
     {
         return member.FindRuntimeAnnotationValue(
-            ComputedAnnotationNames.ObservedMember) as EFCoreObservedMember;
+            AutoComputeAnnotationNames.ObservedMember) as EFCoreObservedMember;
     }
 
     internal static ComputedMemberFactory<IProperty>? GetComputedFactory(this IReadOnlyProperty target)
     {
-        return target[ComputedAnnotationNames.MemberFactory] as ComputedMemberFactory<IProperty>;
+        return target[AutoComputeAnnotationNames.MemberFactory] as ComputedMemberFactory<IProperty>;
     }
 
     internal static void SetComputedFactory(this IMutableProperty target, ComputedMemberFactory<IProperty> factory)
     {
-        target[ComputedAnnotationNames.MemberFactory] = factory;
+        target[AutoComputeAnnotationNames.MemberFactory] = factory;
     }
 
     internal static ComputedMemberFactory<INavigationBase>? GetComputedFactory(this IReadOnlyNavigationBase target)
     {
-        return target[ComputedAnnotationNames.MemberFactory] as ComputedMemberFactory<INavigationBase>;
+        return target[AutoComputeAnnotationNames.MemberFactory] as ComputedMemberFactory<INavigationBase>;
     }
 
     internal static void SetComputedFactory(this IMutableNavigationBase target, ComputedMemberFactory<INavigationBase> factory)
     {
-        target[ComputedAnnotationNames.MemberFactory] = factory;
+        target[AutoComputeAnnotationNames.MemberFactory] = factory;
     }
 
     internal static List<ComputedObserverFactory<IEntityType>>? GetObserversFactories(this IReadOnlyEntityType target)
     {
-        return target[ComputedAnnotationNames.ObserversFactories] as List<ComputedObserverFactory<IEntityType>>;
+        return target[AutoComputeAnnotationNames.ObserversFactories] as List<ComputedObserverFactory<IEntityType>>;
     }
 
     internal static void AddObserverFactory(this IMutableEntityType target, ComputedObserverFactory<IEntityType> factory)
@@ -85,84 +85,84 @@ public static class ComputedAnnotationAccessors
         if (factories is null)
         {
             factories = [];
-            target[ComputedAnnotationNames.ObserversFactories] = factories;
+            target[AutoComputeAnnotationNames.ObserversFactories] = factories;
         }
         factories.Add(factory);
     }
 
     public static ComputedMember? GetComputedMember(this IPropertyBase target)
     {
-        return target.FindRuntimeAnnotationValue(ComputedAnnotationNames.Member) as ComputedMember;
+        return target.FindRuntimeAnnotationValue(AutoComputeAnnotationNames.Member) as ComputedMember;
     }
 
     internal static void SetComputedMember(this IPropertyBase propertyBase, ComputedMember? computedMember)
     {
-        propertyBase.SetRuntimeAnnotation(ComputedAnnotationNames.Member, computedMember);
+        propertyBase.SetRuntimeAnnotation(AutoComputeAnnotationNames.Member, computedMember);
     }
 
     public static IReadOnlyCollection<ComputedObserver>? GetComputedObservers(this IEntityType target)
     {
-        return target.FindRuntimeAnnotationValue(ComputedAnnotationNames.Observers) as IReadOnlyCollection<ComputedObserver>;
+        return target.FindRuntimeAnnotationValue(AutoComputeAnnotationNames.Observers) as IReadOnlyCollection<ComputedObserver>;
     }
 
     internal static void SetComputedObservers(this IEntityType target, IReadOnlyCollection<ComputedObserver>? computedObservers)
     {
-        target.SetRuntimeAnnotation(ComputedAnnotationNames.Observers, computedObservers);
+        target.SetRuntimeAnnotation(AutoComputeAnnotationNames.Observers, computedObservers);
     }
 
     public static IComputedExpressionAnalyzer<IEFCoreComputedInput> GetComputedExpressionAnalyzerOrThrow(this IModel annotatable)
     {
-        return annotatable.FindRuntimeAnnotationValue(ComputedAnnotationNames.ExpressionAnalyzer) as IComputedExpressionAnalyzer<IEFCoreComputedInput>
+        return annotatable.FindRuntimeAnnotationValue(AutoComputeAnnotationNames.ExpressionAnalyzer) as IComputedExpressionAnalyzer<IEFCoreComputedInput>
             ?? throw new Exception($"ExpressionAnalyzer not found in model");
     }
 
     internal static void SetExpressionAnalyzer(this IModel annotatable, IComputedExpressionAnalyzer<IEFCoreComputedInput> analyzer)
     {
-        annotatable.SetRuntimeAnnotation(ComputedAnnotationNames.ExpressionAnalyzer, analyzer);
+        annotatable.SetRuntimeAnnotation(AutoComputeAnnotationNames.ExpressionAnalyzer, analyzer);
     }
 
     public static IReadOnlyList<ComputedMember> GetAllComputedMembers(this IModel annotatable)
     {
-        return annotatable.FindRuntimeAnnotationValue(ComputedAnnotationNames.AllMembers) as IReadOnlyList<ComputedMember>
-            ?? throw new Exception($"{ComputedAnnotationNames.AllMembers} annotation not found in model");
+        return annotatable.FindRuntimeAnnotationValue(AutoComputeAnnotationNames.AllMembers) as IReadOnlyList<ComputedMember>
+            ?? throw new Exception($"{AutoComputeAnnotationNames.AllMembers} annotation not found in model");
     }
 
     internal static void SetAllComputedMembers(this IModel annotatable, IReadOnlyList<ComputedMember> computeds)
     {
-        annotatable.SetRuntimeAnnotation(ComputedAnnotationNames.AllMembers, computeds);
+        annotatable.SetRuntimeAnnotation(AutoComputeAnnotationNames.AllMembers, computeds);
     }
 
     public static IReadOnlyList<ComputedObserver> GetAllComputedObservers(this IModel annotatable)
     {
-        return annotatable.FindRuntimeAnnotationValue(ComputedAnnotationNames.AllObservers) as IReadOnlyList<ComputedObserver>
-            ?? throw new Exception($"{ComputedAnnotationNames.AllObservers} annotation not found in model");
+        return annotatable.FindRuntimeAnnotationValue(AutoComputeAnnotationNames.AllObservers) as IReadOnlyList<ComputedObserver>
+            ?? throw new Exception($"{AutoComputeAnnotationNames.AllObservers} annotation not found in model");
     }
 
     internal static void SetAllComputedObservers(this IModel annotatable, IReadOnlyList<ComputedObserver> computeds)
     {
-        annotatable.SetRuntimeAnnotation(ComputedAnnotationNames.AllObservers, computeds);
+        annotatable.SetRuntimeAnnotation(AutoComputeAnnotationNames.AllObservers, computeds);
     }
 
     internal static LambdaExpression? GetConsistencyFilter(
         this IEntityType entityType)
     {
-        return entityType[ComputedAnnotationNames.ConsistencyFilter] as LambdaExpression;
+        return entityType[AutoComputeAnnotationNames.ConsistencyFilter] as LambdaExpression;
     }
 
     internal static void SetConsistencyFilter(
         this IMutableEntityType entityType,
         LambdaExpression filter)
     {
-        entityType[ComputedAnnotationNames.ConsistencyFilter] = filter;
+        entityType[AutoComputeAnnotationNames.ConsistencyFilter] = filter;
     }
 
     public static LambdaExpression? GetConsistencyCheck(this IReadOnlyPropertyBase target)
     {
-        return target[ComputedAnnotationNames.ConsistencyCheck] as LambdaExpression;
+        return target[AutoComputeAnnotationNames.ConsistencyCheck] as LambdaExpression;
     }
 
     internal static void SetConsistencyCheck(this IMutableProperty propertyBase, LambdaExpression check)
     {
-        propertyBase[ComputedAnnotationNames.ConsistencyCheck] = check;
+        propertyBase[AutoComputeAnnotationNames.ConsistencyCheck] = check;
     }
 }
