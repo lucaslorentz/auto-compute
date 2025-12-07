@@ -8,10 +8,10 @@ public interface IObservedMember
     Type InputType { get; }
     string ToDebugString();
     Expression CreateOriginalValueExpression(
-        IObservedMemberAccess memberAccess,
+        ObservedMemberAccess memberAccess,
         Expression inputExpression);
     Expression CreateCurrentValueExpression(
-        IObservedMemberAccess memberAccess,
+        ObservedMemberAccess memberAccess,
         Expression inputExpression);
 }
 

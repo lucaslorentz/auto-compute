@@ -79,7 +79,7 @@ public class EFCoreObservedNavigation(
     }
 
     public override Expression CreateOriginalValueExpression(
-        IObservedMemberAccess memberAccess,
+        ObservedMemberAccess memberAccess,
         Expression inputExpression)
     {
         return Expression.Convert(
@@ -94,7 +94,7 @@ public class EFCoreObservedNavigation(
     }
 
     public override Expression CreateCurrentValueExpression(
-        IObservedMemberAccess memberAccess,
+        ObservedMemberAccess memberAccess,
         Expression inputExpression)
     {
         return Expression.Convert(

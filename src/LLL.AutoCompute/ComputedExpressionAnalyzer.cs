@@ -114,7 +114,7 @@ public class ComputedExpressionAnalyzer<TInput> : IComputedExpressionAnalyzer<TI
         return GetValueExpression(
             entityType,
             computedExpression,
-            (memberAccess, inputParameter) => memberAccess.CreateOriginalValueExpression(inputParameter),
+            (memberAccess, inputParameter) => memberAccess.Member.CreateOriginalValueExpression(memberAccess, inputParameter),
             ObservedEntityState.Added
         );
     }
@@ -126,7 +126,7 @@ public class ComputedExpressionAnalyzer<TInput> : IComputedExpressionAnalyzer<TI
         return GetValueExpression(
             entityType,
             computedExpression,
-            (memberAccess, inputParameter) => memberAccess.CreateCurrentValueExpression(inputParameter),
+            (memberAccess, inputParameter) => memberAccess.Member.CreateCurrentValueExpression(memberAccess, inputParameter),
             ObservedEntityState.Removed
         );
     }
@@ -134,7 +134,7 @@ public class ComputedExpressionAnalyzer<TInput> : IComputedExpressionAnalyzer<TI
     private Expression<Func<TInput, TEntity, TValue>> GetValueExpression<TEntity, TValue>(
         IObservedEntityType<TInput> entityType,
         Expression<Func<TEntity, TValue>> computedExpression,
-        Func<IObservedMemberAccess, ParameterExpression, Expression> expressionModifier,
+        Func<ObservedMemberAccess, ParameterExpression, Expression> expressionModifier,
         ObservedEntityState defaultValueEntityState)
     {
         var inputParameter = Expression.Parameter(typeof(TInput), "input");

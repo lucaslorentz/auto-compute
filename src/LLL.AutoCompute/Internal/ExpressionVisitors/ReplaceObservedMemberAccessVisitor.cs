@@ -4,7 +4,7 @@ namespace LLL.AutoCompute.Internal.ExpressionVisitors;
 
 internal class ReplaceObservedMemberAccessVisitor(
     IReadOnlyCollection<IObservedMemberAccessLocator> memberAccessLocators,
-    Func<IObservedMemberAccess, Expression> expressionModifier
+    Func<ObservedMemberAccess, Expression> expressionModifier
 ) : ExpressionVisitor
 {
     public override Expression? Visit(Expression? node)

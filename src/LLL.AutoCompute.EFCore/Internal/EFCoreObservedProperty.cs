@@ -20,7 +20,7 @@ public class EFCoreObservedProperty(
     }
 
     public override Expression CreateOriginalValueExpression(
-        IObservedMemberAccess memberAccess,
+        ObservedMemberAccess memberAccess,
         Expression inputExpression)
     {
         return Expression.Convert(
@@ -35,7 +35,7 @@ public class EFCoreObservedProperty(
     }
 
     public override Expression CreateCurrentValueExpression(
-        IObservedMemberAccess memberAccess,
+        ObservedMemberAccess memberAccess,
         Expression inputExpression)
     {
         return Expression.Convert(

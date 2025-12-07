@@ -16,18 +16,18 @@ internal class MemberEntityContextRule(
             var memberAccess = memberAccessLocator.GetObservedMemberAccess(node);
             if (memberAccess is not null)
             {
-                if (memberAccess is IObservedNavigationAccess navigationAccess)
+                if (memberAccess.Member is IObservedNavigation navigation)
                 {
-                    var toKey = navigationAccess.Navigation.IsCollection
+                    var toKey = navigation.IsCollection
                         ? EntityContextKeys.Element
                         : EntityContextKeys.None;
 
                     entityContextRegistry.RegisterPropagation(
-                        navigationAccess.FromExpression,
+                        memberAccess.FromExpression,
                         EntityContextKeys.None,
                         node,
                         toKey,
-                        context => new NavigationEntityContext(node, context, navigationAccess.Navigation));
+                        context => new NavigationEntityContext(node, context, navigation));
                 }
 
                 entityContextRegistry.RegisterRequiredModifier(

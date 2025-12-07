@@ -22,10 +22,10 @@ public abstract class EFCoreObservedMember : IObservedMember<IEFCoreComputedInpu
     public abstract string Name { get; }
     public abstract string ToDebugString();
     public abstract Expression CreateCurrentValueExpression(
-        IObservedMemberAccess memberAccess,
+        ObservedMemberAccess memberAccess,
         Expression inputExpression);
     public abstract Expression CreateOriginalValueExpression(
-        IObservedMemberAccess memberAccess,
+        ObservedMemberAccess memberAccess,
         Expression inputExpression);
     public abstract Task CollectChangesAsync(DbContext dbContext, EFCoreChangeset changes);
     public abstract Task CollectChangesAsync(EntityEntry entityEntry, EFCoreChangeset changes);
