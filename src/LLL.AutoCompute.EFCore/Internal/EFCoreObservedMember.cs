@@ -6,12 +6,11 @@ using Microsoft.EntityFrameworkCore.Metadata;
 
 namespace LLL.AutoCompute.EFCore.Internal;
 
-public abstract class EFCoreObservedMember : IObservedMember<IEFCoreComputedInput>
+public abstract class EFCoreObservedMember : IObservedMember
 {
     private readonly HashSet<ComputedMember> _dependentMembers = [];
 
     public abstract IPropertyBase Property { get; }
-    public Type InputType => typeof(IEFCoreComputedInput);
 
     internal IReadOnlySet<ComputedMember> DependentMembers => _dependentMembers;
     internal bool AddDependentMember(ComputedMember computed)

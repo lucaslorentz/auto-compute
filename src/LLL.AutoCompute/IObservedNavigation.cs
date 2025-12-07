@@ -11,7 +11,7 @@ public interface IObservedNavigation : IObservedMember
     Task<ObservedNavigationChanges> GetChangesAsync(object input);
 }
 
-public interface IObservedNavigation<in TInput> : IObservedNavigation, IObservedMember<TInput>
+public interface IObservedNavigation<in TInput> : IObservedNavigation
     where TInput : IComputedInput
 {
     Task<IReadOnlyDictionary<object, IReadOnlyCollection<object>>> LoadCurrentAsync(TInput input, IReadOnlyCollection<object> fromEntities);

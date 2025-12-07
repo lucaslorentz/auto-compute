@@ -7,7 +7,7 @@ public interface IObservedProperty : IObservedMember
     Task<ObservedPropertyChanges> GetChangesAsync(object input);
 }
 
-public interface IObservedProperty<in TInput> : IObservedProperty, IObservedMember<TInput>
+public interface IObservedProperty<in TInput> : IObservedProperty
     where TInput : IComputedInput
 {
     Task<ObservedPropertyChanges> GetChangesAsync(TInput input);
