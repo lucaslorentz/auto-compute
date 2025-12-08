@@ -3,7 +3,7 @@ using LLL.AutoCompute.ChangeCalculations;
 
 namespace LLL.AutoCompute;
 
-public static class ChangeCalculationsExtensions
+public static class ChangeCalculatorsExtensions
 {
     public static VoidChangeCalculator<TValue> Void<TValue>(
         this IChangeCalculators<TValue> _)
