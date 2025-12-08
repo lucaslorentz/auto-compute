@@ -1,4 +1,4 @@
-namespace LLL.AutoCompute;
+﻿namespace LLL.AutoCompute;
 
 public sealed class ChangeCalculators<TValue> : IChangeCalculators<TValue>
 {

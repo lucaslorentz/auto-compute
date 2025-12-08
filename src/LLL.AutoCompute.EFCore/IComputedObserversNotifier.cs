@@ -1,4 +1,4 @@
-namespace LLL.AutoCompute.EFCore;
+﻿namespace LLL.AutoCompute.EFCore;
 
 public interface IComputedObserversNotifier
 {

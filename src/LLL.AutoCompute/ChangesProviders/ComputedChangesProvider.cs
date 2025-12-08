@@ -1,19 +1,18 @@
-using System.Linq.Expressions;
+﻿using System.Linq.Expressions;
 using LLL.AutoCompute.EntityContexts;
 
 namespace LLL.AutoCompute.ChangesProviders;
 
-public class ComputedChangesProvider<TInput, TEntity, TValue, TChange>(
+public class ComputedChangesProvider<TEntity, TValue, TChange>(
     Expression<Func<TEntity, TValue>> expression,
     EntityContext entityContext,
     Func<TEntity, bool> filter,
     EntityContext filterEntityContext,
     IChangeCalculator<TValue, TChange> changeCalculation,
-    Func<TInput, TEntity, TValue> originalValueGetter,
-    Func<TInput, TEntity, TValue> currentValueGetter
-) : IComputedChangesProvider<TInput, TEntity, TChange>
+    Func<ComputedInput, TEntity, TValue> originalValueGetter,
+    Func<ComputedInput, TEntity, TValue> currentValueGetter
+) : IComputedChangesProvider<TEntity, TChange>
     where TEntity : class
-    where TInput : IComputedInput
 {
     LambdaExpression IComputedChangesProvider.Expression => expression;
     public Expression<Func<TEntity, TValue>> Expression => expression;
@@ -22,7 +21,7 @@ public class ComputedChangesProvider<TInput, TEntity, TValue, TChange>(
     public IChangeCalculator<TChange> ChangeCalculation => changeCalculation;
 
     public async Task<IReadOnlyDictionary<TEntity, TChange>> GetChangesAsync(
-        TInput input,
+        ComputedInput input,
         ChangeMemory<TEntity, TChange>? changeMemory)
     {
         input.IncrementalContext = changeCalculation.ValueStrategy == ComputedValueStrategy.Incremental
@@ -76,7 +75,7 @@ public class ComputedChangesProvider<TInput, TEntity, TValue, TChange>(
     }
 
     private async Task<TChange> GetChangeAsync(
-        TInput input,
+        ComputedInput input,
         TEntity entity,
         ChangeMemory<TEntity, TChange>? changeMemory)
     {
@@ -98,9 +97,9 @@ public class ComputedChangesProvider<TInput, TEntity, TValue, TChange>(
         return delta;
     }
 
-    private ComputedValues<TInput, TEntity, TValue> CreateComputedValues(TInput input, TEntity entity)
+    private ComputedValues<TEntity, TValue> CreateComputedValues(ComputedInput input, TEntity entity)
     {
-        return new ComputedValues<TInput, TEntity, TValue>(
+        return new ComputedValues<TEntity, TValue>(
             input,
             entity,
             originalValueGetter,

@@ -1,4 +1,4 @@
-using System.Collections;
+﻿using System.Collections;
 using System.Collections.Immutable;
 using System.Linq.Expressions;
 using System.Reflection;
@@ -27,7 +27,7 @@ public abstract class ComputedMember(
         return $"{Property.DeclaringType.Name}.{Property.Name}";
     }
 
-    public abstract Task<EFCoreChangeset> Update(IEFCoreComputedInput input);
+    public abstract Task<EFCoreChangeset> Update(ComputedInput input);
 
     protected static void MaybeUpdateProperty(PropertyEntry propertyEntry, object? newValue, EFCoreChangeset? updateChanges)
     {

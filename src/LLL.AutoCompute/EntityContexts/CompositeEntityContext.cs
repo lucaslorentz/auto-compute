@@ -16,7 +16,7 @@ public class CompositeEntityContext : EntityContext
         IsTrackingChanges = parents.Any(c => c.IsTrackingChanges);
     }
 
-    public override async Task<IReadOnlyCollection<object>> GetParentAffectedEntities(IComputedInput input)
+    public override async Task<IReadOnlyCollection<object>> GetParentAffectedEntities(ComputedInput input)
     {
         return await GetAffectedEntitiesAsync(input);
     }

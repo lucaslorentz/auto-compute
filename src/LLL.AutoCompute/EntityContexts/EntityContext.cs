@@ -1,4 +1,4 @@
-using System.Linq.Expressions;
+﻿using System.Linq.Expressions;
 
 namespace LLL.AutoCompute.EntityContexts;
 
@@ -49,7 +49,7 @@ public abstract class EntityContext
         }
     }
 
-    public async Task<IReadOnlyCollection<object>> GetAffectedEntitiesAsync(IComputedInput input)
+    public async Task<IReadOnlyCollection<object>> GetAffectedEntitiesAsync(ComputedInput input)
     {
         var entities = new HashSet<object>();
 
@@ -109,32 +109,32 @@ public abstract class EntityContext
         return entities;
     }
 
-    public abstract Task<IReadOnlyCollection<object>> GetParentAffectedEntities(IComputedInput input);
+    public abstract Task<IReadOnlyCollection<object>> GetParentAffectedEntities(ComputedInput input);
 
-    public virtual async Task EnrichIncrementalContextAsync(IComputedInput input, IReadOnlyCollection<object> entities)
+    public virtual async Task EnrichIncrementalContextAsync(ComputedInput input, IReadOnlyCollection<object> entities)
     {
         foreach (var childContext in _childContexts)
             await childContext.EnrichIncrementalContextFromParentAsync(input, entities);
     }
 
-    public virtual async Task EnrichIncrementalContextFromParentAsync(IComputedInput input, IReadOnlyCollection<object> parentEntities)
+    public virtual async Task EnrichIncrementalContextFromParentAsync(ComputedInput input, IReadOnlyCollection<object> parentEntities)
     {
         await EnrichIncrementalContextAsync(input, parentEntities);
     }
 
-    public virtual async Task EnrichIncrementalContextTowardsRootAsync(IComputedInput input, IReadOnlyCollection<object> entities)
+    public virtual async Task EnrichIncrementalContextTowardsRootAsync(ComputedInput input, IReadOnlyCollection<object> entities)
     {
         foreach (var parent in Parents)
             await parent.EnrichIncrementalContextTowardsRootAsync(input, entities);
     }
 
-    public virtual async Task PreLoadNavigationsAsync(IComputedInput input, IReadOnlyCollection<object> entities)
+    public virtual async Task PreLoadNavigationsAsync(ComputedInput input, IReadOnlyCollection<object> entities)
     {
         foreach (var childContext in _childContexts)
             await childContext.PreLoadNavigationsFromParentAsync(input, entities);
     }
 
-    public virtual async Task PreLoadNavigationsFromParentAsync(IComputedInput input, IReadOnlyCollection<object> parentEntities)
+    public virtual async Task PreLoadNavigationsFromParentAsync(ComputedInput input, IReadOnlyCollection<object> parentEntities)
     {
         await PreLoadNavigationsAsync(input, parentEntities);
     }

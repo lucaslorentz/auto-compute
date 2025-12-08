@@ -1,4 +1,4 @@
-namespace LLL.AutoCompute;
+﻿namespace LLL.AutoCompute;
 
 public enum ComputedValueType
 {

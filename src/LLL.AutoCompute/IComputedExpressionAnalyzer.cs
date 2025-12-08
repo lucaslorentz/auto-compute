@@ -2,11 +2,10 @@
 
 namespace LLL.AutoCompute;
 
-public interface IComputedExpressionAnalyzer<TInput>
-    where TInput : IComputedInput
+public interface IComputedExpressionAnalyzer
 {
-    IComputedChangesProvider<TInput, TEntity, TChange> CreateChangesProvider<TEntity, TValue, TChange>(
-        IObservedEntityType<TInput> entityType,
+    IComputedChangesProvider<TEntity, TChange> CreateChangesProvider<TEntity, TValue, TChange>(
+        IObservedEntityType entityType,
         Expression<Func<TEntity, TValue>> computedExpression,
         Expression<Func<TEntity, bool>> filterExpression,
         IChangeCalculator<TValue, TChange> changeCalculation)

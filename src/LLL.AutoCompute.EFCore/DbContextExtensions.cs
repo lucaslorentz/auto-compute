@@ -112,7 +112,9 @@ public static class DbContextExtensions
 
                     visitedComputedMembers.Add(computed);
 
-                    var input = new EFCoreComputedInput(dbContext, changesToProcess);
+                    var input = new ComputedInput()
+                        .Set(dbContext)
+                        .Set(changesToProcess);
 
                     var newChanges = await computed.Update(input);
 
@@ -151,7 +153,9 @@ public static class DbContextExtensions
             foreach (var observedMember in observedMembers)
                 await observedMember.CollectChangesAsync(dbContext, changesToProcess);
 
-            var input = new EFCoreComputedInput(dbContext, changesToProcess);
+            var input = new ComputedInput()
+                .Set(dbContext)
+                .Set(changesToProcess);
 
             var computedObserversNotifier = new ComputedObserversNotifier();
 

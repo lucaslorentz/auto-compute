@@ -1,4 +1,4 @@
-
+﻿
 using System.Linq.Expressions;
 
 namespace LLL.AutoCompute.EntityContexts;
@@ -21,7 +21,7 @@ public class ScopedEntityContext : EntityContext
     public override IObservedEntityType EntityType { get; }
     public override bool IsTrackingChanges { get; }
 
-    public override async Task<IReadOnlyCollection<object>> GetParentAffectedEntities(IComputedInput input)
+    public override async Task<IReadOnlyCollection<object>> GetParentAffectedEntities(ComputedInput input)
     {
         return await GetAffectedEntitiesAsync(input);
     }

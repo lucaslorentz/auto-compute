@@ -1,4 +1,4 @@
-using System.Linq.Expressions;
+﻿using System.Linq.Expressions;
 using System.Reflection;
 using LLL.AutoCompute.EFCore.Metadata.Internal;
 using Microsoft.EntityFrameworkCore;
@@ -9,7 +9,7 @@ namespace LLL.AutoCompute.EFCore.Internal;
 
 public class EFCoreObservedNavigation(
     INavigationBase navigation)
-    : EFCoreObservedMember, IObservedNavigation<IEFCoreComputedInput>
+    : EFCoreObservedMember, IObservedNavigation
 {
     public override INavigationBase Property => navigation;
     public INavigationBase Navigation => navigation;
@@ -36,15 +36,17 @@ public class EFCoreObservedNavigation(
     }
 
     public virtual async Task<IReadOnlyDictionary<object, IReadOnlyCollection<object>>> LoadOriginalAsync(
-        IEFCoreComputedInput input,
+        ComputedInput input,
         IReadOnlyCollection<object> sourceEntities)
     {
-        await input.DbContext.BulkLoadAsync(sourceEntities, Navigation);
+        var dbContext = input.Get<DbContext>();
+
+        await dbContext.BulkLoadAsync(sourceEntities, Navigation);
 
         var targetEntities = new Dictionary<object, IReadOnlyCollection<object>>();
         foreach (var sourceEntity in sourceEntities)
         {
-            var entityEntry = input.DbContext.Entry(sourceEntity!);
+            var entityEntry = dbContext.Entry(sourceEntity!);
             if (entityEntry.State == EntityState.Added)
                 continue;
 
@@ -59,15 +61,17 @@ public class EFCoreObservedNavigation(
     }
 
     public async Task<IReadOnlyDictionary<object, IReadOnlyCollection<object>>> LoadCurrentAsync(
-        IEFCoreComputedInput input,
+        ComputedInput input,
         IReadOnlyCollection<object> sourceEntities)
     {
-        await input.DbContext.BulkLoadAsync(sourceEntities, Navigation);
+        var dbContext = input.Get<DbContext>();
+
+        await dbContext.BulkLoadAsync(sourceEntities, Navigation);
 
         var targetEntities = new Dictionary<object, IReadOnlyCollection<object>>();
         foreach (var sourceEntity in sourceEntities)
         {
-            var entityEntry = input.DbContext.Entry(sourceEntity!);
+            var entityEntry = dbContext.Entry(sourceEntity!);
             var navigationEntry = entityEntry.Navigation(Navigation);
 
             if (!navigationEntry.IsLoaded && entityEntry.State != EntityState.Detached)
@@ -108,9 +112,9 @@ public class EFCoreObservedNavigation(
         );
     }
 
-    protected virtual object? GetOriginalValue(IEFCoreComputedInput input, object ent)
+    protected virtual object? GetOriginalValue(ComputedInput input, object ent)
     {
-        var dbContext = input.DbContext;
+        var dbContext = input.Get<DbContext>();
 
         var entityEntry = dbContext.Entry(ent!);
 
@@ -145,9 +149,9 @@ public class EFCoreObservedNavigation(
         }
     }
 
-    protected virtual object? GetCurrentValue(IEFCoreComputedInput input, object ent)
+    protected virtual object? GetCurrentValue(ComputedInput input, object ent)
     {
-        var dbContext = input.DbContext;
+        var dbContext = input.Get<DbContext>();
 
         var entityEntry = dbContext.Entry(ent!);
 
@@ -291,8 +295,8 @@ public class EFCoreObservedNavigation(
         }
     }
 
-    public async Task<ObservedNavigationChanges> GetChangesAsync(IEFCoreComputedInput input)
+    public async Task<ObservedNavigationChanges> GetChangesAsync(ComputedInput input)
     {
-        return input.ChangesToProcess.GetOrCreateNavigationChanges(Navigation);
+        return input.Get<EFCoreChangeset>().GetOrCreateNavigationChanges(Navigation);
     }
 }

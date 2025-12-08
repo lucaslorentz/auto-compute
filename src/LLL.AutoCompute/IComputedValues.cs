@@ -1,4 +1,4 @@
-namespace LLL.AutoCompute;
+﻿namespace LLL.AutoCompute;
 
 public interface IComputedValues<out TValue>
 {

@@ -110,13 +110,13 @@ public static class AutoComputeAnnotationAccessors
         target.SetRuntimeAnnotation(AutoComputeAnnotationNames.Observers, computedObservers);
     }
 
-    public static IComputedExpressionAnalyzer<IEFCoreComputedInput> GetComputedExpressionAnalyzerOrThrow(this IModel annotatable)
+    public static IComputedExpressionAnalyzer GetComputedExpressionAnalyzerOrThrow(this IModel annotatable)
     {
-        return annotatable.FindRuntimeAnnotationValue(AutoComputeAnnotationNames.ExpressionAnalyzer) as IComputedExpressionAnalyzer<IEFCoreComputedInput>
+        return annotatable.FindRuntimeAnnotationValue(AutoComputeAnnotationNames.ExpressionAnalyzer) as IComputedExpressionAnalyzer
             ?? throw new Exception($"ExpressionAnalyzer not found in model");
     }
 
-    internal static void SetExpressionAnalyzer(this IModel annotatable, IComputedExpressionAnalyzer<IEFCoreComputedInput> analyzer)
+    internal static void SetExpressionAnalyzer(this IModel annotatable, IComputedExpressionAnalyzer analyzer)
     {
         annotatable.SetRuntimeAnnotation(AutoComputeAnnotationNames.ExpressionAnalyzer, analyzer);
     }

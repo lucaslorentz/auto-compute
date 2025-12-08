@@ -1,5 +1,4 @@
-using System.Linq.Expressions;
-using LLL.AutoCompute.EFCore.Internal;
+﻿using System.Linq.Expressions;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.ChangeTracking;
 using Microsoft.EntityFrameworkCore.Metadata;
@@ -8,22 +7,23 @@ namespace LLL.AutoCompute.EFCore.Metadata.Internal;
 
 public class ComputedProperty<TEntity, TProperty>(
     IProperty property,
-    IComputedChangesProvider<IEFCoreComputedInput, TEntity, TProperty> changesProvider
+    IComputedChangesProvider<TEntity, TProperty> changesProvider
 ) : ComputedMember<TEntity, TProperty>(changesProvider)
     where TEntity : class
 {
     private readonly Func<TEntity, TProperty> _compiledExpression = ((Expression<Func<TEntity, TProperty>>)changesProvider.Expression).Compile();
 
-    public new IComputedChangesProvider<IEFCoreComputedInput, TEntity, TProperty> ChangesProvider => changesProvider;
+    public new IComputedChangesProvider<TEntity, TProperty> ChangesProvider => changesProvider;
     public override IProperty Property => property;
 
-    public override async Task<EFCoreChangeset> Update(IEFCoreComputedInput input)
+    public override async Task<EFCoreChangeset> Update(ComputedInput input)
     {
+        var dbContext = input.Get<DbContext>();
         var updateChanges = new EFCoreChangeset();
         var changes = await changesProvider.GetChangesAsync(input, null);
         foreach (var (entity, change) in changes)
         {
-            var entityEntry = input.DbContext.Entry(entity);
+            var entityEntry = dbContext.Entry(entity);
             var propertyEntry = entityEntry.Property(Property);
 
             var newValue = ChangesProvider.ChangeCalculation.ApplyChange(

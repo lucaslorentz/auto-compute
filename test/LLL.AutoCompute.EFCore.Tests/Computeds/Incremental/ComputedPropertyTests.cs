@@ -1,4 +1,4 @@
-using FluentAssertions;
+﻿using FluentAssertions;
 using Microsoft.EntityFrameworkCore;
 
 namespace LLL.AutoCompute.EFCore.Tests.Computeds.Incremental;

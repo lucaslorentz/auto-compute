@@ -1,11 +1,11 @@
-using LLL.AutoCompute.EFCore;
+﻿using LLL.AutoCompute.EFCore;
 using LLL.AutoCompute.EFCore.Internal;
 using Microsoft.EntityFrameworkCore;
 
 namespace LLL.AutoCompute.ChangesProviders;
 
 public class EFCoreChangesProvider<TEntity, TChange>(
-    IComputedChangesProvider<IEFCoreComputedInput, TEntity, TChange> unboundChangesProvider,
+    IComputedChangesProvider<TEntity, TChange> unboundChangesProvider,
     DbContext dbContext)
     where TEntity : class
 {
@@ -22,7 +22,9 @@ public class EFCoreChangesProvider<TEntity, TChange>(
         foreach (var observedMember in _observedMembers)
             await observedMember.CollectChangesAsync(dbContext, changesToProcess);
 
-        var input = new EFCoreComputedInput(dbContext, changesToProcess);
+        var input = new ComputedInput()
+            .Set(dbContext)
+            .Set(changesToProcess);
 
         return await unboundChangesProvider.GetChangesAsync(input, _memory);
     }

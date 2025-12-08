@@ -1,4 +1,4 @@
-
+﻿
 namespace LLL.AutoCompute.ChangeCalculations;
 
 public record class VoidChangeCalculator<TValue>

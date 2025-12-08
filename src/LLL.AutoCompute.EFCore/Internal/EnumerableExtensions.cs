@@ -1,4 +1,4 @@
-
+﻿
 namespace LLL.AutoCompute.EFCore;
 
 internal static class EnumerableExtensions

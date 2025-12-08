@@ -1,11 +1,10 @@
-﻿using LLL.AutoCompute.EFCore.Internal;
-using LLL.AutoCompute.EFCore.Metadata.Internal;
+﻿using LLL.AutoCompute.EFCore.Metadata.Internal;
 using Microsoft.EntityFrameworkCore.Metadata;
 using Microsoft.EntityFrameworkCore.Metadata.Conventions;
 
 namespace LLL.AutoCompute.EFCore.Metadata.Conventions;
 
-class ComputedRuntimeConvention(Func<IModel, IComputedExpressionAnalyzer<IEFCoreComputedInput>> analyzerFactory)
+class ComputedRuntimeConvention(Func<IModel, IComputedExpressionAnalyzer> analyzerFactory)
     : IModelFinalizedConvention
 {
     public IModel ProcessModelFinalized(IModel model)
@@ -16,7 +15,7 @@ class ComputedRuntimeConvention(Func<IModel, IComputedExpressionAnalyzer<IEFCore
 
         var allComputedMembers = CreateComputedMembers(model, analyzer)
             .TopoSort(c => c.GetComputedDependencies());
-            
+
         model.SetAllComputedMembers(allComputedMembers);
 
         var allComputedObservers = CreateComputedObservers(model, analyzer);
@@ -28,7 +27,7 @@ class ComputedRuntimeConvention(Func<IModel, IComputedExpressionAnalyzer<IEFCore
 
     private static IReadOnlyList<ComputedMember> CreateComputedMembers(
         IModel model,
-        IComputedExpressionAnalyzer<IEFCoreComputedInput> analyzer)
+        IComputedExpressionAnalyzer analyzer)
     {
         var allComputedMembers = new List<ComputedMember>();
 
@@ -74,7 +73,7 @@ class ComputedRuntimeConvention(Func<IModel, IComputedExpressionAnalyzer<IEFCore
 
     private static IReadOnlyList<ComputedObserver> CreateComputedObservers(
         IModel model,
-        IComputedExpressionAnalyzer<IEFCoreComputedInput> analyzer)
+        IComputedExpressionAnalyzer analyzer)
     {
         var allComputedObservers = new List<ComputedObserver>();
 

@@ -9,15 +9,14 @@ using LLL.AutoCompute.Internal.ExpressionVisitors;
 
 namespace LLL.AutoCompute;
 
-public class ComputedExpressionAnalyzer<TInput> : IComputedExpressionAnalyzer<TInput>
-    where TInput : IComputedInput
+public class ComputedExpressionAnalyzer : IComputedExpressionAnalyzer
 {
     private readonly IList<IEntityContextNodeRule> _entityContextRules = [];
     private readonly HashSet<IObservedMemberAccessLocator> _memberAccessLocators = [];
     private readonly IList<Func<Expression, Expression>> _expressionModifiers = [];
     private IObservedEntityTypeResolver? _entityTypeResolver;
 
-    public ComputedExpressionAnalyzer<TInput> AddDefaults()
+    public ComputedExpressionAnalyzer AddDefaults()
     {
         return AddEntityContextRule(new ChangeTrackingEntityContextRule())
             .AddEntityContextRule(new ConditionalEntityContextRule())
@@ -29,35 +28,35 @@ public class ComputedExpressionAnalyzer<TInput> : IComputedExpressionAnalyzer<TI
             .AddEntityContextRule(new MemberEntityContextRule(_memberAccessLocators));
     }
 
-    public ComputedExpressionAnalyzer<TInput> AddObservedMemberAccessLocator(
+    public ComputedExpressionAnalyzer AddObservedMemberAccessLocator(
         IObservedMemberAccessLocator memberAccessLocator)
     {
         _memberAccessLocators.Add(memberAccessLocator);
         return this;
     }
 
-    public ComputedExpressionAnalyzer<TInput> AddEntityContextRule(
+    public ComputedExpressionAnalyzer AddEntityContextRule(
         IEntityContextNodeRule rule)
     {
         _entityContextRules.Add(rule);
         return this;
     }
 
-    public ComputedExpressionAnalyzer<TInput> AddExpressionModifier(Func<Expression, Expression> modifier)
+    public ComputedExpressionAnalyzer AddExpressionModifier(Func<Expression, Expression> modifier)
     {
         _expressionModifiers.Add(modifier);
         return this;
     }
 
-    public ComputedExpressionAnalyzer<TInput> SetObservedEntityTypeResolver(
+    public ComputedExpressionAnalyzer SetObservedEntityTypeResolver(
         IObservedEntityTypeResolver entityTypeResolver)
     {
         _entityTypeResolver = entityTypeResolver;
         return this;
     }
 
-    public IComputedChangesProvider<TInput, TEntity, TChange> CreateChangesProvider<TEntity, TValue, TChange>(
-        IObservedEntityType<TInput> entityType,
+    public IComputedChangesProvider<TEntity, TChange> CreateChangesProvider<TEntity, TValue, TChange>(
+        IObservedEntityType entityType,
         Expression<Func<TEntity, TValue>> computedExpression,
         Expression<Func<TEntity, bool>>? filterExpression,
         IChangeCalculator<TValue, TChange> changeCalculation)
@@ -74,7 +73,7 @@ public class ComputedExpressionAnalyzer<TInput> : IComputedExpressionAnalyzer<TI
 
         var filterEntityContext = GetEntityContext(entityType, filterExpression);
 
-        return new ComputedChangesProvider<TInput, TEntity, TValue, TChange>(
+        return new ComputedChangesProvider<TEntity, TValue, TChange>(
             computedExpression,
             computedEntityContext,
             filterExpression.Compile(),
@@ -107,8 +106,8 @@ public class ComputedExpressionAnalyzer<TInput> : IComputedExpressionAnalyzer<TI
         return entityContext;
     }
 
-    private Expression<Func<TInput, TEntity, TValue>> GetOriginalValueExpression<TEntity, TValue>(
-        IObservedEntityType<TInput> entityType,
+    private Expression<Func<ComputedInput, TEntity, TValue>> GetOriginalValueExpression<TEntity, TValue>(
+        IObservedEntityType entityType,
         Expression<Func<TEntity, TValue>> computedExpression)
     {
         return GetValueExpression(
@@ -119,8 +118,8 @@ public class ComputedExpressionAnalyzer<TInput> : IComputedExpressionAnalyzer<TI
         );
     }
 
-    private Expression<Func<TInput, TEntity, TValue>> GetCurrentValueExpression<TEntity, TValue>(
-        IObservedEntityType<TInput> entityType,
+    private Expression<Func<ComputedInput, TEntity, TValue>> GetCurrentValueExpression<TEntity, TValue>(
+        IObservedEntityType entityType,
         Expression<Func<TEntity, TValue>> computedExpression)
     {
         return GetValueExpression(
@@ -131,13 +130,13 @@ public class ComputedExpressionAnalyzer<TInput> : IComputedExpressionAnalyzer<TI
         );
     }
 
-    private Expression<Func<TInput, TEntity, TValue>> GetValueExpression<TEntity, TValue>(
-        IObservedEntityType<TInput> entityType,
+    private Expression<Func<ComputedInput, TEntity, TValue>> GetValueExpression<TEntity, TValue>(
+        IObservedEntityType entityType,
         Expression<Func<TEntity, TValue>> computedExpression,
         Func<ObservedMemberAccess, ParameterExpression, Expression> expressionModifier,
         ObservedEntityState defaultValueEntityState)
     {
-        var inputParameter = Expression.Parameter(typeof(TInput), "input");
+        var inputParameter = Expression.Parameter(typeof(ComputedInput), "input");
 
         var newBody = new ReplaceObservedMemberAccessVisitor(
             _memberAccessLocators,
@@ -153,7 +152,7 @@ public class ComputedExpressionAnalyzer<TInput> : IComputedExpressionAnalyzer<TI
             newBody,
             defaultValueEntityState);
 
-        return (Expression<Func<TInput, TEntity, TValue>>)Expression.Lambda(newBody, [
+        return (Expression<Func<ComputedInput, TEntity, TValue>>)Expression.Lambda(newBody, [
             inputParameter,
             .. computedExpression.Parameters
         ]);
@@ -180,7 +179,7 @@ public class ComputedExpressionAnalyzer<TInput> : IComputedExpressionAnalyzer<TI
     }
 
     private Expression ReturnDefaultIfEntityStateExpression(
-        IObservedEntityType<TInput> entityType,
+        IObservedEntityType entityType,
         ParameterExpression inputParameter,
         ParameterExpression entityParameter,
         Expression expression,

@@ -1,4 +1,4 @@
-using System.Collections;
+﻿using System.Collections;
 using System.Reflection;
 using LLL.AutoCompute.Internal;
 using Microsoft.EntityFrameworkCore;

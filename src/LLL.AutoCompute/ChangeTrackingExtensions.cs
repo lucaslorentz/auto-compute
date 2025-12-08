@@ -1,4 +1,4 @@
-namespace LLL.AutoCompute;
+﻿namespace LLL.AutoCompute;
 
 public static class ChangeTrackingExtensions
 {
@@ -6,7 +6,7 @@ public static class ChangeTrackingExtensions
     {
         return value;
     }
-    
+
     public static T AsComputedTracked<T>(this T value)
     {
         return value;

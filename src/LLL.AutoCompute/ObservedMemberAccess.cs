@@ -1,8 +1,8 @@
-using System.Linq.Expressions;
+﻿using System.Linq.Expressions;
 
 namespace LLL.AutoCompute;
 
-public class ObservedMemberAccess(
+public sealed class ObservedMemberAccess(
     Expression expression,
     Expression fromExpression,
     IObservedMember value

@@ -1,12 +1,11 @@
-using System.Linq.Expressions;
-using LLL.AutoCompute.EFCore.Internal;
+﻿using System.Linq.Expressions;
 using LLL.AutoCompute.EFCore.Metadata.Internal.ExpressionVisitors;
 using Microsoft.EntityFrameworkCore.Metadata;
 
 namespace LLL.AutoCompute.EFCore.Metadata.Internal;
 
 public delegate ComputedMember ComputedMemberFactory<in TTarget>(
-    IComputedExpressionAnalyzer<IEFCoreComputedInput> analyzer,
+    IComputedExpressionAnalyzer analyzer,
     TTarget target);
 
 public class ComputedMemberFactory

@@ -1,4 +1,4 @@
-using System.Linq.Expressions;
+﻿using System.Linq.Expressions;
 using System.Reflection;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.ChangeTracking;
@@ -8,7 +8,7 @@ namespace LLL.AutoCompute.EFCore.Internal;
 
 public class EFCoreObservedProperty(
     IProperty property)
-    : EFCoreObservedMember, IObservedProperty<IEFCoreComputedInput>
+    : EFCoreObservedMember, IObservedProperty
 {
     public override IProperty Property => property;
     public override string Name => Property.Name;
@@ -49,9 +49,9 @@ public class EFCoreObservedProperty(
         );
     }
 
-    protected virtual object? GetOriginalValue(IEFCoreComputedInput input, object ent)
+    protected virtual object? GetOriginalValue(ComputedInput input, object ent)
     {
-        var dbContext = input.DbContext;
+        var dbContext = input.Get<DbContext>();
 
         var entityEntry = dbContext.Entry(ent!);
 
@@ -61,9 +61,9 @@ public class EFCoreObservedProperty(
         return entityEntry.Property(Property).OriginalValue;
     }
 
-    protected virtual object? GetCurrentValue(IEFCoreComputedInput input, object ent)
+    protected virtual object? GetCurrentValue(ComputedInput input, object ent)
     {
-        var dbContext = input.DbContext;
+        var dbContext = input.Get<DbContext>();
 
         var entityEntry = dbContext.Entry(ent!);
 
@@ -97,8 +97,8 @@ public class EFCoreObservedProperty(
         }
     }
 
-    public async Task<ObservedPropertyChanges> GetChangesAsync(IEFCoreComputedInput input)
+    public async Task<ObservedPropertyChanges> GetChangesAsync(ComputedInput input)
     {
-        return input.ChangesToProcess.GetOrCreatePropertyChanges(Property);
+        return input.Get<EFCoreChangeset>().GetOrCreatePropertyChanges(Property);
     }
 }

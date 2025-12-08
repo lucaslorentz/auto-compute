@@ -1,12 +1,11 @@
-﻿using LLL.AutoCompute.EFCore.Internal;
-using Microsoft.EntityFrameworkCore.Metadata;
+﻿using Microsoft.EntityFrameworkCore.Metadata;
 using Microsoft.EntityFrameworkCore.Metadata.Conventions;
 using Microsoft.EntityFrameworkCore.Metadata.Conventions.Infrastructure;
 
 namespace LLL.AutoCompute.EFCore.Metadata.Conventions;
 
 public class ComputedConventionSetPlugin(
-    Func<IModel, IComputedExpressionAnalyzer<IEFCoreComputedInput>> analyzerFactory
+    Func<IModel, IComputedExpressionAnalyzer> analyzerFactory
 ) : IConventionSetPlugin
 {
     public ConventionSet ModifyConventions(ConventionSet conventionSet)

@@ -1,4 +1,4 @@
-using System.Linq.Expressions;
+﻿using System.Linq.Expressions;
 using LLL.AutoCompute.EFCore.Internal;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.ChangeTracking;
@@ -8,25 +8,26 @@ namespace LLL.AutoCompute.EFCore.Metadata.Internal;
 
 public class ComputedNavigation<TEntity, TProperty>(
     INavigationBase navigationBase,
-    IComputedChangesProvider<IEFCoreComputedInput, TEntity, TProperty> changesProvider,
+    IComputedChangesProvider<TEntity, TProperty> changesProvider,
     IReadOnlySet<IPropertyBase> controlledMembers
 ) : ComputedMember<TEntity, TProperty>(changesProvider), IComputedNavigationBuilder<TEntity, TProperty>
     where TEntity : class
 {
     private readonly Func<TEntity, TProperty> _compiledExpression = ((Expression<Func<TEntity, TProperty>>)changesProvider.Expression).Compile();
 
-    public new IComputedChangesProvider<IEFCoreComputedInput, TEntity, TProperty> ChangesProvider => changesProvider;
+    public new IComputedChangesProvider<TEntity, TProperty> ChangesProvider => changesProvider;
     public override INavigationBase Property => navigationBase;
     public IReadOnlySet<IPropertyBase> ControlledMembers => controlledMembers;
     public Delegate? ReuseKeySelector { get; set; }
 
-    public override async Task<EFCoreChangeset> Update(IEFCoreComputedInput input)
+    public override async Task<EFCoreChangeset> Update(ComputedInput input)
     {
+        var dbContext = input.Get<DbContext>();
         var updateChanges = new EFCoreChangeset();
         var changes = await changesProvider.GetChangesAsync(input, null);
         foreach (var (entity, change) in changes)
         {
-            var entityEntry = input.DbContext.Entry(entity);
+            var entityEntry = dbContext.Entry(entity);
             var navigationEntry = entityEntry.Navigation(navigationBase);
 
             var originalValue = GetOriginalValue(navigationEntry);

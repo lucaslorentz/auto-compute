@@ -10,7 +10,7 @@ public class ComputedCollectionTests
         using var context = await GetDbContextAsync();
 
         var customerA = context.Customers.Find(CommerceDbContext.CustomerAId)!;
-        
+
         VerifyInitialStateCustomerA(customerA);
 
         var order1 = context.Orders.Find(1)!;

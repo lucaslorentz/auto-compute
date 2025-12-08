@@ -1,16 +1,16 @@
-using Microsoft.EntityFrameworkCore;
+﻿using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata;
 
 namespace LLL.AutoCompute.EFCore.Internal;
 
 public class EFCoreObservedEntityType(IEntityType entityType)
-    : IObservedEntityType<IEFCoreComputedInput>
+    : IObservedEntityType
 {
     public string Name => entityType.Name;
 
-    public ObservedEntityState GetEntityState(IEFCoreComputedInput input, object entity)
+    public ObservedEntityState GetEntityState(ComputedInput input, object entity)
     {
-        return input.DbContext.Entry(entity).State switch
+        return input.Get<DbContext>().Entry(entity).State switch
         {
             EntityState.Added => ObservedEntityState.Added,
             EntityState.Deleted => ObservedEntityState.Removed,
@@ -19,7 +19,8 @@ public class EFCoreObservedEntityType(IEntityType entityType)
         };
     }
 
-    public bool IsInstanceOfType(object obj) {
+    public bool IsInstanceOfType(object obj)
+    {
         return entityType.ClrType.IsInstanceOfType(obj);
     }
 }

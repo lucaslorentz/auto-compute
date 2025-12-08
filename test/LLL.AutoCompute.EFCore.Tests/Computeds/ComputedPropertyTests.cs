@@ -106,7 +106,7 @@ public class ComputedPropertyTests
         person.Pets.Remove(pet);
 
         await context.SaveChangesAsync();
-        
+
         person.NumberOfOrangePets.Should().Be(0);
         person.HasOrangePets.Should().BeFalse();
         person.NumberOfBlackPets.Should().Be(0);
@@ -130,7 +130,7 @@ public class ComputedPropertyTests
         pet.Owner = null;
 
         await context.SaveChangesAsync();
-        
+
         person.NumberOfOrangePets.Should().Be(0);
         person.HasOrangePets.Should().BeFalse();
         person.NumberOfBlackPets.Should().Be(0);

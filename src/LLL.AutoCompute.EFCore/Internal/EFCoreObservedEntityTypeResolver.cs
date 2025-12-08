@@ -1,4 +1,4 @@
-using LLL.AutoCompute.EFCore.Metadata.Internal;
+﻿using LLL.AutoCompute.EFCore.Metadata.Internal;
 using Microsoft.EntityFrameworkCore.Metadata;
 
 namespace LLL.AutoCompute.EFCore.Internal;

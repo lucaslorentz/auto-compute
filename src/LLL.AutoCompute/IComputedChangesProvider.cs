@@ -1,4 +1,4 @@
-using System.Linq.Expressions;
+﻿using System.Linq.Expressions;
 using LLL.AutoCompute.ChangesProviders;
 using LLL.AutoCompute.EntityContexts;
 
@@ -11,11 +11,11 @@ public interface IComputedChangesProvider
     IChangeCalculator ChangeCalculation { get; }
 }
 
-public interface IComputedChangesProvider<TInput, TEntity, TChange>
+public interface IComputedChangesProvider<TEntity, TChange>
     : IComputedChangesProvider
     where TEntity : class
 {
     IChangeCalculator IComputedChangesProvider.ChangeCalculation => ChangeCalculation;
     new IChangeCalculator<TChange> ChangeCalculation { get; }
-    Task<IReadOnlyDictionary<TEntity, TChange>> GetChangesAsync(TInput input, ChangeMemory<TEntity, TChange>? memory);
+    Task<IReadOnlyDictionary<TEntity, TChange>> GetChangesAsync(ComputedInput input, ChangeMemory<TEntity, TChange>? memory);
 }

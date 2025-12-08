@@ -40,12 +40,12 @@ public class ChangeTrackingTests
             default,
             c => c.CurrentValue());
         changes.Should().HaveCount(1);
-        
+
         changes = await context.GetChangesAsync(
             (Person p) => p.AsComputedUntracked().Pets.Count(p => p.Color == PetColor.Orange),
             default,
             c => c.CurrentValue());
-        changes.Should().BeEmpty();        
+        changes.Should().BeEmpty();
     }
 
     [Fact]

@@ -1,4 +1,4 @@
-using LLL.AutoCompute.EFCore.Internal;
+﻿using LLL.AutoCompute.EFCore.Internal;
 
 namespace LLL.AutoCompute.EFCore.Metadata.Internal;
 

@@ -1,10 +1,10 @@
-namespace LLL.AutoCompute.ChangesProviders;
+﻿namespace LLL.AutoCompute.ChangesProviders;
 
-public class ComputedValues<TInput, TEntity, TValue>(
-    TInput input,
+public class ComputedValues<TEntity, TValue>(
+    ComputedInput input,
     TEntity entity,
-    Func<TInput, TEntity, TValue> originalValueGetter,
-    Func<TInput, TEntity, TValue> currentValueGetter)
+    Func<ComputedInput, TEntity, TValue> originalValueGetter,
+    Func<ComputedInput, TEntity, TValue> currentValueGetter)
     : IComputedValues<TValue>
 {
     public TValue GetOriginalValue() => originalValueGetter(input, entity);
