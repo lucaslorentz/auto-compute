@@ -34,14 +34,17 @@ public abstract class EntityContext
 
     public IEnumerable<IObservedMember> GetAllObservedMembers()
     {
-        foreach (var om in _observedMembers)
-            yield return om;
+        return GetAllWithDuplicates(this).Distinct();
 
-        foreach (var cc in _childContexts)
+        IEnumerable<IObservedMember> GetAllWithDuplicates(EntityContext context)
         {
-            foreach (var om in cc.GetAllObservedMembers())
-            {
+            foreach (var om in context._observedMembers)
                 yield return om;
+
+            foreach (var cc in context._childContexts)
+            {
+                foreach (var om in GetAllWithDuplicates(cc))
+                    yield return om;
             }
         }
     }

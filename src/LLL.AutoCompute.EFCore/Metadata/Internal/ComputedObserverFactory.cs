@@ -27,7 +27,7 @@ public class ComputedObserverFactory
                     filterExpression ?? (static x => true),
                     changeCalculation);
 
-                if (changesProvider.ObservedMembers.Count == 0)
+                if (!changesProvider.EntityContext.GetAllObservedMembers().Any())
                     throw new Exception("Computed expression doesn't have observed members");
 
                 return new ComputedObserver<TEntity, TChange>(
