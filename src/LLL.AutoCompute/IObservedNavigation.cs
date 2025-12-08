@@ -6,9 +6,9 @@ public interface IObservedNavigation : IObservedMember
     IObservedEntityType TargetEntityType { get; }
     bool IsCollection { get; }
     IObservedNavigation GetInverse();
-    Task<IReadOnlyDictionary<object, IReadOnlyCollection<object>>> LoadCurrentAsync(object input, IReadOnlyCollection<object> fromEntities);
-    Task<IReadOnlyDictionary<object, IReadOnlyCollection<object>>> LoadOriginalAsync(object input, IReadOnlyCollection<object> fromEntities);
-    Task<ObservedNavigationChanges> GetChangesAsync(object input);
+    Task<IReadOnlyDictionary<object, IReadOnlyCollection<object>>> LoadCurrentAsync(IComputedInput input, IReadOnlyCollection<object> fromEntities);
+    Task<IReadOnlyDictionary<object, IReadOnlyCollection<object>>> LoadOriginalAsync(IComputedInput input, IReadOnlyCollection<object> fromEntities);
+    Task<ObservedNavigationChanges> GetChangesAsync(IComputedInput input);
 }
 
 public interface IObservedNavigation<in TInput> : IObservedNavigation
@@ -18,7 +18,7 @@ public interface IObservedNavigation<in TInput> : IObservedNavigation
 
     Task<IReadOnlyDictionary<object, IReadOnlyCollection<object>>> LoadOriginalAsync(TInput input, IReadOnlyCollection<object> fromEntities);
 
-    async Task<IReadOnlyDictionary<object, IReadOnlyCollection<object>>> IObservedNavigation.LoadCurrentAsync(object input, IReadOnlyCollection<object> fromEntities)
+    async Task<IReadOnlyDictionary<object, IReadOnlyCollection<object>>> IObservedNavigation.LoadCurrentAsync(IComputedInput input, IReadOnlyCollection<object> fromEntities)
     {
         if (input is not TInput inputTyped)
             throw new ArgumentException($"Param {nameof(input)} should be of type {typeof(TInput)}");
@@ -26,7 +26,7 @@ public interface IObservedNavigation<in TInput> : IObservedNavigation
         return await LoadCurrentAsync(inputTyped, fromEntities);
     }
 
-    async Task<IReadOnlyDictionary<object, IReadOnlyCollection<object>>> IObservedNavigation.LoadOriginalAsync(object input, IReadOnlyCollection<object> fromEntities)
+    async Task<IReadOnlyDictionary<object, IReadOnlyCollection<object>>> IObservedNavigation.LoadOriginalAsync(IComputedInput input, IReadOnlyCollection<object> fromEntities)
     {
         if (input is not TInput inputTyped)
             throw new ArgumentException($"Param {nameof(input)} should be of type {typeof(TInput)}");
@@ -36,7 +36,7 @@ public interface IObservedNavigation<in TInput> : IObservedNavigation
 
     Task<ObservedNavigationChanges> GetChangesAsync(TInput input);
 
-    async Task<ObservedNavigationChanges> IObservedNavigation.GetChangesAsync(object input)
+    async Task<ObservedNavigationChanges> IObservedNavigation.GetChangesAsync(IComputedInput input)
     {
         if (input is not TInput inputTyped)
             throw new ArgumentException($"Param {nameof(input)} should be of type {typeof(TInput)}");
