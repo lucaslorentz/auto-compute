@@ -1,6 +1,4 @@
-﻿using System.Linq.Expressions;
-using System.Reflection;
-using Microsoft.EntityFrameworkCore;
+﻿using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.ChangeTracking;
 using Microsoft.EntityFrameworkCore.Metadata;
 
@@ -10,72 +8,42 @@ public class EFCoreObservedProperty(
     IProperty property)
     : EFCoreObservedMember, IObservedProperty
 {
-    public override IProperty Property => property;
-    public override string Name => Property.Name;
-    public virtual Type EntityType => Property.DeclaringType.ClrType;
+    public override IProperty Member => property;
+    public override string Name => Member.Name;
+    public virtual Type EntityType => Member.DeclaringType.ClrType;
 
     public override string ToDebugString()
     {
-        return $"{Property.DeclaringType.ShortName()}.{Property.Name}";
+        return $"{Member.DeclaringType.ShortName()}.{Member.Name}";
     }
 
-    public override Expression CreateOriginalValueExpression(
-        ObservedMemberAccess memberAccess,
-        Expression inputExpression)
-    {
-        return Expression.Convert(
-            Expression.Call(
-                Expression.Constant(this),
-                GetType().GetMethod(nameof(GetOriginalValue), BindingFlags.Instance | BindingFlags.NonPublic | BindingFlags.FlattenHierarchy)!,
-                inputExpression,
-                memberAccess.FromExpression
-            ),
-            Property.ClrType
-        );
-    }
-
-    public override Expression CreateCurrentValueExpression(
-        ObservedMemberAccess memberAccess,
-        Expression inputExpression)
-    {
-        return Expression.Convert(
-            Expression.Call(
-                Expression.Constant(this),
-                GetType().GetMethod(nameof(GetCurrentValue), BindingFlags.Instance | BindingFlags.NonPublic | BindingFlags.FlattenHierarchy)!,
-                inputExpression,
-                memberAccess.FromExpression
-            ),
-            Property.ClrType
-        );
-    }
-
-    protected virtual object? GetOriginalValue(ComputedInput input, object ent)
+    protected override object? GetOriginalValue(ComputedInput input, object ent)
     {
         var dbContext = input.Get<DbContext>();
 
         var entityEntry = dbContext.Entry(ent!);
 
         if (entityEntry.State == EntityState.Added)
-            throw new Exception($"Cannot access property '{Property.DeclaringType.ShortName()}.{Property.Name}' original value for an added entity");
+            throw new Exception($"Cannot access property '{Member.DeclaringType.ShortName()}.{Member.Name}' original value for an added entity");
 
-        return entityEntry.Property(Property).OriginalValue;
+        return entityEntry.Property(Member).OriginalValue;
     }
 
-    protected virtual object? GetCurrentValue(ComputedInput input, object ent)
+    protected override object? GetCurrentValue(ComputedInput input, object ent)
     {
         var dbContext = input.Get<DbContext>();
 
         var entityEntry = dbContext.Entry(ent!);
 
         if (entityEntry.State == EntityState.Deleted)
-            throw new Exception($"Cannot access property '{Property.DeclaringType.ShortName()}.{Property.Name}' current value for a deleted entity");
+            throw new Exception($"Cannot access property '{Member.DeclaringType.ShortName()}.{Member.Name}' current value for a deleted entity");
 
-        return entityEntry.Property(Property).CurrentValue;
+        return entityEntry.Property(Member).CurrentValue;
     }
 
     public override async Task CollectChangesAsync(DbContext dbContext, EFCoreChangeset changes)
     {
-        foreach (var entityEntry in dbContext.EntityEntriesOfType(Property.DeclaringType))
+        foreach (var entityEntry in dbContext.EntityEntriesOfType(Member.DeclaringType))
         {
             await CollectChangesAsync(entityEntry, changes);
         }
@@ -87,18 +55,18 @@ public class EFCoreObservedProperty(
             || entityEntry.State == EntityState.Deleted
             || entityEntry.State == EntityState.Modified)
         {
-            var propertyEntry = entityEntry.Property(Property);
+            var propertyEntry = entityEntry.Property(Member);
             if (entityEntry.State == EntityState.Added
                 || entityEntry.State == EntityState.Deleted
                 || propertyEntry.IsModified)
             {
-                changes.AddPropertyChange(Property, entityEntry.Entity);
+                changes.AddPropertyChange(Member, entityEntry.Entity);
             }
         }
     }
 
     public async Task<ObservedPropertyChanges> GetChangesAsync(ComputedInput input)
     {
-        return input.Get<EFCoreChangeset>().GetOrCreatePropertyChanges(Property);
+        return input.Get<EFCoreChangeset>().GetOrCreatePropertyChanges(Member);
     }
 }

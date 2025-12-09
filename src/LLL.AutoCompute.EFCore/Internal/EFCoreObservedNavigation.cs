@@ -1,6 +1,4 @@
-﻿using System.Linq.Expressions;
-using System.Reflection;
-using LLL.AutoCompute.EFCore.Metadata.Internal;
+﻿using LLL.AutoCompute.EFCore.Metadata.Internal;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.ChangeTracking;
 using Microsoft.EntityFrameworkCore.Metadata;
@@ -11,26 +9,25 @@ public class EFCoreObservedNavigation(
     INavigationBase navigation)
     : EFCoreObservedMember, IObservedNavigation
 {
-    public override INavigationBase Property => navigation;
-    public INavigationBase Navigation => navigation;
+    public override INavigationBase Member => navigation;
 
-    public override string Name => Navigation.Name;
-    public virtual IObservedEntityType SourceEntityType => Navigation.DeclaringEntityType.GetOrCreateObservedEntityType();
-    public virtual IObservedEntityType TargetEntityType => Navigation.TargetEntityType.GetOrCreateObservedEntityType();
-    public virtual bool IsCollection => Navigation.IsCollection;
+    public override string Name => Member.Name;
+    public virtual IObservedEntityType SourceEntityType => Member.DeclaringEntityType.GetOrCreateObservedEntityType();
+    public virtual IObservedEntityType TargetEntityType => Member.TargetEntityType.GetOrCreateObservedEntityType();
+    public virtual bool IsCollection => Member.IsCollection;
 
     public override string ToDebugString()
     {
-        return $"{Navigation.DeclaringEntityType.ShortName()}.{Navigation.Name}";
+        return $"{Member.DeclaringEntityType.ShortName()}.{Member.Name}";
     }
 
     public IObservedNavigation GetInverse()
     {
-        var inverse = Navigation.Inverse
-            ?? throw new InvalidOperationException($"No inverse for navigation '{Navigation.DeclaringType.ShortName()}.{Navigation.Name}'");
+        var inverse = Member.Inverse
+            ?? throw new InvalidOperationException($"No inverse for navigation '{Member.DeclaringType.ShortName()}.{Member.Name}'");
 
         if (inverse.IsShadowProperty())
-            throw new InvalidOperationException($"Inverse for navigation '{Navigation.DeclaringType.ShortName()}.{Navigation.Name}' cannot be a shadow property");
+            throw new InvalidOperationException($"Inverse for navigation '{Member.DeclaringType.ShortName()}.{Member.Name}' cannot be a shadow property");
 
         return inverse.GetOrCreateObservedNavigation();
     }
@@ -41,7 +38,7 @@ public class EFCoreObservedNavigation(
     {
         var dbContext = input.Get<DbContext>();
 
-        await dbContext.BulkLoadAsync(sourceEntities, Navigation);
+        await dbContext.BulkLoadAsync(sourceEntities, Member);
 
         var targetEntities = new Dictionary<object, IReadOnlyCollection<object>>();
         foreach (var sourceEntity in sourceEntities)
@@ -50,7 +47,7 @@ public class EFCoreObservedNavigation(
             if (entityEntry.State == EntityState.Added)
                 continue;
 
-            var navigationEntry = entityEntry.Navigation(Navigation);
+            var navigationEntry = entityEntry.Navigation(Member);
 
             if (!navigationEntry.IsLoaded && entityEntry.State != EntityState.Detached)
                 await navigationEntry.LoadAsync();
@@ -66,13 +63,13 @@ public class EFCoreObservedNavigation(
     {
         var dbContext = input.Get<DbContext>();
 
-        await dbContext.BulkLoadAsync(sourceEntities, Navigation);
+        await dbContext.BulkLoadAsync(sourceEntities, Member);
 
         var targetEntities = new Dictionary<object, IReadOnlyCollection<object>>();
         foreach (var sourceEntity in sourceEntities)
         {
             var entityEntry = dbContext.Entry(sourceEntity!);
-            var navigationEntry = entityEntry.Navigation(Navigation);
+            var navigationEntry = entityEntry.Navigation(Member);
 
             if (!navigationEntry.IsLoaded && entityEntry.State != EntityState.Detached)
                 await navigationEntry.LoadAsync();
@@ -82,52 +79,22 @@ public class EFCoreObservedNavigation(
         return targetEntities;
     }
 
-    public override Expression CreateOriginalValueExpression(
-        ObservedMemberAccess memberAccess,
-        Expression inputExpression)
-    {
-        return Expression.Convert(
-            Expression.Call(
-                Expression.Constant(this),
-                GetType().GetMethod(nameof(GetOriginalValue), BindingFlags.Instance | BindingFlags.NonPublic | BindingFlags.FlattenHierarchy)!,
-                inputExpression,
-                memberAccess.FromExpression
-            ),
-            Navigation.ClrType
-        );
-    }
-
-    public override Expression CreateCurrentValueExpression(
-        ObservedMemberAccess memberAccess,
-        Expression inputExpression)
-    {
-        return Expression.Convert(
-            Expression.Call(
-                Expression.Constant(this),
-                GetType().GetMethod(nameof(GetCurrentValue), BindingFlags.Instance | BindingFlags.NonPublic | BindingFlags.FlattenHierarchy)!,
-                inputExpression,
-                memberAccess.FromExpression
-            ),
-            Navigation.ClrType
-        );
-    }
-
-    protected virtual object? GetOriginalValue(ComputedInput input, object ent)
+    protected override object? GetOriginalValue(ComputedInput input, object ent)
     {
         var dbContext = input.Get<DbContext>();
 
         var entityEntry = dbContext.Entry(ent!);
 
         if (entityEntry.State == EntityState.Added)
-            throw new Exception($"Cannot access navigation '{Navigation.DeclaringType.ShortName()}.{Navigation.Name}' original value for an added entity");
+            throw new Exception($"Cannot access navigation '{Member.DeclaringType.ShortName()}.{Member.Name}' original value for an added entity");
 
         if (input.TryGet<IncrementalContext>(out var incrementalContext))
         {
             var incrementalEntities = incrementalContext.GetOriginalEntities(ent, this);
 
-            if (Navigation.IsCollection)
+            if (Member.IsCollection)
             {
-                var collectionAccessor = Navigation.GetCollectionAccessor()!;
+                var collectionAccessor = Member.GetCollectionAccessor()!;
                 var collection = collectionAccessor.Create();
                 foreach (var entity in incrementalEntities)
                     collectionAccessor.AddStandalone(collection, entity);
@@ -140,7 +107,7 @@ public class EFCoreObservedNavigation(
         }
         else
         {
-            var navigationEntry = entityEntry.Navigation(Navigation);
+            var navigationEntry = entityEntry.Navigation(Member);
 
             if (!navigationEntry.IsLoaded && entityEntry.State != EntityState.Detached)
                 navigationEntry.Load();
@@ -149,22 +116,22 @@ public class EFCoreObservedNavigation(
         }
     }
 
-    protected virtual object? GetCurrentValue(ComputedInput input, object ent)
+    protected override object? GetCurrentValue(ComputedInput input, object ent)
     {
         var dbContext = input.Get<DbContext>();
 
         var entityEntry = dbContext.Entry(ent!);
 
         if (entityEntry.State == EntityState.Deleted)
-            throw new Exception($"Cannot access navigation '{Navigation.DeclaringType.ShortName()}.{Navigation.Name}' current value for a deleted entity");
+            throw new Exception($"Cannot access navigation '{Member.DeclaringType.ShortName()}.{Member.Name}' current value for a deleted entity");
 
         if (input.TryGet<IncrementalContext>(out var incrementalContext))
         {
             var incrementalEntities = incrementalContext.GetCurrentEntities(ent, this);
 
-            if (Navigation.IsCollection)
+            if (Member.IsCollection)
             {
-                var collectionAccessor = Navigation.GetCollectionAccessor()!;
+                var collectionAccessor = Member.GetCollectionAccessor()!;
                 var collection = collectionAccessor.Create();
                 foreach (var entity in incrementalEntities)
                     collectionAccessor.AddStandalone(collection, entity);
@@ -177,7 +144,7 @@ public class EFCoreObservedNavigation(
         }
         else
         {
-            var navigationEntry = entityEntry.Navigation(Navigation);
+            var navigationEntry = entityEntry.Navigation(Member);
             if (!navigationEntry.IsLoaded && entityEntry.State != EntityState.Detached)
                 navigationEntry.Load();
 
@@ -187,18 +154,18 @@ public class EFCoreObservedNavigation(
 
     public override async Task CollectChangesAsync(DbContext dbContext, EFCoreChangeset changes)
     {
-        foreach (var entityEntry in dbContext.EntityEntriesOfType(Navigation.DeclaringEntityType))
+        foreach (var entityEntry in dbContext.EntityEntriesOfType(Member.DeclaringEntityType))
         {
             await CollectChangesAsync(entityEntry, changes);
         }
-        if (Navigation.Inverse is not null)
+        if (Member.Inverse is not null)
         {
-            foreach (var entityEntry in dbContext.EntityEntriesOfType(Navigation.Inverse.DeclaringEntityType))
+            foreach (var entityEntry in dbContext.EntityEntriesOfType(Member.Inverse.DeclaringEntityType))
             {
                 await CollectChangesAsync(entityEntry, changes);
             }
         }
-        if (Navigation is ISkipNavigation skipNavigation)
+        if (Member is ISkipNavigation skipNavigation)
         {
             foreach (var joinEntry in dbContext.EntityEntriesOfType(skipNavigation.JoinEntityType))
             {
@@ -216,9 +183,9 @@ public class EFCoreObservedNavigation(
             return;
         }
 
-        if (Navigation.DeclaringEntityType.IsAssignableFrom(entityEntry.Metadata))
+        if (Member.DeclaringEntityType.IsAssignableFrom(entityEntry.Metadata))
         {
-            var navigationEntry = entityEntry.Navigation(Navigation);
+            var navigationEntry = entityEntry.Navigation(Member);
             if (entityEntry.State == EntityState.Added
                 || entityEntry.State == EntityState.Deleted
                 || navigationEntry.IsModified)
@@ -226,20 +193,20 @@ public class EFCoreObservedNavigation(
                 var modifiedEntities = navigationEntry.GetModifiedEntities();
 
                 foreach (var ent in modifiedEntities.added)
-                    changes.RegisterNavigationAdded(Navigation, entityEntry.Entity, ent);
+                    changes.RegisterNavigationAdded(Member, entityEntry.Entity, ent);
 
                 foreach (var ent in modifiedEntities.removed)
-                    changes.RegisterNavigationRemoved(Navigation, entityEntry.Entity, ent);
+                    changes.RegisterNavigationRemoved(Member, entityEntry.Entity, ent);
             }
         }
 
-        if (Navigation.Inverse is not null && Navigation.Inverse.DeclaringEntityType.IsAssignableFrom(entityEntry.Metadata))
+        if (Member.Inverse is not null && Member.Inverse.DeclaringEntityType.IsAssignableFrom(entityEntry.Metadata))
         {
             if (entityEntry.State == EntityState.Added
                                 || entityEntry.State == EntityState.Deleted
                                 || entityEntry.State == EntityState.Modified)
             {
-                var inverseNavigationEntry = entityEntry.Navigation(Navigation.Inverse);
+                var inverseNavigationEntry = entityEntry.Navigation(Member.Inverse);
                 if (entityEntry.State == EntityState.Added
                     || entityEntry.State == EntityState.Deleted
                     || inverseNavigationEntry.IsModified)
@@ -250,15 +217,15 @@ public class EFCoreObservedNavigation(
                     var modifiedEntities = inverseNavigationEntry.GetModifiedEntities();
 
                     foreach (var entity in modifiedEntities.added)
-                        changes.RegisterNavigationAdded(Navigation, entity, entityEntry.Entity);
+                        changes.RegisterNavigationAdded(Member, entity, entityEntry.Entity);
 
                     foreach (var entity in modifiedEntities.removed)
-                        changes.RegisterNavigationRemoved(Navigation, entity, entityEntry.Entity);
+                        changes.RegisterNavigationRemoved(Member, entity, entityEntry.Entity);
                 }
             }
         }
 
-        if (Navigation is ISkipNavigation skipNavigation && skipNavigation.JoinEntityType.IsAssignableFrom(entityEntry.Metadata))
+        if (Member is ISkipNavigation skipNavigation && skipNavigation.JoinEntityType.IsAssignableFrom(entityEntry.Metadata))
         {
             var dependentToPrincipal = skipNavigation.ForeignKey.DependentToPrincipal!;
             var joinReferenceToOther = skipNavigation.Inverse.ForeignKey.DependentToPrincipal;
@@ -278,7 +245,7 @@ public class EFCoreObservedNavigation(
                     foreach (var entity in dependentToPrincipalEntry.GetCurrentEntities())
                     {
                         foreach (var otherEntity in otherReferenceEntry.GetCurrentEntities())
-                            changes.RegisterNavigationAdded(Navigation, entity, otherEntity);
+                            changes.RegisterNavigationAdded(Member, entity, otherEntity);
                     }
                 }
 
@@ -288,7 +255,7 @@ public class EFCoreObservedNavigation(
                     foreach (var entity in dependentToPrincipalEntry.GetOriginalEntities())
                     {
                         foreach (var otherEntity in otherReferenceEntry.GetOriginalEntities())
-                            changes.RegisterNavigationRemoved(Navigation, entity, otherEntity);
+                            changes.RegisterNavigationRemoved(Member, entity, otherEntity);
                     }
                 }
             }
@@ -297,6 +264,6 @@ public class EFCoreObservedNavigation(
 
     public async Task<ObservedNavigationChanges> GetChangesAsync(ComputedInput input)
     {
-        return input.Get<EFCoreChangeset>().GetOrCreateNavigationChanges(Navigation);
+        return input.Get<EFCoreChangeset>().GetOrCreateNavigationChanges(Member);
     }
 }

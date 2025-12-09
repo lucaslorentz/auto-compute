@@ -1,4 +1,5 @@
 ﻿using System.Linq.Expressions;
+using System.Reflection;
 using LLL.AutoCompute.EFCore.Metadata.Internal;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.ChangeTracking;
@@ -10,7 +11,7 @@ public abstract class EFCoreObservedMember : IObservedMember
 {
     private readonly HashSet<ComputedMember> _dependentMembers = [];
 
-    public abstract IPropertyBase Property { get; }
+    public abstract IPropertyBase Member { get; }
 
     internal IReadOnlySet<ComputedMember> DependentMembers => _dependentMembers;
     internal bool AddDependentMember(ComputedMember computed)
@@ -20,12 +21,40 @@ public abstract class EFCoreObservedMember : IObservedMember
 
     public abstract string Name { get; }
     public abstract string ToDebugString();
-    public abstract Expression CreateCurrentValueExpression(
+
+    public Expression CreateCurrentValueExpression(
         ObservedMemberAccess memberAccess,
-        Expression inputExpression);
-    public abstract Expression CreateOriginalValueExpression(
+        Expression inputExpression)
+    {
+        return Expression.Convert(
+            Expression.Call(
+                Expression.Constant(this),
+                GetType().GetMethod(nameof(GetCurrentValue), BindingFlags.Instance | BindingFlags.NonPublic | BindingFlags.FlattenHierarchy)!,
+                inputExpression,
+                memberAccess.FromExpression
+            ),
+            Member.ClrType
+        );
+    }
+
+    public Expression CreateOriginalValueExpression(
         ObservedMemberAccess memberAccess,
-        Expression inputExpression);
+        Expression inputExpression)
+    {
+        return Expression.Convert(
+            Expression.Call(
+                Expression.Constant(this),
+                GetType().GetMethod(nameof(GetOriginalValue), BindingFlags.Instance | BindingFlags.NonPublic | BindingFlags.FlattenHierarchy)!,
+                inputExpression,
+                memberAccess.FromExpression
+            ),
+            Member.ClrType
+        );
+    }
+
+    protected abstract object? GetCurrentValue(ComputedInput input, object ent);
+    protected abstract object? GetOriginalValue(ComputedInput input, object ent);
+
     public abstract Task CollectChangesAsync(DbContext dbContext, EFCoreChangeset changes);
     public abstract Task CollectChangesAsync(EntityEntry entityEntry, EFCoreChangeset changes);
 }
