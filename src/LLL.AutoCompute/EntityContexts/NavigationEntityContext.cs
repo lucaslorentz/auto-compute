@@ -29,7 +29,7 @@ public class NavigationEntityContext : EntityContext
         if (!GetAllObservedMembers().Any())
             return [];
 
-        var incrementalContext = input.IncrementalContext;
+        input.TryGet<IncrementalContext>(out var incrementalContext);
 
         var inverseNavigation = _navigation.GetInverse();
 
@@ -67,8 +67,8 @@ public class NavigationEntityContext : EntityContext
     {
         var entities = new HashSet<object>();
 
-        var incrementalContext = input.IncrementalContext
-            ?? throw new InvalidOperationException("IncrementalContext is required to enrich from parent.");
+        if (!input.TryGet<IncrementalContext>(out var incrementalContext))
+            throw new InvalidOperationException("IncrementalContext is required to enrich from parent.");
 
         var parentEntitiesByLoadAll = parentEntities
             .ToLookup(e => _shouldLoadAll || incrementalContext.ShouldLoadAll(e));
@@ -110,8 +110,8 @@ public class NavigationEntityContext : EntityContext
 
     public override async Task EnrichIncrementalContextTowardsRootAsync(ComputedInput input, IReadOnlyCollection<object> entities)
     {
-        var incrementalContext = input.IncrementalContext
-            ?? throw new InvalidOperationException("IncrementalContext is required to enrich towards root.");
+        if (!input.TryGet<IncrementalContext>(out var incrementalContext))
+            throw new InvalidOperationException("IncrementalContext is required to enrich towards root.");
 
         var inverse = _navigation.GetInverse();
 

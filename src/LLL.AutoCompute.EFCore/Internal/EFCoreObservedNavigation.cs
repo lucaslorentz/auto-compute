@@ -121,9 +121,9 @@ public class EFCoreObservedNavigation(
         if (entityEntry.State == EntityState.Added)
             throw new Exception($"Cannot access navigation '{Navigation.DeclaringType.ShortName()}.{Navigation.Name}' original value for an added entity");
 
-        if (input.IncrementalContext is not null)
+        if (input.TryGet<IncrementalContext>(out var incrementalContext))
         {
-            var incrementalEntities = input.IncrementalContext.GetOriginalEntities(ent, this);
+            var incrementalEntities = incrementalContext.GetOriginalEntities(ent, this);
 
             if (Navigation.IsCollection)
             {
@@ -158,9 +158,9 @@ public class EFCoreObservedNavigation(
         if (entityEntry.State == EntityState.Deleted)
             throw new Exception($"Cannot access navigation '{Navigation.DeclaringType.ShortName()}.{Navigation.Name}' current value for a deleted entity");
 
-        if (input.IncrementalContext is not null)
+        if (input.TryGet<IncrementalContext>(out var incrementalContext))
         {
-            var incrementalEntities = input.IncrementalContext.GetCurrentEntities(ent, this);
+            var incrementalEntities = incrementalContext.GetCurrentEntities(ent, this);
 
             if (Navigation.IsCollection)
             {

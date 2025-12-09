@@ -53,7 +53,7 @@ public abstract class EntityContext
     {
         var entities = new HashSet<object>();
 
-        var incrementalContext = input.IncrementalContext;
+        input.TryGet<IncrementalContext>(out var incrementalContext);
 
         foreach (var member in _observedMembers)
         {

@@ -1,4 +1,5 @@
 ﻿using System.Collections.Concurrent;
+using System.Diagnostics.CodeAnalysis;
 
 namespace LLL.AutoCompute;
 
@@ -6,15 +7,18 @@ public sealed class ComputedInput
 {
     private readonly ConcurrentDictionary<object, object?> _values = new();
 
-    public IncrementalContext? IncrementalContext { get; set; }
-
     public ComputedInput Set<T>(T value)
     {
         _values[typeof(T)] = value;
         return this;
     }
 
-    public bool TryGet<T>(out T? value)
+    public void Remove<T>()
+    {
+        _values.Remove(typeof(T), out var _);
+    }
+
+    public bool TryGet<T>([NotNullWhen(true)] out T? value)
     {
         if (!_values.TryGetValue(typeof(T), out var result))
         {

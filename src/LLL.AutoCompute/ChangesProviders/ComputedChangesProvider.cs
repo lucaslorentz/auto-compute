@@ -23,54 +23,62 @@ public class ComputedChangesProvider<TEntity, TValue, TChange>(
         ComputedInput input,
         ChangeMemory<TEntity, TChange>? changeMemory)
     {
-        input.IncrementalContext = changeCalculation.ValueStrategy == ComputedValueStrategy.Incremental
-            ? new IncrementalContext()
-            : null;
-
-        var affectedEntities = (await entityContext.GetAffectedEntitiesAsync(input))
-            .OfType<TEntity>()
-            .ToArray();
-
-        await filterEntityContext.PreLoadNavigationsAsync(input!, affectedEntities);
-
-        affectedEntities = affectedEntities
-            .Where(e => entityContext.EntityType.GetEntityState(input!, e) != ObservedEntityState.Removed
-                && filter(e))
-            .ToArray();
-
-        switch (changeCalculation.ValueStrategy)
+        try
         {
-            case ComputedValueStrategy.Incremental:
-                await entityContext.EnrichIncrementalContextAsync(input!, affectedEntities);
-                break;
-            case ComputedValueStrategy.Full:
-                await entityContext.PreLoadNavigationsAsync(input!, affectedEntities);
-                break;
-        }
+            if (changeCalculation.ValueStrategy == ComputedValueStrategy.Incremental)
+                input.Set(new IncrementalContext());
+            else
+                input.Remove<IncrementalContext>();
 
-        var changes = new Dictionary<TEntity, TChange>();
+            var affectedEntities = (await entityContext.GetAffectedEntitiesAsync(input))
+                .OfType<TEntity>()
+                .ToArray();
 
-        foreach (var entity in affectedEntities)
-        {
-            changes[entity] = await GetChangeAsync(input, entity, changeMemory);
-        }
+            await filterEntityContext.PreLoadNavigationsAsync(input!, affectedEntities);
 
-        if (changeMemory is not null)
-        {
-            foreach (var entity in changeMemory.GetEntities())
+            affectedEntities = affectedEntities
+                .Where(e => entityContext.EntityType.GetEntityState(input!, e) != ObservedEntityState.Removed
+                    && filter(e))
+                .ToArray();
+
+            switch (changeCalculation.ValueStrategy)
             {
-                if (changes.ContainsKey(entity))
-                    continue;
-
-                changes[entity] = await GetChangeAsync(input, entity, changeMemory);
-                changeMemory.Remove(entity);
+                case ComputedValueStrategy.Incremental:
+                    await entityContext.EnrichIncrementalContextAsync(input!, affectedEntities);
+                    break;
+                case ComputedValueStrategy.Full:
+                    await entityContext.PreLoadNavigationsAsync(input!, affectedEntities);
+                    break;
             }
+
+            var changes = new Dictionary<TEntity, TChange>();
+
+            foreach (var entity in affectedEntities)
+            {
+                changes[entity] = await GetChangeAsync(input, entity, changeMemory);
+            }
+
+            if (changeMemory is not null)
+            {
+                foreach (var entity in changeMemory.GetEntities())
+                {
+                    if (changes.ContainsKey(entity))
+                        continue;
+
+                    changes[entity] = await GetChangeAsync(input, entity, changeMemory);
+                    changeMemory.Remove(entity);
+                }
+            }
+
+            var filteredChanges = changes
+                .Where(kv => !changeCalculation.IsNoChange(kv.Value));
+
+            return new Dictionary<TEntity, TChange>(filteredChanges);
         }
-
-        var filteredChanges = changes
-            .Where(kv => !changeCalculation.IsNoChange(kv.Value));
-
-        return new Dictionary<TEntity, TChange>(filteredChanges);
+        finally
+        {
+            input.Remove<IncrementalContext>();
+        }
     }
 
     private async Task<TChange> GetChangeAsync(
