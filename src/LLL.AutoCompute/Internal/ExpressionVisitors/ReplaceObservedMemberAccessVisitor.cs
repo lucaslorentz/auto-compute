@@ -9,20 +9,18 @@ internal class ReplaceObservedMemberAccessVisitor(
 {
     public override Expression? Visit(Expression? node)
     {
-        if (node is not null)
+        var visitedNode = base.Visit(node);
+
+        if (visitedNode is not null)
         {
             foreach (var memberAccessLocator in memberAccessLocators)
             {
-                var memberAccess = memberAccessLocator.GetObservedMemberAccess(node);
+                var memberAccess = memberAccessLocator.GetObservedMemberAccess(visitedNode);
                 if (memberAccess is not null)
-                {
-                    var modifiedNode = expressionModifier(memberAccess);
-
-                    return base.Visit(modifiedNode);
-                }
+                    return expressionModifier(memberAccess);
             }
         }
 
-        return base.Visit(node);
+        return visitedNode;
     }
 }

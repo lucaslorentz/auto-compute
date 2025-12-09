@@ -1,5 +1,5 @@
 ﻿using System.Collections;
-using System.Collections.Immutable;
+using System.Collections.Frozen;
 using System.Linq.Expressions;
 using System.Reflection;
 using LLL.AutoCompute.EFCore.Internal;
@@ -35,7 +35,7 @@ public abstract class ComputedMember(
         if (valueComparer.Equals(propertyEntry.CurrentValue, newValue))
             return;
 
-        updateChanges?.AddPropertyChange(propertyEntry.Metadata, propertyEntry.EntityEntry.Entity);
+        updateChanges?.RegisterPropertyChange(propertyEntry.Metadata, propertyEntry.EntityEntry.Entity, propertyEntry.CurrentValue, newValue);
 
         propertyEntry.CurrentValue = newValue;
     }
@@ -75,10 +75,12 @@ public abstract class ComputedMember(
                     foreach (var member in updateMembers)
                     {
                         var observedMember = member.GetObservedMember();
-                        if (observedMember is null)
-                            continue;
+                        if (observedMember is not null)
+                            await observedMember.CollectChangesAsync(entry, updateChanges);
 
-                        await observedMember.CollectChangesAsync(entry, updateChanges);
+                        var observedEntityType = entry.Metadata.GetObservedEntityType();
+                        if (observedEntityType is not null)
+                            await observedEntityType.CollectChangesAsync(entry, updateChanges);
                     }
                 }
             }
@@ -104,7 +106,7 @@ public abstract class ComputedMember(
                                 existingNavigationEntry,
                                 newMemberValue,
                                 updateChanges,
-                                ImmutableHashSet<IPropertyBase>.Empty,
+                                FrozenSet<IPropertyBase>.Empty,
                                 null);
                             break;
                         default:

@@ -15,6 +15,11 @@ public abstract class ComputedBase(
         .OfType<EFCoreObservedMember>()
         .ToHashSet();
 
+    public IReadOnlySet<EFCoreObservedEntityType> ObservedEntityTypes { get; } = changesProvider.EntityContext
+        .GetAllObservedEntityTypes()
+        .OfType<EFCoreObservedEntityType>()
+        .ToHashSet();
+
     public IEnumerable<ComputedMember> GetComputedDependencies()
     {
         return ObservedMembers

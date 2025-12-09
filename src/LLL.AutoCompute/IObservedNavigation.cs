@@ -1,4 +1,4 @@
-﻿namespace LLL.AutoCompute;
+namespace LLL.AutoCompute;
 
 /// <summary>
 /// Represents an observed navigation property (reference or collection) between entity types.
@@ -24,5 +24,5 @@ public interface IObservedNavigation : IObservedMember
     Task<IReadOnlyDictionary<object, IReadOnlyCollection<object>>> LoadOriginalAsync(ComputedInput input, IReadOnlyCollection<object> fromEntities);
 
     /// <summary>Gets all navigation changes detected in the current input context.</summary>
-    Task<ObservedNavigationChanges> GetChangesAsync(ComputedInput input);
+    Task<IReadOnlyList<ObservedNavigationChange>> GetChangesAsync(ComputedInput input);
 }

@@ -15,12 +15,20 @@ public class EFCoreChangesProvider<TEntity, TChange>(
         .OfType<EFCoreObservedMember>()
         .ToArray();
 
+    private readonly EFCoreObservedEntityType[] _observedEntityTypes = unboundChangesProvider.EntityContext
+        .GetAllObservedEntityTypes()
+        .OfType<EFCoreObservedEntityType>()
+        .ToArray();
+
     public async Task<IReadOnlyDictionary<TEntity, TChange>> GetChangesAsync()
     {
         var changesToProcess = new EFCoreChangeset();
 
         foreach (var observedMember in _observedMembers)
             await observedMember.CollectChangesAsync(dbContext, changesToProcess);
+
+        foreach (var observedEntityType in _observedEntityTypes)
+            await observedEntityType.CollectChangesAsync(dbContext, changesToProcess);
 
         var input = new ComputedInput()
             .Set(dbContext)

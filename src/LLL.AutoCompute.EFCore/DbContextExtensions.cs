@@ -1,4 +1,4 @@
-﻿using System.Diagnostics.CodeAnalysis;
+using System.Diagnostics.CodeAnalysis;
 using System.Linq.Expressions;
 using LLL.AutoCompute.ChangesProviders;
 using LLL.AutoCompute.EFCore.Caching;
@@ -92,6 +92,10 @@ public static class DbContextExtensions
             var observedMembers = sortedComputedMembers.SelectMany(x => x.ObservedMembers).ToHashSet();
             foreach (var observedMember in observedMembers)
                 await observedMember.CollectChangesAsync(dbContext, changesToProcess);
+            
+            var observedEntityTypes = sortedComputedMembers.SelectMany(x => x.ObservedEntityTypes).ToHashSet();
+            foreach(var observedEntityType in observedEntityTypes)
+                await observedEntityType.CollectChangesAsync(dbContext, changesToProcess);
 
             var updates = new EFCoreChangeset();
 
@@ -152,6 +156,10 @@ public static class DbContextExtensions
             var observedMembers = allComputedObservers.SelectMany(x => x.ObservedMembers).ToHashSet();
             foreach (var observedMember in observedMembers)
                 await observedMember.CollectChangesAsync(dbContext, changesToProcess);
+
+            var observedEntityTypes = allComputedObservers.SelectMany(x => x.ObservedEntityTypes).ToHashSet();
+            foreach(var observedEntityType in observedEntityTypes)
+                await observedEntityType.CollectChangesAsync(dbContext, changesToProcess);
 
             var input = new ComputedInput()
                 .Set(dbContext)

@@ -1,5 +1,4 @@
-﻿
-namespace LLL.AutoCompute;
+﻿namespace LLL.AutoCompute;
 
 /// <summary>
 /// Represents an observed scalar property on an entity type.
@@ -10,5 +9,5 @@ public interface IObservedProperty : IObservedMember
     IObservedEntityType EntityType { get; }
 
     /// <summary>Gets all property changes detected in the current input context.</summary>
-    Task<ObservedPropertyChanges> GetChangesAsync(ComputedInput input);
+    Task<IReadOnlyList<ObservedPropertyChange>> GetChangesAsync(ComputedInput input);
 }

@@ -1,4 +1,5 @@
-﻿using LLL.AutoCompute.EFCore.Metadata.Internal;
+﻿using System.Collections;
+using LLL.AutoCompute.EFCore.Metadata.Internal;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.ChangeTracking;
 using Microsoft.EntityFrameworkCore.Metadata;
@@ -79,7 +80,7 @@ public class EFCoreObservedNavigation(
         return targetEntities;
     }
 
-    protected override object? GetOriginalValue(ComputedInput input, object ent)
+    protected override object? GetOriginalValue(ComputedInput input, object ent, Func<object> currentValueGetter)
     {
         var dbContext = input.Get<DbContext>();
 
@@ -108,15 +109,31 @@ public class EFCoreObservedNavigation(
         else
         {
             var navigationEntry = entityEntry.Navigation(Member);
-
-            if (!navigationEntry.IsLoaded && entityEntry.State != EntityState.Detached)
-                navigationEntry.Load();
-
-            return navigationEntry.GetOriginalValue();
+            var original = navigationEntry.GetCurrentValue();
+            var change = input.Get<EFCoreChangeset>().GetChange(Member, ent);
+            // Undo the changes from changeset
+            if (change is not null)
+            {
+                foreach (var a in change.Added)
+                {
+                    if (Member.IsCollection)
+                        ((IList)original!).Remove(a);
+                    else
+                        original = null;
+                }
+                foreach (var r in change.Removed)
+                {
+                    if (Member.IsCollection)
+                        ((IList)original!).Add(r);
+                    else
+                        original = r;
+                }
+            }
+            return original;
         }
     }
 
-    protected override object? GetCurrentValue(ComputedInput input, object ent)
+    protected override object? GetCurrentValue(ComputedInput input, object ent, Func<object> currentValueGetter)
     {
         var dbContext = input.Get<DbContext>();
 
@@ -262,8 +279,8 @@ public class EFCoreObservedNavigation(
         }
     }
 
-    public async Task<ObservedNavigationChanges> GetChangesAsync(ComputedInput input)
+    public async Task<IReadOnlyList<ObservedNavigationChange>> GetChangesAsync(ComputedInput input)
     {
-        return input.Get<EFCoreChangeset>().GetOrCreateNavigationChanges(Member);
+        return input.Get<EFCoreChangeset>().GetChanges(Member);
     }
 }

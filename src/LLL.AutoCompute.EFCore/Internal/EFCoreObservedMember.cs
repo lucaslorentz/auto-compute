@@ -31,7 +31,13 @@ public abstract class EFCoreObservedMember : IObservedMember
                 Expression.Constant(this),
                 GetType().GetMethod(nameof(GetCurrentValue), BindingFlags.Instance | BindingFlags.NonPublic | BindingFlags.FlattenHierarchy)!,
                 inputExpression,
-                memberAccess.FromExpression
+                memberAccess.FromExpression,
+                Expression.Lambda(
+                    Expression.Convert(
+                        memberAccess.Expression,
+                        typeof(object)
+                    )
+                )
             ),
             Member.ClrType
         );
@@ -46,14 +52,20 @@ public abstract class EFCoreObservedMember : IObservedMember
                 Expression.Constant(this),
                 GetType().GetMethod(nameof(GetOriginalValue), BindingFlags.Instance | BindingFlags.NonPublic | BindingFlags.FlattenHierarchy)!,
                 inputExpression,
-                memberAccess.FromExpression
+                memberAccess.FromExpression,
+                Expression.Lambda(
+                    Expression.Convert(
+                        memberAccess.Expression,
+                        typeof(object)
+                    )
+                )
             ),
             Member.ClrType
         );
     }
 
-    protected abstract object? GetCurrentValue(ComputedInput input, object ent);
-    protected abstract object? GetOriginalValue(ComputedInput input, object ent);
+    protected abstract object? GetCurrentValue(ComputedInput input, object ent, Func<object> currentValueGetter);
+    protected abstract object? GetOriginalValue(ComputedInput input, object ent, Func<object> currentValueGetter);
 
     public abstract Task CollectChangesAsync(DbContext dbContext, EFCoreChangeset changes);
     public abstract Task CollectChangesAsync(EntityEntry entityEntry, EFCoreChangeset changes);

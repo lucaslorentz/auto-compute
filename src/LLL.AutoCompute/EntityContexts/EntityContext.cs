@@ -32,11 +32,29 @@ public abstract class EntityContext
         _observedMembers.Add(member);
     }
 
+    public IEnumerable<IObservedEntityType> GetAllObservedEntityTypes()
+    {
+        return GetAllWithDuplicates(this).Distinct();
+
+        static IEnumerable<IObservedEntityType> GetAllWithDuplicates(EntityContext context)
+        {
+            yield return context.EntityType;
+
+            foreach (var cc in context._childContexts)
+            {
+                foreach (var om in GetAllWithDuplicates(cc))
+                {
+                    yield return om;
+                }
+            }
+        }
+    }
+
     public IEnumerable<IObservedMember> GetAllObservedMembers()
     {
         return GetAllWithDuplicates(this).Distinct();
 
-        IEnumerable<IObservedMember> GetAllWithDuplicates(EntityContext context)
+        static IEnumerable<IObservedMember> GetAllWithDuplicates(EntityContext context)
         {
             foreach (var om in context._observedMembers)
                 yield return om;
@@ -55,39 +73,48 @@ public abstract class EntityContext
 
         input.TryGet<IncrementalContext>(out var incrementalContext);
 
+        var entityChanges = await EntityType.GetChangesAsync(input);
+        if (entityChanges is not null)
+        {
+            foreach (var entity in entityChanges.Added)
+                entities.Add(entity);
+            foreach (var entity in entityChanges.Removed)
+                entities.Add(entity);
+        }
+
         foreach (var member in _observedMembers)
         {
             if (member is IObservedProperty observedProperty)
             {
                 var propertyChanges = await observedProperty.GetChangesAsync(input);
-                foreach (var ent in propertyChanges.GetEntityChanges())
+                foreach (var propertyChange in propertyChanges)
                 {
-                    if (!EntityType.IsInstanceOfType(ent))
+                    if (!EntityType.IsInstanceOfType(propertyChange.Entity))
                         continue;
 
-                    entities.Add(ent);
+                    entities.Add(propertyChange.Entity);
                 }
             }
             else if (member is IObservedNavigation observedNavigation)
             {
                 var navigationChanges = await observedNavigation.GetChangesAsync(input);
-                foreach (var (entity, changes) in navigationChanges.GetEntityChanges())
+                foreach (var navigationChange in navigationChanges)
                 {
-                    if (!EntityType.IsInstanceOfType(entity))
+                    if (!EntityType.IsInstanceOfType(navigationChange.Entity))
                         continue;
 
-                    entities.Add(entity);
+                    entities.Add(navigationChange.Entity);
                     if (incrementalContext is not null)
                     {
-                        foreach (var addedEntity in changes.Added)
+                        foreach (var addedEntity in navigationChange.Added)
                         {
                             incrementalContext.SetShouldLoadAll(addedEntity);
-                            incrementalContext.AddCurrentEntity(entity, observedNavigation, addedEntity);
+                            incrementalContext.AddCurrentEntity(navigationChange.Entity, observedNavigation, addedEntity);
                         }
-                        foreach (var removedEntity in changes.Removed)
+                        foreach (var removedEntity in navigationChange.Removed)
                         {
                             incrementalContext.SetShouldLoadAll(removedEntity);
-                            incrementalContext.AddOriginalEntity(entity, observedNavigation, removedEntity);
+                            incrementalContext.AddOriginalEntity(navigationChange.Entity, observedNavigation, removedEntity);
                         }
                     }
                 }
