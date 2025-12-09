@@ -77,10 +77,6 @@ public abstract class ComputedMember(
                         var observedMember = member.GetObservedMember();
                         if (observedMember is not null)
                             await observedMember.CollectChangesAsync(entry, updateChanges);
-
-                        var observedEntityType = entry.Metadata.GetObservedEntityType();
-                        if (observedEntityType is not null)
-                            await observedEntityType.CollectChangesAsync(entry, updateChanges);
                     }
                 }
             }
@@ -130,6 +126,13 @@ public abstract class ComputedMember(
 
                 if (navigation.Inverse is not null)
                     updateChanges.RegisterNavigationRemoved(navigation.Inverse, entityToRemove, entity);
+
+                var observedEntityType = navigation.TargetEntityType.GetObservedEntityType();
+                if (observedEntityType is not null)
+                {
+                    var entry = dbContext.Entry(entityToRemove);
+                    await observedEntityType.CollectChangesAsync(entry, updateChanges);
+                }
             }
         }
 
@@ -146,6 +149,13 @@ public abstract class ComputedMember(
 
                 if (navigation.Inverse is not null)
                     updateChanges.RegisterNavigationAdded(navigation.Inverse, entityToAdd, entity);
+
+                var observedEntityType = navigation.TargetEntityType.GetObservedEntityType();
+                if (observedEntityType is not null)
+                {
+                    var entry = dbContext.Entry(entityToAdd);
+                    await observedEntityType.CollectChangesAsync(entry, updateChanges);
+                }
             }
         }
     }
