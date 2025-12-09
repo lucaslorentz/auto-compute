@@ -12,13 +12,13 @@ public static class PropertyBuilderExtensions
         ChangeCalculatorSelector<TProperty, TProperty>? calculationSelector = null)
         where TEntity : class
     {
-        var changeCalculation = calculationSelector?.Invoke(ChangeCalculators<TProperty>.Instance)
-            ?? ChangeCalculators<TProperty>.Instance.CurrentValue();
+        var changeCalculator = calculationSelector?.Invoke(ChangeCalculatorFactory<TProperty>.Instance)
+            ?? ChangeCalculatorFactory<TProperty>.Instance.CurrentValue();
 
         propertyBuilder.Metadata.SetComputedFactory(
             ComputedMemberFactory.CreateComputedPropertyFactory(
                 computedExpression,
-                changeCalculation));
+                changeCalculator));
 
         return propertyBuilder;
     }

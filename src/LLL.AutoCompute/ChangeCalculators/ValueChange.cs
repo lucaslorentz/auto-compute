@@ -1,4 +1,4 @@
-﻿namespace LLL.AutoCompute.ChangeCalculations;
+﻿namespace LLL.AutoCompute.ChangeCalculators;
 
 public readonly struct ValueChange<TValue>(TValue? original, TValue current)
 {

@@ -49,12 +49,12 @@ public static class DbContextExtensions
     {
         filterExpression ??= static e => true;
 
-        var changeCalculation = calculationSelector(ChangeCalculators<TValue>.Instance);
+        var changeCalculator = calculationSelector(ChangeCalculatorFactory<TValue>.Instance);
 
         var key = (
             ComputedExpression: new ExpressionCacheKey(computedExpression, ExpressionEqualityComparer.Instance),
             filterExpression: new ExpressionCacheKey(filterExpression, ExpressionEqualityComparer.Instance),
-            ChangeCalculation: changeCalculation
+            ChangeCalculator: changeCalculator
         );
 
         var concurrentCreationCache = dbContext.GetService<IConcurrentCreationCache>();
@@ -70,7 +70,7 @@ public static class DbContextExtensions
                 entityType.GetOrCreateObservedEntityType(),
                 computedExpression,
                 filterExpression ?? (x => true),
-                changeCalculation)
+                changeCalculator)
         );
 
         return new EFCoreChangesProvider<TEntity, TChange>(

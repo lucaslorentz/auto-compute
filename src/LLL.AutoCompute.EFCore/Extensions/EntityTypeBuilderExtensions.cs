@@ -61,13 +61,13 @@ public static class EntityTypeBuilderExtensions
         Func<ComputedChangeEventData<TEntity, TChange>, Task> callback)
         where TEntity : class
     {
-        var changeCalculation = calculationSelector(ChangeCalculators<TValue>.Instance);
+        var changeCalculator = calculationSelector(ChangeCalculatorFactory<TValue>.Instance);
 
         entityTypeBuilder.Metadata.AddObserverFactory(
             ComputedObserverFactory.CreateObserverFactory(
                 computedExpression,
                 filterExpression,
-                changeCalculation,
+                changeCalculator,
                 callback));
     }
 

@@ -16,7 +16,7 @@ public interface IComputedChangesProvider
     EntityContext EntityContext { get; }
 
     /// <summary>The calculator used to determine changes between original and current values.</summary>
-    IChangeCalculator ChangeCalculation { get; }
+    IChangeCalculator ChangeCalculator { get; }
 }
 
 /// <summary>
@@ -29,10 +29,10 @@ public interface IComputedChangesProvider<TEntity, TChange>
     where TEntity : class
 {
     /// <inheritdoc/>
-    IChangeCalculator IComputedChangesProvider.ChangeCalculation => ChangeCalculation;
+    IChangeCalculator IComputedChangesProvider.ChangeCalculator => ChangeCalculator;
 
     /// <summary>The typed calculator used to determine changes.</summary>
-    new IChangeCalculator<TChange> ChangeCalculation { get; }
+    new IChangeCalculator<TChange> ChangeCalculator { get; }
 
     /// <summary>
     /// Computes changes for all affected entities based on the current input state.

@@ -26,7 +26,7 @@ public class ComputedProperty<TEntity, TProperty>(
             var entityEntry = dbContext.Entry(entity);
             var propertyEntry = entityEntry.Property(Property);
 
-            var newValue = ChangesProvider.ChangeCalculation.ApplyChange(
+            var newValue = ChangesProvider.ChangeCalculator.ApplyChange(
                 GetOriginalValue(propertyEntry),
                 change);
 

@@ -1,5 +1,5 @@
 ﻿
-namespace LLL.AutoCompute.ChangeCalculations;
+namespace LLL.AutoCompute.ChangeCalculators;
 
 public record class VoidChangeCalculator<TValue>
     : IChangeCalculator<TValue, VoidChange>

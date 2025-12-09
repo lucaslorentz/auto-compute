@@ -59,7 +59,7 @@ public class ComputedExpressionAnalyzer : IComputedExpressionAnalyzer
         IObservedEntityType entityType,
         Expression<Func<TEntity, TValue>> computedExpression,
         Expression<Func<TEntity, bool>>? filterExpression,
-        IChangeCalculator<TValue, TChange> changeCalculation)
+        IChangeCalculator<TValue, TChange> changeCalculator)
         where TEntity : class
     {
         filterExpression ??= static x => true;
@@ -78,7 +78,7 @@ public class ComputedExpressionAnalyzer : IComputedExpressionAnalyzer
             computedEntityContext,
             filterExpression.Compile(),
             filterEntityContext,
-            changeCalculation,
+            changeCalculator,
             originalValueGetter,
             currentValueGetter
         );

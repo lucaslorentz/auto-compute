@@ -12,7 +12,7 @@ public class ComputedMemberFactory
 {
     public static ComputedMemberFactory<IProperty> CreateComputedPropertyFactory<TEntity, TProperty>(
         Expression<Func<TEntity, TProperty>> computedExpression,
-        IChangeCalculator<TProperty, TProperty> changeCalculation)
+        IChangeCalculator<TProperty, TProperty> changeCalculator)
         where TEntity : class
     {
         return (analyzer, property) =>
@@ -26,7 +26,7 @@ public class ComputedMemberFactory
                     property.DeclaringType.ContainingEntityType.GetOrCreateObservedEntityType(),
                     computedExpression,
                     static x => true,
-                    changeCalculation);
+                    changeCalculator);
 
                 if (!changesProvider.EntityContext.GetAllObservedMembers().Any())
                     throw new Exception("Computed expression doesn't have observed members");
@@ -44,7 +44,7 @@ public class ComputedMemberFactory
 
     public static ComputedMemberFactory<INavigationBase> CreateComputedNavigationFactory<TEntity, TProperty>(
         Expression<Func<TEntity, TProperty>> computedExpression,
-        IChangeCalculator<TProperty, TProperty> changeCalculation,
+        IChangeCalculator<TProperty, TProperty> changeCalculator,
         Action<IComputedNavigationBuilder<TEntity, TProperty>>? configure)
         where TEntity : class
         where TProperty : class
@@ -60,7 +60,7 @@ public class ComputedMemberFactory
                     navigation.DeclaringType.ContainingEntityType.GetOrCreateObservedEntityType(),
                     computedExpression,
                     static x => true,
-                    changeCalculation);
+                    changeCalculator);
 
                 if (!changesProvider.EntityContext.GetAllObservedMembers().Any())
                     throw new Exception("Computed expression doesn't have observed members");

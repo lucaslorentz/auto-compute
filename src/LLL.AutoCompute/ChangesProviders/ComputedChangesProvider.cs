@@ -8,7 +8,7 @@ public class ComputedChangesProvider<TEntity, TValue, TChange>(
     EntityContext entityContext,
     Func<TEntity, bool> filter,
     EntityContext filterEntityContext,
-    IChangeCalculator<TValue, TChange> changeCalculation,
+    IChangeCalculator<TValue, TChange> changeCalculator,
     Func<ComputedInput, TEntity, TValue> originalValueGetter,
     Func<ComputedInput, TEntity, TValue> currentValueGetter
 ) : IComputedChangesProvider<TEntity, TChange>
@@ -17,7 +17,7 @@ public class ComputedChangesProvider<TEntity, TValue, TChange>(
     LambdaExpression IComputedChangesProvider.Expression => expression;
     public Expression<Func<TEntity, TValue>> Expression => expression;
     public EntityContext EntityContext => entityContext;
-    public IChangeCalculator<TChange> ChangeCalculation => changeCalculation;
+    public IChangeCalculator<TChange> ChangeCalculator => changeCalculator;
 
     public async Task<IReadOnlyDictionary<TEntity, TChange>> GetChangesAsync(
         ComputedInput input,
@@ -25,7 +25,7 @@ public class ComputedChangesProvider<TEntity, TValue, TChange>(
     {
         try
         {
-            if (changeCalculation.ValueStrategy == ComputedValueStrategy.Incremental)
+            if (changeCalculator.ValueStrategy == ComputedValueStrategy.Incremental)
                 input.Set(new IncrementalContext());
             else
                 input.Remove<IncrementalContext>();
@@ -41,7 +41,7 @@ public class ComputedChangesProvider<TEntity, TValue, TChange>(
                     && filter(e))
                 .ToArray();
 
-            switch (changeCalculation.ValueStrategy)
+            switch (changeCalculator.ValueStrategy)
             {
                 case ComputedValueStrategy.Incremental:
                     await entityContext.EnrichIncrementalContextAsync(input!, affectedEntities);
@@ -71,7 +71,7 @@ public class ComputedChangesProvider<TEntity, TValue, TChange>(
             }
 
             var filteredChanges = changes
-                .Where(kv => !changeCalculation.IsNoChange(kv.Value));
+                .Where(kv => !changeCalculator.IsNoChange(kv.Value));
 
             return new Dictionary<TEntity, TChange>(filteredChanges);
         }
@@ -86,7 +86,7 @@ public class ComputedChangesProvider<TEntity, TValue, TChange>(
         TEntity entity,
         ChangeMemory<TEntity, TChange>? changeMemory)
     {
-        var valueChange = changeCalculation.GetChange(CreateComputedValues(input, entity));
+        var valueChange = changeCalculator.GetChange(CreateComputedValues(input, entity));
         return DeltaChange(entity, valueChange, changeMemory);
     }
 
@@ -96,7 +96,7 @@ public class ComputedChangesProvider<TEntity, TValue, TChange>(
             return change;
 
         var delta = changeMemory.TryGet(entity, out var previousChange)
-            ? ChangeCalculation.DeltaChange(previousChange, change)
+            ? ChangeCalculator.DeltaChange(previousChange, change)
             : change;
 
         changeMemory.AddOrUpdate(entity, change);

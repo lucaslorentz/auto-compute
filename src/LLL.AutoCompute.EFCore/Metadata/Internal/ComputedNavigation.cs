@@ -32,7 +32,7 @@ public class ComputedNavigation<TEntity, TProperty>(
 
             var originalValue = GetOriginalValue(navigationEntry);
 
-            var newValue = ChangesProvider.ChangeCalculation.ApplyChange(
+            var newValue = ChangesProvider.ChangeCalculator.ApplyChange(
                 originalValue,
                 change);
 

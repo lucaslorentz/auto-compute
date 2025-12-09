@@ -12,7 +12,7 @@ public class ComputedObserverFactory
     public static ComputedObserverFactory<IEntityType> CreateObserverFactory<TEntity, TValue, TChange>(
         Expression<Func<TEntity, TValue>> computedExpression,
         Expression<Func<TEntity, bool>>? filterExpression,
-        IChangeCalculator<TValue, TChange> changeCalculation,
+        IChangeCalculator<TValue, TChange> changeCalculator,
         Func<ComputedChangeEventData<TEntity, TChange>, Task> callback)
         where TEntity : class
     {
@@ -24,7 +24,7 @@ public class ComputedObserverFactory
                     entityType.GetOrCreateObservedEntityType(),
                     computedExpression,
                     filterExpression ?? (static x => true),
-                    changeCalculation);
+                    changeCalculator);
 
                 if (!changesProvider.EntityContext.GetAllObservedMembers().Any())
                     throw new Exception("Computed expression doesn't have observed members");

@@ -16,13 +16,13 @@ public interface IComputedExpressionAnalyzer
     /// <param name="entityType">The observed entity type metadata.</param>
     /// <param name="computedExpression">The expression that computes values from entities.</param>
     /// <param name="filterExpression">An optional filter to limit which entities are tracked.</param>
-    /// <param name="changeCalculation">The calculator that determines changes between values.</param>
+    /// <param name="changeCalculator">The calculator that determines changes between values.</param>
     /// <returns>A changes provider that detects changes for affected entities.</returns>
     IComputedChangesProvider<TEntity, TChange> CreateChangesProvider<TEntity, TValue, TChange>(
         IObservedEntityType entityType,
         Expression<Func<TEntity, TValue>> computedExpression,
         Expression<Func<TEntity, bool>> filterExpression,
-        IChangeCalculator<TValue, TChange> changeCalculation)
+        IChangeCalculator<TValue, TChange> changeCalculator)
         where TEntity : class;
 
     /// <summary>

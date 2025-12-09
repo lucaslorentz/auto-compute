@@ -14,13 +14,13 @@ public static class NavigationBuilderExtensions
         where TEntity : class
         where TProperty : class
     {
-        var changeCalculation = calculationSelector?.Invoke(ChangeCalculators<TProperty>.Instance)
-            ?? ChangeCalculators<TProperty>.Instance.CurrentValue();
+        var changeCalculator = calculationSelector?.Invoke(ChangeCalculatorFactory<TProperty>.Instance)
+            ?? ChangeCalculatorFactory<TProperty>.Instance.CurrentValue();
 
         navigationBuilder.Metadata.SetComputedFactory(
             ComputedMemberFactory.CreateComputedNavigationFactory(
                 computedExpression!,
-                changeCalculation,
+                changeCalculator,
                 configure));
 
         return navigationBuilder;

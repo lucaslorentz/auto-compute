@@ -1,6 +1,6 @@
 ﻿using System.Numerics;
 
-namespace LLL.AutoCompute.ChangeCalculations;
+namespace LLL.AutoCompute.ChangeCalculators;
 
 public record class NumberChangeCalculator<TValue>(bool IsIncremental)
     : IChangeCalculator<TValue, TValue>
