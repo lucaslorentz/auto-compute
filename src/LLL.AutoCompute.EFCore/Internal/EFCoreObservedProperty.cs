@@ -1,4 +1,5 @@
-﻿using Microsoft.EntityFrameworkCore;
+﻿using LLL.AutoCompute.EFCore.Metadata.Internal;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.ChangeTracking;
 using Microsoft.EntityFrameworkCore.Metadata;
 
@@ -10,7 +11,7 @@ public class EFCoreObservedProperty(
 {
     public override IProperty Member => property;
     public override string Name => Member.Name;
-    public virtual Type EntityType => Member.DeclaringType.ClrType;
+    public virtual IObservedEntityType EntityType => ((IEntityType)Member.DeclaringType).GetOrCreateObservedEntityType();
 
     public override string ToDebugString()
     {

@@ -87,19 +87,19 @@ public class ComputedChangesProvider<TEntity, TValue, TChange>(
         ChangeMemory<TEntity, TChange>? changeMemory)
     {
         var valueChange = changeCalculation.GetChange(CreateComputedValues(input, entity));
-        return DeltaChange(changeMemory, entity, valueChange);
+        return DeltaChange(entity, valueChange, changeMemory);
     }
 
-    private TChange DeltaChange(ChangeMemory<TEntity, TChange>? changeMemory, TEntity entity, TChange result)
+    private TChange DeltaChange(TEntity entity, TChange change, ChangeMemory<TEntity, TChange>? changeMemory)
     {
         if (changeMemory is null)
-            return result;
+            return change;
 
-        var delta = changeMemory.TryGet(entity, out var previousResult)
-            ? ChangeCalculation.DeltaChange(previousResult, result)
-            : result;
+        var delta = changeMemory.TryGet(entity, out var previousChange)
+            ? ChangeCalculation.DeltaChange(previousChange, change)
+            : change;
 
-        changeMemory.AddOrUpdate(entity, result);
+        changeMemory.AddOrUpdate(entity, change);
 
         return delta;
     }
