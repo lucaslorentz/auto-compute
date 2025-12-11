@@ -13,7 +13,8 @@ public abstract class EFCoreObservedMember : IObservedMember
 
     public abstract IPropertyBase Member { get; }
 
-    internal IReadOnlySet<ComputedMember> DependentMembers => _dependentMembers;
+    public IReadOnlySet<ComputedMember> DependentMembers => _dependentMembers;
+    
     internal bool AddDependentMember(ComputedMember computed)
     {
         return _dependentMembers.Add(computed);

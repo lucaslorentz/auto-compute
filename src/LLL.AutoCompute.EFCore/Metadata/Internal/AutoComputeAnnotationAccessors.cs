@@ -14,7 +14,7 @@ public static class AutoComputeAnnotationAccessors
             entityType);
     }
 
-    internal static EFCoreObservedEntityType? GetObservedEntityType(this IEntityType entityType)
+    public static EFCoreObservedEntityType? GetObservedEntityType(this IEntityType entityType)
     {
         return entityType.FindRuntimeAnnotationValue(
             AutoComputeAnnotationNames.ObservedEntityType) as EFCoreObservedEntityType;
@@ -28,7 +28,7 @@ public static class AutoComputeAnnotationAccessors
             property);
     }
 
-    internal static EFCoreObservedProperty? GetObservedProperty(this IProperty property)
+    public static EFCoreObservedProperty? GetObservedProperty(this IProperty property)
     {
         return property.FindRuntimeAnnotationValue(
             AutoComputeAnnotationNames.ObservedMember) as EFCoreObservedProperty;
@@ -42,13 +42,13 @@ public static class AutoComputeAnnotationAccessors
             navigation);
     }
 
-    internal static EFCoreObservedNavigation? GetObservedNavigation(this INavigationBase navigation)
+    public static EFCoreObservedNavigation? GetObservedNavigation(this INavigationBase navigation)
     {
         return navigation.FindRuntimeAnnotationValue(
             AutoComputeAnnotationNames.ObservedMember) as EFCoreObservedNavigation;
     }
 
-    internal static EFCoreObservedMember? GetObservedMember(this IPropertyBase member)
+    public static EFCoreObservedMember? GetObservedMember(this IPropertyBase member)
     {
         return member.FindRuntimeAnnotationValue(
             AutoComputeAnnotationNames.ObservedMember) as EFCoreObservedMember;
