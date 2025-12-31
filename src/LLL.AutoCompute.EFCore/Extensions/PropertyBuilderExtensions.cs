@@ -30,4 +30,11 @@ public static class PropertyBuilderExtensions
     {
         propertyBuilder.Metadata.SetConsistencyCheck(check);
     }
+
+    public static void ConsistencyEquality<TProperty>(
+        this PropertyBuilder<TProperty> propertyBuilder,
+        Expression<Func<TProperty, TProperty, bool>> areEqual)
+    {
+        propertyBuilder.Metadata.SetConsistencyEquality(areEqual);
+    }
 }

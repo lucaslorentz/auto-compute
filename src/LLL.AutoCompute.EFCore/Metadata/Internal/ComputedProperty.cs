@@ -55,6 +55,11 @@ public class ComputedProperty<TEntity, TProperty>(
 
     protected override Expression CreateIsValueConsistentExpression(Expression computedValue, Expression storedValue)
     {
+        var consistencyCheckEquals = (Expression<Func<TProperty, TProperty, bool>>?)Property.GetConsistencyEquality();
+
+        if (consistencyCheckEquals is not null)
+            return consistencyCheckEquals.UnwrapLambda([computedValue, storedValue]);
+
         return Expression.Call(
             typeof(object), nameof(object.Equals), [],
             Expression.Convert(computedValue, typeof(object)),

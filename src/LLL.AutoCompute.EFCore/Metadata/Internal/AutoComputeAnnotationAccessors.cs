@@ -165,4 +165,14 @@ public static class AutoComputeAnnotationAccessors
     {
         propertyBase[AutoComputeAnnotationNames.ConsistencyCheck] = check;
     }
+
+    public static LambdaExpression? GetConsistencyEquality(this IReadOnlyPropertyBase target)
+    {
+        return target[AutoComputeAnnotationNames.ConsistencyEquality] as LambdaExpression;
+    }
+
+    internal static void SetConsistencyEquality(this IMutableProperty propertyBase, LambdaExpression check)
+    {
+        propertyBase[AutoComputeAnnotationNames.ConsistencyEquality] = check;
+    }
 }
