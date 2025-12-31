@@ -27,7 +27,7 @@ internal class MemberEntityContextRule(
                         EntityContextKeys.None,
                         node,
                         toKey,
-                        context => new NavigationEntityContext(node, context, navigation));
+                        context => context.DeriveWithCache(navigation, n => new NavigationEntityContext(node, context, navigation)));
                 }
 
                 entityContextRegistry.RegisterRequiredModifier(

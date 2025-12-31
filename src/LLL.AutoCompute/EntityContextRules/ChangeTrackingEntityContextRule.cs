@@ -19,7 +19,9 @@ public class ChangeTrackingEntityContextRule : IEntityContextNodeRule
                     EntityContextKeys.None,
                     node,
                     EntityContextKeys.None,
-                    context => new ChangeTrackingEntityContext(node, context, false));
+                    context => context.IsTrackingChanges
+                        ? context.DeriveWithCache(("tracking", false), k => new ChangeTrackingEntityContext(node, context, false))
+                        : context);
             }
             else if (methodCallExpression.Method.Name == nameof(ChangeTrackingExtensions.AsComputedTracked))
             {
@@ -28,7 +30,9 @@ public class ChangeTrackingEntityContextRule : IEntityContextNodeRule
                     EntityContextKeys.None,
                     node,
                     EntityContextKeys.None,
-                    context => new ChangeTrackingEntityContext(node, context, true));
+                    context => !context.IsTrackingChanges
+                        ? context.DeriveWithCache(("tracking", true), k => new ChangeTrackingEntityContext(node, context, true))
+                        : context);
             }
         }
     }

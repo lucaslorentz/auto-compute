@@ -93,9 +93,9 @@ public static class DbContextExtensions
             var observedMembers = sortedComputedMembers.SelectMany(x => x.ObservedMembers).ToHashSet();
             foreach (var observedMember in observedMembers)
                 await observedMember.CollectChangesAsync(dbContext, changesToProcess);
-            
+
             var observedEntityTypes = sortedComputedMembers.SelectMany(x => x.ObservedEntityTypes).ToHashSet();
-            foreach(var observedEntityType in observedEntityTypes)
+            foreach (var observedEntityType in observedEntityTypes)
                 await observedEntityType.CollectChangesAsync(dbContext, changesToProcess);
 
             var updates = new EFCoreChangeset();
@@ -159,7 +159,7 @@ public static class DbContextExtensions
                 await observedMember.CollectChangesAsync(dbContext, changesToProcess);
 
             var observedEntityTypes = allComputedObservers.SelectMany(x => x.ObservedEntityTypes).ToHashSet();
-            foreach(var observedEntityType in observedEntityTypes)
+            foreach (var observedEntityType in observedEntityTypes)
                 await observedEntityType.CollectChangesAsync(dbContext, changesToProcess);
 
             var input = new ComputedInput()

@@ -102,6 +102,7 @@ public class EntityContextRegistry : IEntityContextRegistry
 
                 var entityContexts = definitions
                     .SelectMany(d => d.GetContexts())
+                    .Distinct()
                     .GroupBy(kv => kv.Key, kv => kv.Value)
                     .ToDictionary(g => g.Key, g =>
                     {

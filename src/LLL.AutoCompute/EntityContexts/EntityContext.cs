@@ -1,4 +1,5 @@
-﻿using System.Linq.Expressions;
+﻿using System.Collections.Concurrent;
+using System.Linq.Expressions;
 
 namespace LLL.AutoCompute.EntityContexts;
 
@@ -134,6 +135,14 @@ public abstract class EntityContext
         }
 
         return entities;
+    }
+
+    private readonly ConcurrentDictionary<object, EntityContext> _derivedContexts = [];
+
+    public EntityContext DeriveWithCache<T>(T key, Func<T, EntityContext> factory)
+        where T : notnull
+    {
+        return _derivedContexts.GetOrAdd(key, k => factory((T)k));
     }
 
     public abstract Task<IReadOnlyCollection<object>> GetParentAffectedEntities(ComputedInput input);

@@ -9,18 +9,30 @@ internal class ReplaceObservedMemberAccessVisitor(
 {
     public override Expression? Visit(Expression? node)
     {
-        var visitedNode = base.Visit(node);
-
-        if (visitedNode is not null)
+        try
         {
-            foreach (var memberAccessLocator in memberAccessLocators)
-            {
-                var memberAccess = memberAccessLocator.GetObservedMemberAccess(visitedNode);
-                if (memberAccess is not null)
-                    return expressionModifier(memberAccess);
-            }
-        }
+            var visitedNode = base.Visit(node);
 
-        return visitedNode;
+            if (visitedNode is not null)
+            {
+                foreach (var memberAccessLocator in memberAccessLocators)
+                {
+                    var memberAccess = memberAccessLocator.GetObservedMemberAccess(visitedNode);
+                    if (memberAccess is not null)
+                        return expressionModifier(memberAccess);
+                }
+            }
+
+            return visitedNode;
+        }
+        catch (Exception ex) when (ex is not CustomException)
+        {
+            throw new CustomException($"Failed to replace memebers {node}", ex);
+        }
     }
+}
+
+class CustomException(string m, Exception inner) : Exception(m, inner)
+{
+    
 }

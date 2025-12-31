@@ -24,8 +24,7 @@ public class LinqMethodsEntityContextRule(Lazy<IObservedEntityTypeResolver?> ent
                                 methodCallExpression.Arguments[0],
                                 EntityContextKeys.Element,
                                 param,
-                                EntityContextKeys.None,
-                                context => new ScopedEntityContext(methodCallExpression, context));
+                                EntityContextKeys.None);
                         }
                     }
                 }
