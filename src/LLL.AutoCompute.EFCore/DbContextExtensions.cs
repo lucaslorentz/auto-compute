@@ -4,6 +4,7 @@ using LLL.AutoCompute.ChangesProviders;
 using LLL.AutoCompute.EFCore.Caching;
 using LLL.AutoCompute.EFCore.Internal;
 using LLL.AutoCompute.EFCore.Metadata.Internal;
+using LLL.AutoCompute.Internal.ExpressionVisitors;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.ChangeTracking;
 using Microsoft.EntityFrameworkCore.Infrastructure;
@@ -218,8 +219,6 @@ public static class DbContextExtensions
         var consistencyFilter = entityType.GetConsistencyFilter();
         if (consistencyFilter is not null)
         {
-            var analyzer = dbContext.Model.GetComputedExpressionAnalyzerOrThrow();
-
             var preparedConsistencyFilter = Expression.Lambda<Func<TEntity, bool>>(
                 ReplacingExpressionVisitor.Replace(
                     consistencyFilter.Parameters[1],
@@ -228,11 +227,26 @@ public static class DbContextExtensions
                 ),
                 consistencyFilter.Parameters[0]);
 
-            preparedConsistencyFilter = (Expression<Func<TEntity, bool>>)analyzer.RunExpressionModifiers(preparedConsistencyFilter);
+            preparedConsistencyFilter = dbContext.PrepareComputedExpression(preparedConsistencyFilter);
 
             query = query.Where(preparedConsistencyFilter);
         }
 
         return query;
+    }
+
+    internal static T PrepareComputedExpression<T>(this DbContext dbContext, T expression)
+        where T : Expression
+    {
+        var analyzer = dbContext.Model.GetComputedExpressionAnalyzerOrThrow();
+        expression = (T)analyzer.RunExpressionModifiers(expression);
+        expression = (T)new RemoveChangeComputedTrackingVisitor().Visit(expression);
+        return expression;
+    }
+
+    internal static T PrepareComputedExpression<T>(this DbContext dbContext, Expression expression)
+        where T : Expression
+    {
+        return (T)dbContext.PrepareComputedExpression(expression);
     }
 }

@@ -218,24 +218,23 @@ public abstract class ComputedMember<TEntity, TMember>(
     public override Expression<Func<TEntity, bool>> GetIsMemberConsistentLambda(DbContext dbContext)
     {
         var consistencyCheck = Property.GetConsistencyCheck();
-        if (consistencyCheck is not null)
+        if (consistencyCheck is null)
         {
-            var analyzer = dbContext.Model.GetComputedExpressionAnalyzerOrThrow();
-            return (Expression<Func<TEntity, bool>>)analyzer.RunExpressionModifiers(consistencyCheck);
+            var entParameter = ChangesProvider.Expression.Parameters.First();
+
+            var computedValue = new RemoveChangeComputedTrackingVisitor().Visit(
+                ChangesProvider.Expression.Body
+            );
+
+            var storedValue = CreateEFPropertyExpression(entParameter, Property);
+
+            consistencyCheck = Expression.Lambda<Func<TEntity, bool>>(
+                CreateIsValueConsistentExpression(computedValue, storedValue),
+                entParameter
+            );
         }
 
-        var entParameter = ChangesProvider.Expression.Parameters.First();
-
-        var computedValue = new RemoveChangeComputedTrackingVisitor().Visit(
-            ChangesProvider.Expression.Body
-        );
-
-        var storedValue = CreateEFPropertyExpression(entParameter, Property);
-
-        return Expression.Lambda<Func<TEntity, bool>>(
-            CreateIsValueConsistentExpression(computedValue, storedValue),
-            entParameter
-        );
+        return dbContext.PrepareComputedExpression<Expression<Func<TEntity, bool>>>(consistencyCheck);
     }
 
     protected abstract Expression CreateIsValueConsistentExpression(Expression computedValue, Expression storedValue);
