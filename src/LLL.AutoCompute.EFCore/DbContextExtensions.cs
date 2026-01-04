@@ -115,30 +115,38 @@ public static class DbContextExtensions
                     if (!targetComputeds.Contains(computed))
                         continue;
 
-                    visitedComputedMembers.Add(computed);
+                    try
+                    {
+                        visitedComputedMembers.Add(computed);
 
-                    var input = new ComputedInput()
-                        .Set(dbContext)
-                        .Set(changesToProcess);
+                        var input = new ComputedInput()
+                            .Set(dbContext)
+                            .Set(changesToProcess);
 
-                    var newChanges = await computed.Update(input);
+                        var newChanges = await computed.Update(input);
 
-                    if (newChanges.Count == 0)
-                        continue;
+                        if (newChanges.Count == 0)
+                            continue;
 
-                    // Detect new changes
-                    dbContext.ChangeTracker.DetectChanges();
+                        // Detect new changes
+                        dbContext.ChangeTracker.DetectChanges();
 
-                    // Register changes in updates, tracking for cyclic updates
-                    newChanges.MergeInto(updates, true);
+                        // Register changes in updates, tracking for cyclic updates
+                        newChanges.MergeInto(updates, true);
 
-                    // Re-update affected computeds that were already updated
-                    var computedsToReUpdate = newChanges.GetAffectedComputedMembers(visitedComputedMembers);
-                    if (computedsToReUpdate.Count != 0)
-                        await UpdateComputedsAsync(computedsToReUpdate, newChanges);
+                        // Re-update affected computeds that were already updated
+                        var computedsToReUpdate = newChanges.GetAffectedComputedMembers(visitedComputedMembers);
+                        if (computedsToReUpdate.Count != 0)
+                            await UpdateComputedsAsync(computedsToReUpdate, newChanges);
 
-                    // Merge new changes into changesToProcess, to make next computeds in the loop aware of the new changes
-                    newChanges.MergeInto(changesToProcess, false);
+                        // Merge new changes into changesToProcess, to make next computeds in the loop aware of the new changes
+                        newChanges.MergeInto(changesToProcess, false);
+
+                    }
+                    catch (Exception ex)
+                    {
+                        throw new Exception($"Failed to update computed {computed.ToDebugString()}", ex);
+                    }
                 }
             }
         });
