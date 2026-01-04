@@ -11,16 +11,13 @@ public class EFCoreObservedEntityType(IEntityType entityType)
 
     public ObservedEntityState GetEntityState(ComputedInput input, object entity)
     {
-        var entityTypeChanges = input.Get<EFCoreChangeset>().GetChanges(entityType);
-        if (entityTypeChanges is not null)
+        return input.Get<DbContext>().Entry(entity).State switch
         {
-            if (entityTypeChanges.Added.Contains(entity))
-                return ObservedEntityState.Added;
-
-            if (entityTypeChanges.Removed.Contains(entity))
-                return ObservedEntityState.Removed;
-        }
-        return ObservedEntityState.None;
+            EntityState.Added => ObservedEntityState.Added,
+            EntityState.Deleted => ObservedEntityState.Removed,
+            EntityState.Detached => ObservedEntityState.Removed,
+            _ => ObservedEntityState.None
+        };
     }
 
     public async Task CollectChangesAsync(DbContext dbContext, EFCoreChangeset changes)

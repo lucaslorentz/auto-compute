@@ -137,9 +137,9 @@ public class EFCoreObservedNavigation(
     {
         var dbContext = input.Get<DbContext>();
 
-        var entityEntry = dbContext.Entry(ent!);
+        var entityState = SourceEntityType.GetEntityState(input, ent);
 
-        if (entityEntry.State == EntityState.Deleted)
+        if (entityState == ObservedEntityState.Removed)
             throw new Exception($"Cannot access navigation '{Member.DeclaringType.ShortName()}.{Member.Name}' current value for a deleted entity");
 
         if (input.TryGet<IncrementalContext>(out var incrementalContext))
@@ -161,6 +161,7 @@ public class EFCoreObservedNavigation(
         }
         else
         {
+            var entityEntry = dbContext.Entry(ent!);
             var navigationEntry = entityEntry.Navigation(Member);
             if (!navigationEntry.IsLoaded && entityEntry.State != EntityState.Detached)
                 navigationEntry.Load();
