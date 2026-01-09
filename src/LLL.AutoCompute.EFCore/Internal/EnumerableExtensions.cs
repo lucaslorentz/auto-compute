@@ -1,9 +1,16 @@
 ﻿
+using LLL.AutoCompute.EFCore.Metadata.Internal;
+
 namespace LLL.AutoCompute.EFCore;
 
-internal static class EnumerableExtensions
+public static class EnumerableExtensions
 {
-    public static IReadOnlyList<T> TopoSort<T>(
+    public static IReadOnlyList<ComputedMember> TopoSort(this IEnumerable<ComputedMember> source)
+    {
+        return source.TopoSort(c => c.GetComputedDependencies());
+    }
+
+    internal static IReadOnlyList<T> TopoSort<T>(
         this IEnumerable<T> source,
         Func<T, IEnumerable<T>> getDependencies)
         where T : notnull
