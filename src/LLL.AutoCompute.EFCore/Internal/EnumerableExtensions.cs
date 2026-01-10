@@ -15,13 +15,16 @@ public static class EnumerableExtensions
         Func<T, IEnumerable<T>> getDependencies)
         where T : notnull
     {
-        var visited = new HashSet<T>();
         var result = new List<T>();
+
+        // Track a pending list instead of visited list,
+        // to avoid including dependencies not in the original source
+        var pendingToVisit = source.ToHashSet();
 
         // Visit item, adding their dependencies first
         void Visit(T item)
         {
-            if (!visited.Add(item))
+            if (!pendingToVisit.Remove(item))
                 return;
 
             foreach (var v in getDependencies(item))
