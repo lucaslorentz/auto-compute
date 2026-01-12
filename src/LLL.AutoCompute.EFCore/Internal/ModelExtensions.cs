@@ -42,16 +42,20 @@ public static class ModelExtensions
                 }
 
                 // Add items that were in the collection but were removed
+                var joinReferenceToSelf = skipNavigation.ForeignKey.DependentToPrincipal;
                 var joinReferenceToOther = skipNavigation.Inverse.ForeignKey.DependentToPrincipal;
-                foreach (var joinEntry in entityEntry.Context.EntityEntriesOfType(skipNavigation.JoinEntityType))
+                if (joinReferenceToSelf is not null && joinReferenceToOther is not null)
                 {
-                    var selfReferenceEntry = joinEntry.Reference(skipNavigation.ForeignKey.DependentToPrincipal!);
-                    var otherReferenceEntry = joinEntry.Reference(joinReferenceToOther!);
-                    if ((joinEntry.State == EntityState.Deleted || selfReferenceEntry.IsModified || otherReferenceEntry.IsModified)
-                        && joinEntry.State != EntityState.Added
-                        && skipNavigation.ForeignKey.IsConnected(entityEntry.OriginalValues, joinEntry.OriginalValues))
+                    foreach (var joinEntry in entityEntry.Context.EntityEntriesOfType(skipNavigation.JoinEntityType))
                     {
-                        collectionAccessor.AddStandalone(originalValue, otherReferenceEntry.GetOriginalValue()!);
+                        var selfReferenceEntry = joinEntry.Reference(joinReferenceToSelf);
+                        var otherReferenceEntry = joinEntry.Reference(joinReferenceToOther!);
+                        if ((joinEntry.State == EntityState.Deleted || selfReferenceEntry.IsModified || otherReferenceEntry.IsModified)
+                            && joinEntry.State != EntityState.Added
+                            && skipNavigation.ForeignKey.IsConnected(entityEntry.OriginalValues, joinEntry.OriginalValues))
+                        {
+                            collectionAccessor.AddStandalone(originalValue, otherReferenceEntry.GetOriginalValue()!);
+                        }
                     }
                 }
             }
