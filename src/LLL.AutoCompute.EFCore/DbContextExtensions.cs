@@ -235,7 +235,7 @@ public static class DbContextExtensions
                 ),
                 consistencyFilter.Parameters[0]);
 
-            preparedConsistencyFilter = dbContext.PrepareComputedExpression(preparedConsistencyFilter);
+            preparedConsistencyFilter = dbContext.PrepareComputedExpressionForDatabase(preparedConsistencyFilter);
 
             query = query.Where(preparedConsistencyFilter);
         }
@@ -243,11 +243,12 @@ public static class DbContextExtensions
         return query;
     }
 
-    internal static T PrepareComputedExpression<T>(this DbContext dbContext, T expression)
+    internal static T PrepareComputedExpressionForDatabase<T>(this DbContext dbContext, T expression)
         where T : Expression
     {
         var analyzer = dbContext.Model.GetComputedExpressionAnalyzerOrThrow();
         expression = (T)analyzer.RunExpressionModifiers(expression);
+        expression = (T)analyzer.RunDatabaseExpressionModifiers(expression);
         expression = (T)new RemoveChangeComputedTrackingVisitor().Visit(expression);
         return expression;
     }
@@ -255,6 +256,6 @@ public static class DbContextExtensions
     internal static T PrepareComputedExpression<T>(this DbContext dbContext, Expression expression)
         where T : Expression
     {
-        return (T)dbContext.PrepareComputedExpression(expression);
+        return (T)dbContext.PrepareComputedExpressionForDatabase(expression);
     }
 }

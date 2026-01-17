@@ -14,6 +14,7 @@ public class ComputedExpressionAnalyzer : IComputedExpressionAnalyzer
     private readonly IList<IEntityContextNodeRule> _entityContextRules = [];
     private readonly HashSet<IObservedMemberAccessLocator> _memberAccessLocators = [];
     private readonly IList<Func<Expression, Expression>> _expressionModifiers = [];
+    private readonly IList<Func<Expression, Expression>> _databaseExpressionModifiers = [];
     private IObservedEntityTypeResolver? _entityTypeResolver;
 
     public ComputedExpressionAnalyzer AddDefaults()
@@ -45,6 +46,12 @@ public class ComputedExpressionAnalyzer : IComputedExpressionAnalyzer
     public ComputedExpressionAnalyzer AddExpressionModifier(Func<Expression, Expression> modifier)
     {
         _expressionModifiers.Add(modifier);
+        return this;
+    }
+
+    public ComputedExpressionAnalyzer AddDatabaseExpressionModifier(Func<Expression, Expression> modifier)
+    {
+        _databaseExpressionModifiers.Add(modifier);
         return this;
     }
 
@@ -161,6 +168,14 @@ public class ComputedExpressionAnalyzer : IComputedExpressionAnalyzer
     public Expression RunExpressionModifiers(Expression expression)
     {
         foreach (var modifier in _expressionModifiers)
+            expression = modifier(expression);
+
+        return expression;
+    }
+
+    public Expression RunDatabaseExpressionModifiers(Expression expression)
+    {
+        foreach (var modifier in _databaseExpressionModifiers)
             expression = modifier(expression);
 
         return expression;

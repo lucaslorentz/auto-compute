@@ -29,4 +29,9 @@ public interface IComputedExpressionAnalyzer
     /// Runs all registered expression modifiers on the given expression.
     /// </summary>
     Expression RunExpressionModifiers(Expression expression);
+
+    /// <summary>
+    /// Runs all registered database expression modifiers on the given expression.
+    /// </summary>
+    Expression RunDatabaseExpressionModifiers(Expression expression);
 }
