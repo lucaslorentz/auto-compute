@@ -108,7 +108,7 @@ public class ComputedExpressionAnalyzer : IComputedExpressionAnalyzer
 
         entityContextRegistry.PrepareEntityContexts();
 
-        entityContext.ValidateAll();
+        entityContext.Validate();
 
         return entityContext;
     }

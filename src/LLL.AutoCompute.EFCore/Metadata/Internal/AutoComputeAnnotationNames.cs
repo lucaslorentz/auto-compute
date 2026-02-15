@@ -17,4 +17,5 @@ public static class AutoComputeAnnotationNames
     public const string ConsistencyFilter = TempPrefix + "ConsistencyFilter";
     public const string ConsistencyCheck = TempPrefix + "ConsistencyCheck";
     public const string ConsistencyEquality = TempPrefix + "ConsistencyCheckEquals";
+    public const string ChangePropagationTarget = Prefix + "ChangePropagationTarget";
 }

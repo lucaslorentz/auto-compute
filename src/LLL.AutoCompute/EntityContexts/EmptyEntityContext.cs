@@ -10,6 +10,8 @@ public class EmptyEntityContext(
     public override IObservedEntityType EntityType => entityType;
     public override bool IsTrackingChanges => false;
 
+    public override string ToDebugString() => $"Empty({EntityType.Name})";
+
     public override async Task<IReadOnlyCollection<object>> GetParentAffectedEntities(ComputedInput input)
     {
         throw new InvalidOperationException("Can't call GetParentAffectedEntities on EmptyEntityContext");

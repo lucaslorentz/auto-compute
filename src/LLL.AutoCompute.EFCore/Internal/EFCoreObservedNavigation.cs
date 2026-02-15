@@ -16,21 +16,27 @@ public class EFCoreObservedNavigation(
     public virtual IObservedEntityType SourceEntityType => Member.DeclaringEntityType.GetOrCreateObservedEntityType();
     public virtual IObservedEntityType TargetEntityType => Member.TargetEntityType.GetOrCreateObservedEntityType();
     public virtual bool IsCollection => Member.IsCollection;
+    public virtual ChangePropagationTarget? ChangePropagationTarget => Member.GetChangePropagationTarget();
 
     public override string ToDebugString()
     {
         return $"{Member.DeclaringEntityType.ShortName()}.{Member.Name}";
     }
 
-    public IObservedNavigation GetInverse()
+    public IObservedNavigation? GetInverse()
     {
-        var inverse = Member.Inverse
-            ?? throw new InvalidOperationException($"No inverse for navigation '{Member.DeclaringType.ShortName()}.{Member.Name}'");
-
-        if (inverse.IsShadowProperty())
-            throw new InvalidOperationException($"Inverse for navigation '{Member.DeclaringType.ShortName()}.{Member.Name}' cannot be a shadow property");
+        var inverse = Member.Inverse;
+        if (inverse is null || inverse.IsShadowProperty())
+            return null;
 
         return inverse.GetOrCreateObservedNavigation();
+    }
+
+    public IObservedNavigation GetInverseOrThrow()
+    {
+        return GetInverse()
+            ?? throw new InvalidOperationException(
+                $"Navigation '{ToDebugString()}' requires a non-shadow inverse navigation.");
     }
 
     public virtual async Task<IReadOnlyDictionary<object, IReadOnlyCollection<object>>> LoadOriginalAsync(

@@ -74,6 +74,19 @@ public static class AutoComputeAnnotationAccessors
         target[AutoComputeAnnotationNames.MemberFactory] = factory;
     }
 
+    internal static ChangePropagationTarget? GetChangePropagationTarget(this IReadOnlyNavigationBase target)
+    {
+        if (target[AutoComputeAnnotationNames.ChangePropagationTarget] is ChangePropagationTarget targetValue)
+            return targetValue;
+
+        return null;
+    }
+
+    internal static void SetChangePropagationTarget(this IMutableNavigationBase target, ChangePropagationTarget targetValue)
+    {
+        target[AutoComputeAnnotationNames.ChangePropagationTarget] = targetValue;
+    }
+
     internal static List<ComputedObserverFactory<IEntityType>>? GetObserversFactories(this IReadOnlyEntityType target)
     {
         return target[AutoComputeAnnotationNames.ObserversFactories] as List<ComputedObserverFactory<IEntityType>>;

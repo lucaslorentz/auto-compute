@@ -7,6 +7,8 @@ public class CompositeEntityContext : EntityContext
     public override IObservedEntityType EntityType { get; }
     public override bool IsTrackingChanges { get; }
 
+    public override string ToDebugString() => $"Composite({EntityType.Name})";
+
     public CompositeEntityContext(
         Expression expression,
         IReadOnlyList<EntityContext> parents)

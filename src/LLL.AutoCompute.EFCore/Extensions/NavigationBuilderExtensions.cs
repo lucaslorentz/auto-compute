@@ -1,4 +1,4 @@
-﻿using System.Linq.Expressions;
+using System.Linq.Expressions;
 using LLL.AutoCompute.EFCore.Metadata.Internal;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
@@ -23,6 +23,16 @@ public static class NavigationBuilderExtensions
                 changeCalculator,
                 configure));
 
+        return navigationBuilder;
+    }
+
+    public static NavigationBuilder<TEntity, TProperty> SetChangePropagationTarget<TEntity, TProperty>(
+        this NavigationBuilder<TEntity, TProperty> navigationBuilder,
+        ChangePropagationTarget target)
+        where TEntity : class
+        where TProperty : class
+    {
+        navigationBuilder.Metadata.SetChangePropagationTarget(target);
         return navigationBuilder;
     }
 }

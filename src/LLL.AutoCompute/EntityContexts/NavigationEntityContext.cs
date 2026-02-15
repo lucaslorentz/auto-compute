@@ -23,6 +23,14 @@ public class NavigationEntityContext : EntityContext
     public IObservedNavigation Navigation => _navigation;
     public override bool IsTrackingChanges { get; }
 
+    public override string ToDebugString() => $"Navigation({_navigation.ToDebugString()})";
+
+    public override ChangePropagationTarget PropagationTarget =>
+        _navigation.GetInverse()?.ChangePropagationTarget ?? ChangePropagationTarget.AllEntities;
+
+    public override bool CanResolveLoadedEntities =>
+        _navigation.ChangePropagationTarget != ChangePropagationTarget.LoadedEntities;
+
     public override async Task<IReadOnlyCollection<object>> GetParentAffectedEntities(ComputedInput input)
     {
         // Short circuit to avoid requiring inverse navigation when no tracked property is accessed
@@ -31,11 +39,19 @@ public class NavigationEntityContext : EntityContext
 
         input.TryGet<IncrementalContext>(out var incrementalContext);
 
-        var inverseNavigation = _navigation.GetInverse();
-
         var sourceType = _navigation.SourceEntityType;
 
         var entities = await GetAffectedEntitiesAsync(input);
+
+        if (_navigation.ChangePropagationTarget == ChangePropagationTarget.LoadedEntities)
+        {
+            return await GetParentAffectedLoadedEntities(
+                input,
+                entities,
+                incrementalContext);
+        }
+
+        var inverseNavigation = _navigation.GetInverseOrThrow();
 
         var parentEntities = new HashSet<object>();
         foreach (var (ent, parents) in await inverseNavigation.LoadOriginalAsync(input, entities))
@@ -61,6 +77,79 @@ public class NavigationEntityContext : EntityContext
             }
         }
         return parentEntities;
+    }
+
+    private async Task<IReadOnlyCollection<object>> GetParentAffectedLoadedEntities(
+        ComputedInput input,
+        IReadOnlyCollection<object> affectedEntities,
+        IncrementalContext? incrementalContext)
+    {
+        if (affectedEntities.Count == 0)
+            return [];
+
+        var affectedEntitiesSet = affectedEntities.ToHashSet(ReferenceEqualityComparer.Instance);
+        var loadedParents = await _parent.ResolveLoadedEntitiesAsync(input);
+
+        if (loadedParents.Count == 0)
+            return [];
+
+        var parentEntities = new HashSet<object>(ReferenceEqualityComparer.Instance);
+
+        foreach (var (parent, entities) in await _navigation.LoadOriginalAsync(input, loadedParents))
+        {
+            foreach (var entity in entities)
+            {
+                if (!affectedEntitiesSet.Contains(entity))
+                    continue;
+
+                parentEntities.Add(parent);
+                incrementalContext?.AddOriginalEntity(parent, _navigation, entity);
+            }
+        }
+
+        foreach (var (parent, entities) in await _navigation.LoadCurrentAsync(input, loadedParents))
+        {
+            foreach (var entity in entities)
+            {
+                if (!affectedEntitiesSet.Contains(entity))
+                    continue;
+
+                parentEntities.Add(parent);
+                incrementalContext?.AddCurrentEntity(parent, _navigation, entity);
+            }
+        }
+
+        return parentEntities;
+    }
+
+    protected override async Task<IReadOnlyCollection<object>> ResolveLoadedEntitiesFromParentAsync(
+        ComputedInput input,
+        IReadOnlyCollection<object> parentLoadedEntities)
+    {
+        if (parentLoadedEntities.Count == 0)
+            return [];
+
+        var entities = new HashSet<object>(ReferenceEqualityComparer.Instance);
+
+        foreach (var (_, children) in await _navigation.LoadOriginalAsync(input, parentLoadedEntities))
+        {
+            foreach (var child in children)
+            {
+                if (EntityType.IsInstanceOfType(child))
+                    entities.Add(child);
+            }
+        }
+
+        foreach (var (_, children) in await _navigation.LoadCurrentAsync(input, parentLoadedEntities))
+        {
+            foreach (var child in children)
+            {
+                if (EntityType.IsInstanceOfType(child))
+                    entities.Add(child);
+            }
+        }
+
+        return entities;
     }
 
     public override async Task EnrichIncrementalContextFromParentAsync(ComputedInput input, IReadOnlyCollection<object> parentEntities)
@@ -113,7 +202,18 @@ public class NavigationEntityContext : EntityContext
         if (!input.TryGet<IncrementalContext>(out var incrementalContext))
             throw new InvalidOperationException("IncrementalContext is required to enrich towards root.");
 
-        var inverse = _navigation.GetInverse();
+        if (_navigation.ChangePropagationTarget == ChangePropagationTarget.LoadedEntities)
+        {
+            var loadedParentEntities = await GetParentAffectedLoadedEntities(
+                input,
+                entities,
+                incrementalContext);
+
+            await _parent.EnrichIncrementalContextTowardsRootAsync(input, loadedParentEntities);
+            return;
+        }
+
+        var inverse = _navigation.GetInverseOrThrow();
 
         var parentEntities = new HashSet<object>();
 
@@ -162,11 +262,14 @@ public class NavigationEntityContext : EntityContext
         _shouldLoadAll = true;
     }
 
-    public override void ValidateSelf()
+    protected override void ValidateSelf()
     {
-        if (GetAllObservedMembers().Any())
-        {
-            _navigation.GetInverse();
-        }
+        if (!GetAllObservedMembers().Any())
+            return;
+
+        if (PropagationTarget == ChangePropagationTarget.LoadedEntities)
+            return;
+
+        _navigation.GetInverseOrThrow();
     }
 }

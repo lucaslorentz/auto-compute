@@ -1,5 +1,6 @@
 ﻿using System.Collections.Concurrent;
 using System.Linq.Expressions;
+using LLL.AutoCompute.ChangesProviders;
 
 namespace LLL.AutoCompute.EntityContexts;
 
@@ -22,50 +23,62 @@ public abstract class EntityContext
     public IReadOnlyList<EntityContext> Parents => _parents;
     public IReadOnlySet<IObservedMember> ObservedMembers => _observedMembers;
     public IEnumerable<EntityContext> ChildContexts => _childContexts;
+    public abstract string ToDebugString();
 
     public abstract IObservedEntityType EntityType { get; }
     public abstract bool IsTrackingChanges { get; }
     public Guid Id { get; } = Guid.NewGuid();
     public Expression Expression => _expression;
 
+    public virtual ChangePropagationTarget PropagationTarget => ChangePropagationTarget.AllEntities;
+
+    public virtual bool CanResolveLoadedEntities => true;
+
     public void RegisterObservedMember(IObservedMember member)
     {
         _observedMembers.Add(member);
     }
 
-    public IEnumerable<IObservedEntityType> GetAllObservedEntityTypes()
+    public IEnumerable<IObservedEntityType> GetAllObservedEntityTypes(ChangePropagationTarget? propagationTargetFilter = null)
     {
-        return GetAllWithDuplicates(this).Distinct();
+        return GetAllWithDuplicates(this, pathPropagationTarget: ChangePropagationTarget.AllEntities).Distinct();
 
-        static IEnumerable<IObservedEntityType> GetAllWithDuplicates(EntityContext context)
+        IEnumerable<IObservedEntityType> GetAllWithDuplicates(EntityContext context, ChangePropagationTarget pathPropagationTarget)
         {
-            yield return context.EntityType;
+            var strictestPropagationTarget = GetStrictestPropagationTarget(pathPropagationTarget, context.PropagationTarget);
 
-            foreach (var cc in context._childContexts)
+            if (propagationTargetFilter is null || strictestPropagationTarget == propagationTargetFilter)
+                yield return context.EntityType;
+
+            foreach (var childContext in context._childContexts)
             {
-                foreach (var om in GetAllWithDuplicates(cc))
-                {
-                    yield return om;
-                }
+                foreach (var entityType in GetAllWithDuplicates(childContext, strictestPropagationTarget))
+                    yield return entityType;
             }
         }
     }
 
-    public IEnumerable<IObservedMember> GetAllObservedMembers()
+    public IEnumerable<IObservedMember> GetAllObservedMembers(ChangePropagationTarget? propagationTargetFilter = null)
     {
-        return GetAllWithDuplicates(this).Distinct();
+        return GetAllWithDuplicates(this, pathPropagationTarget: ChangePropagationTarget.AllEntities).Distinct();
 
-        static IEnumerable<IObservedMember> GetAllWithDuplicates(EntityContext context)
+        IEnumerable<IObservedMember> GetAllWithDuplicates(EntityContext context, ChangePropagationTarget pathPropagationTarget)
         {
-            foreach (var om in context._observedMembers)
-                yield return om;
+            var strictestPropagationTarget = GetStrictestPropagationTarget(pathPropagationTarget, context.PropagationTarget);
 
-            foreach (var cc in context._childContexts)
+            if (propagationTargetFilter is null || strictestPropagationTarget == propagationTargetFilter)
             {
-                foreach (var om in GetAllWithDuplicates(cc))
-                    yield return om;
+                foreach (var observedMember in context._observedMembers)
+                    yield return observedMember;
+            }
+
+            foreach (var childContext in context._childContexts)
+            {
+                foreach (var observedMember in GetAllWithDuplicates(childContext, strictestPropagationTarget))
+                    yield return observedMember;
             }
         }
+
     }
 
     public async Task<IReadOnlyCollection<object>> GetAffectedEntitiesAsync(ComputedInput input)
@@ -147,6 +160,43 @@ public abstract class EntityContext
 
     public abstract Task<IReadOnlyCollection<object>> GetParentAffectedEntities(ComputedInput input);
 
+    public async Task<IReadOnlyCollection<object>> ResolveLoadedEntitiesAsync(ComputedInput input)
+    {
+        var entities = new HashSet<object>(ReferenceEqualityComparer.Instance);
+        var parentLoadedEntities = new HashSet<object>(ReferenceEqualityComparer.Instance);
+
+        foreach (var parent in _parents)
+        {
+            var resolved = await parent.ResolveLoadedEntitiesAsync(input);
+            foreach (var entity in resolved)
+                parentLoadedEntities.Add(entity);
+        }
+
+        if (parentLoadedEntities.Count != 0)
+        {
+            var loadedEntities = await ResolveLoadedEntitiesFromParentAsync(input, parentLoadedEntities);
+            foreach (var entity in loadedEntities)
+                entities.Add(entity);
+        }
+
+        if (input.TryGet<LoadedEntitySet>(out var loadedEntitySet))
+        {
+            foreach (var entity in loadedEntitySet.Entities.Where(EntityType.IsInstanceOfType))
+                entities.Add(entity);
+        }
+
+        return entities;
+    }
+
+    protected virtual async Task<IReadOnlyCollection<object>> ResolveLoadedEntitiesFromParentAsync(
+        ComputedInput input,
+        IReadOnlyCollection<object> parentLoadedEntities)
+    {
+        return parentLoadedEntities
+            .Where(EntityType.IsInstanceOfType)
+            .ToArray();
+    }
+
     public virtual async Task EnrichIncrementalContextAsync(ComputedInput input, IReadOnlyCollection<object> entities)
     {
         foreach (var childContext in _childContexts)
@@ -181,13 +231,33 @@ public abstract class EntityContext
             parent.MarkNavigationToLoadAll();
     }
 
-    public void ValidateAll()
+    protected void ValidateAll(EntityContext? firstNotSupportingResolveLoadedEntities)
     {
         ValidateSelf();
 
+        if (firstNotSupportingResolveLoadedEntities is not null
+            && PropagationTarget == ChangePropagationTarget.LoadedEntities)
+        {
+            throw new InvalidOperationException(
+                $"EntityContext '{firstNotSupportingResolveLoadedEntities.ToDebugString()}' does not support resolving loaded entities from root and context '{ToDebugString()}' requires loaded entities from root. Remove LoadedEntities propagation target from one of these navigations.");
+        }
+
+        var nextNotSupportingResolveLoadedEntities =
+            firstNotSupportingResolveLoadedEntities
+            ?? (CanResolveLoadedEntities ? null : this);
+
         foreach (var childContext in _childContexts)
-            childContext.ValidateAll();
+            childContext.ValidateAll(nextNotSupportingResolveLoadedEntities);
     }
 
-    public virtual void ValidateSelf() { }
+    protected virtual void ValidateSelf()
+    {
+    }
+
+    private static ChangePropagationTarget GetStrictestPropagationTarget(params ChangePropagationTarget[] targets)
+    {
+        return targets.Any(m => m == ChangePropagationTarget.LoadedEntities)
+            ? ChangePropagationTarget.LoadedEntities
+            : ChangePropagationTarget.AllEntities;
+    }
 }

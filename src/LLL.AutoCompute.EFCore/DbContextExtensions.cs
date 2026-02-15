@@ -86,6 +86,10 @@ public static class DbContextExtensions
         {
             dbContext.ChangeTracker.DetectChanges();
 
+            var loadedEntities = dbContext.ChangeTracker.Entries()
+                .Select(e => e.Entity)
+                .ToHashSet(ReferenceEqualityComparer.Instance);
+
             var sortedComputedMembers = dbContext.Model.GetAllComputedMembers();
 
             var changesToProcess = new EFCoreChangeset();
@@ -101,7 +105,6 @@ public static class DbContextExtensions
             var updates = new EFCoreChangeset();
 
             var visitedComputedMembers = new HashSet<ComputedMember>();
-
             await UpdateComputedsAsync(sortedComputedMembers.ToHashSet(), changesToProcess);
 
             return updates.Count;
@@ -121,7 +124,8 @@ public static class DbContextExtensions
 
                         var input = new ComputedInput()
                             .Set(dbContext)
-                            .Set(changesToProcess);
+                            .Set(changesToProcess)
+                            .Set(new LoadedEntitySet(loadedEntities));
 
                         var newChanges = await computed.Update(input);
 

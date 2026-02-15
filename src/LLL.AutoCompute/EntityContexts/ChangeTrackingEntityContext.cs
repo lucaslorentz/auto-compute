@@ -4,21 +4,20 @@ namespace LLL.AutoCompute.EntityContexts;
 
 public class ChangeTrackingEntityContext : EntityContext
 {
-    private readonly EntityContext _parent;
-
     public ChangeTrackingEntityContext(
         Expression expression,
         EntityContext parent,
-        bool trackChanges)
+        bool isTrackingChanges)
         : base(expression, [parent])
     {
         EntityType = parent.EntityType;
-        _parent = parent;
-        IsTrackingChanges = trackChanges;
+        IsTrackingChanges = isTrackingChanges;
     }
 
     public override IObservedEntityType EntityType { get; }
     public override bool IsTrackingChanges { get; }
+
+    public override string ToDebugString() => $"ChangeTracking({EntityType.Name}, {IsTrackingChanges})";
 
     public override async Task<IReadOnlyCollection<object>> GetParentAffectedEntities(ComputedInput input)
     {

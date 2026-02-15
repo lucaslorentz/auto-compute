@@ -14,8 +14,14 @@ public interface IObservedNavigation : IObservedMember
     /// <summary>True if this is a collection navigation; false for reference navigations.</summary>
     bool IsCollection { get; }
 
-    /// <summary>Gets the inverse navigation (from target back to source).</summary>
-    IObservedNavigation GetInverse();
+    /// <summary>The change propagation target configured for this navigation.</summary>
+    ChangePropagationTarget? ChangePropagationTarget { get; }
+
+    /// <summary>Gets the inverse navigation (from target back to source), if available and non-shadow.</summary>
+    IObservedNavigation? GetInverse();
+
+    /// <summary>Gets the inverse navigation and throws when it is not available.</summary>
+    IObservedNavigation GetInverseOrThrow();
 
     /// <summary>Loads the current related entities for the given source entities.</summary>
     Task<IReadOnlyDictionary<object, IReadOnlyCollection<object>>> LoadCurrentAsync(ComputedInput input, IReadOnlyCollection<object> fromEntities);

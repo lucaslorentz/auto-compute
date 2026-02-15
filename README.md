@@ -64,6 +64,23 @@ dbContext.Interactions.Add(new Interaction {
 dbContext.SaveChanges(); // Post LikeCount updates via lightweight increment
 ```
 
+### 🕒 Deferred Updates For Unloaded Entities
+Use this when a small change may affect many related records.
+
+Example: changing a product price or a shipping rule can impact thousands of orders.
+
+`SetChangePropagationTarget(ChangePropagationTarget.LoadedEntities)` keeps `SaveChanges()` fast:
+- entities already loaded in the current `DbContext` are updated during `SaveChanges`;
+- entities not loaded are deferred (you can process them later with your async/queue flow).
+
+This gives immediate consistency for what the user is editing, without a large synchronous fan-out.
+
+```csharp
+modelBuilder.Entity<Order>()
+    .Navigation(o => o.Items)
+    .SetChangePropagationTarget(ChangePropagationTarget.LoadedEntities);
+```
+
 ### 🔗 Computed Navigations
 **Auto-sync related** entities when their dependencies change.  
 *Great for cloning relationships or maintaining derived collections.*
