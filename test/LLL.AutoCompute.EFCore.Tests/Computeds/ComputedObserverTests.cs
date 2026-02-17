@@ -144,6 +144,7 @@ public class ComputedObserverTests
                 {
                     modelBuilder.Entity<TEntity>()
                         .ComputedObserver(
+                            "TestObserver",
                             observerExpression,
                             null,
                             calculationSelector,

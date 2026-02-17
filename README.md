@@ -9,6 +9,7 @@
 - [Features](#features)
 - [Getting Started](#getting-started)
 - [How It Works](#how-it-works)
+- [Explorer UI](#explorer-ui)
 - [Roadmap](#roadmap)
 - [License](#license)
 
@@ -141,21 +142,71 @@ modelBuilder.Entity<Person>().ComputedObserver(
 
 [Diagram](https://excalidraw.com/#json=fZqhU0GKni812toTdr2vZ,qkLdmgG9sw7w_24fgY9VOw)
 
+## Explorer UI
+
+A **web-based dashboard** for inspecting your Auto Compute setup at runtime — browse entity schemas, check consistency, fix stale data, and visualize change propagation flows.
+
+### Setup
+
+1. **Install the package:**
+    ```
+    dotnet add package LLL.AutoCompute.EFCore.Explorer
+    ```
+
+2. **Register services:**
+    ```csharp
+    services.AddAutoComputeExplorer();
+    ```
+
+3. **Map the endpoints:**
+    ```csharp
+    app.MapAutoComputeExplorer<YourDbContext>("/auto-compute-explorer");
+    ```
+
+4. **Navigate to** `/auto-compute-explorer` in your browser.
+
+### What's included
+
+- **Entity Catalog** — lists all entities with links to their schema and data.
+- **Schema Inspector** — view properties (with type, PK, shadow flags), navigations, methods, and observers for each entity. Computed members show their LINQ expression and full dependency chain.
+- **Data Browser** — paginated table with column selection, text search, per-column sorting, dynamic filters (=, >=, <=, >, <), and inconsistency filtering by date range.
+- **Entity Detail View** — inspect a single entity instance with all property, computed, and method values; fix individual or all computed members.
+- **Consistency Dashboard** — check consistency of any computed member (with optional "since" date), see consistent/inconsistent/total counts, and bulk-fix inconsistencies.
+- **Computed Members & Observers List** — cross-entity view of all computed members and observers with their dependencies and consistency status.
+- **Entity Context Graph** — interactive node-link diagram (powered by React Flow + dagre) showing how changes propagate through entity relationships. Exportable as PNG/SVG.
+
+### Options
+
+You can customize which methods appear in the schema via `MethodFilter`:
+
+```csharp
+services.AddAutoComputeExplorer(options =>
+{
+    options.MethodFilter = m =>
+        m.IsPublic
+        && !m.IsStatic
+        && m.GetParameters().Length == 0
+        && !m.IsSpecialName;
+});
+```
+
+The default filter already includes only public, non-static, parameterless, non-special methods.
+
 ## Roadmap
 
 - [x] Computed properties, collections and references
 - [x] Incremental computed properties
    - [x] Incremental calculation
    - [x] Load all navigation items to evaluate Linq All/Any/Contains
-   - [x] Load necessary navigation items to evaluate Linq Distinct 
+   - [x] Load necessary navigation items to evaluate Linq Distinct
 - [x] Computed observers
 - [x] Methods to query inconsistent entities
 - [x] Methods to fix inconsistent entities
+- [x] Web-based UI for schema introspection, consistency check and fix
 - [ ] Async queue-based update for hot computed properties
   - [ ] Throttled update - Update X seconds after the first change
   - [ ] Debounced update - Update X seconds after the last change
 - [ ] Periodic consistency check and fixes
-- [ ] Web-based UI for schema introspection, consistency check and fix
 
 ## License
 MIT licensed. See [LICENSE](LICENSE) for details.

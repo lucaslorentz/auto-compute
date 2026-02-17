@@ -1,25 +1,28 @@
-﻿using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore;
 
 namespace LLL.AutoCompute.EFCore.Metadata.Internal;
 
 public abstract class ComputedObserver(
+    string name,
     IComputedChangesProvider changesProvider)
     : ComputedBase(changesProvider)
 {
+    public string Name => name;
     public abstract Task<Func<Task>?> CreateObserverNotifier(ComputedInput input);
 }
 
 public class ComputedObserver<TEntity, TChange>(
+    string name,
     IComputedChangesProvider<TEntity, TChange> changesProvider,
     Func<ComputedChangeEventData<TEntity, TChange>, Task> callback
-) : ComputedObserver(changesProvider)
+) : ComputedObserver(name, changesProvider)
     where TEntity : class
 {
     public new IComputedChangesProvider<TEntity, TChange> ChangesProvider => changesProvider;
 
     public override string ToDebugString()
     {
-        return "ComputedObserver";
+        return $"ComputedObserver({Name})";
     }
 
     public override async Task<Func<Task>?> CreateObserverNotifier(ComputedInput input)

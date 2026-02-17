@@ -10,6 +10,7 @@ public delegate ComputedObserver ComputedObserverFactory<in TTarget>(
 public class ComputedObserverFactory
 {
     public static ComputedObserverFactory<IEntityType> CreateObserverFactory<TEntity, TValue, TChange>(
+        string name,
         Expression<Func<TEntity, TValue>> computedExpression,
         Expression<Func<TEntity, bool>>? filterExpression,
         IChangeCalculator<TValue, TChange> changeCalculator,
@@ -30,6 +31,7 @@ public class ComputedObserverFactory
                     throw new Exception("Computed expression doesn't have observed members");
 
                 return new ComputedObserver<TEntity, TChange>(
+                    name,
                     changesProvider,
                     callback);
             }

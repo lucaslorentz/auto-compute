@@ -1,4 +1,5 @@
-﻿using System.Linq.Expressions;
+using System.Linq.Expressions;
+using System.Text.RegularExpressions;
 using LLL.AutoCompute.EFCore.Metadata.Internal;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
@@ -6,6 +7,8 @@ namespace LLL.AutoCompute.EFCore;
 
 public static class EntityTypeBuilderExtensions
 {
+    private static readonly Regex ValidNameRegex = new(@"^[A-Z][a-zA-Z0-9]*$", RegexOptions.Compiled);
+
     public static PropertyBuilder<TProperty> ComputedProperty<TEntity, TProperty>(
         this EntityTypeBuilder<TEntity> entityTypeBuilder,
         Expression<Func<TEntity, TProperty>> propertyExpression,
@@ -32,6 +35,7 @@ public static class EntityTypeBuilderExtensions
 
     public static void ComputedObserver<TEntity, TValue, TChange>(
         this EntityTypeBuilder<TEntity> entityTypeBuilder,
+        string name,
         Expression<Func<TEntity, TValue>> computedExpression,
         Expression<Func<TEntity, bool>>? filterExpression,
         ChangeCalculatorSelector<TValue, TChange> calculationSelector,
@@ -40,6 +44,7 @@ public static class EntityTypeBuilderExtensions
     {
         entityTypeBuilder
             .ComputedObserver(
+                name,
                 computedExpression,
                 filterExpression,
                 calculationSelector,
@@ -55,16 +60,21 @@ public static class EntityTypeBuilderExtensions
 
     public static void ComputedObserver<TEntity, TValue, TChange>(
         this EntityTypeBuilder<TEntity> entityTypeBuilder,
+        string name,
         Expression<Func<TEntity, TValue>> computedExpression,
         Expression<Func<TEntity, bool>>? filterExpression,
         ChangeCalculatorSelector<TValue, TChange> calculationSelector,
         Func<ComputedChangeEventData<TEntity, TChange>, Task> callback)
         where TEntity : class
     {
+        if (!ValidNameRegex.IsMatch(name))
+            throw new ArgumentException($"Observer name '{name}' is invalid. Name must be PascalCase with only alphanumeric characters (e.g. 'NotificarBiker').", nameof(name));
+
         var changeCalculator = calculationSelector(ChangeCalculatorFactory<TValue>.Instance);
 
         entityTypeBuilder.Metadata.AddObserverFactory(
             ComputedObserverFactory.CreateObserverFactory(
+                name,
                 computedExpression,
                 filterExpression,
                 changeCalculator,
