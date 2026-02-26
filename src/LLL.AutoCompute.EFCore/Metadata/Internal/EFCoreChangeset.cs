@@ -68,6 +68,11 @@ public class EFCoreChangeset
         }
         navigationChange.RegisterAdded(relatedEntity);
         MaybeCleanupNavigationChange(navigation, navigationChanges, navigationChange);
+
+        #if DEBUG
+        if (!navigation.IsCollection && navigationChange.Added.Count > 1)
+            throw new Exception($"Cannot add multiple related entities to a reference navigation '{navigation.DeclaringType.ShortName()}.{navigation.Name}'");
+        #endif
     }
 
     public void RegisterNavigationRemoved(INavigationBase navigation, object entity, object relatedEntity)
@@ -81,6 +86,11 @@ public class EFCoreChangeset
         }
         navigationChange.RegisterRemoved(relatedEntity);
         MaybeCleanupNavigationChange(navigation, navigationChanges, navigationChange);
+
+        #if DEBUG
+        if (!navigation.IsCollection && navigationChange.Removed.Count > 1)
+            throw new Exception($"Cannot remove multiple related entities from a reference navigation '{navigation.DeclaringType.ShortName()}.{navigation.Name}'");
+        #endif
     }
 
     private void MaybeCleanupNavigationChange(
@@ -165,7 +175,7 @@ public class EFCoreChangeset
                     target.RegisterNavigationAdded(navigation, entity, added);
 
                 foreach (var removed in entityChanges.Removed)
-                    target.RegisterNavigationAdded(navigation, entity, removed);
+                    target.RegisterNavigationRemoved(navigation, entity, removed);
             }
         }
 
