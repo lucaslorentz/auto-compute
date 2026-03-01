@@ -43,15 +43,15 @@ public class NavigationEntityContext : EntityContext
 
         var entities = await GetAffectedEntitiesAsync(input);
 
-        if (_navigation.ChangePropagationTarget == ChangePropagationTarget.LoadedEntities)
+
+        var inverseNavigation = _navigation.GetInverseOrThrow();
+        if (inverseNavigation.ChangePropagationTarget == ChangePropagationTarget.LoadedEntities)
         {
             return await GetParentAffectedLoadedEntities(
                 input,
                 entities,
                 incrementalContext);
         }
-
-        var inverseNavigation = _navigation.GetInverseOrThrow();
 
         var parentEntities = new HashSet<object>();
         foreach (var (ent, parents) in await inverseNavigation.LoadOriginalAsync(input, entities))
@@ -202,7 +202,9 @@ public class NavigationEntityContext : EntityContext
         if (!input.TryGet<IncrementalContext>(out var incrementalContext))
             throw new InvalidOperationException("IncrementalContext is required to enrich towards root.");
 
-        if (_navigation.ChangePropagationTarget == ChangePropagationTarget.LoadedEntities)
+        var inverse = _navigation.GetInverseOrThrow();
+
+        if (inverse.ChangePropagationTarget == ChangePropagationTarget.LoadedEntities)
         {
             var loadedParentEntities = await GetParentAffectedLoadedEntities(
                 input,
@@ -212,8 +214,6 @@ public class NavigationEntityContext : EntityContext
             await _parent.EnrichIncrementalContextTowardsRootAsync(input, loadedParentEntities);
             return;
         }
-
-        var inverse = _navigation.GetInverseOrThrow();
 
         var parentEntities = new HashSet<object>();
 

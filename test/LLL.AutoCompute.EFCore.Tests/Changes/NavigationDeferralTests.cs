@@ -51,6 +51,53 @@ public class NavigationDeferralTests
     }
 
     [Fact]
+    public async Task ChangePropagationTarget_LoadedEntities_OnForwardNavigation_UpdatesAllOrders()
+    {
+        await using var connection = new SqliteConnection("Filename=:memory:");
+        await connection.OpenAsync();
+
+        var options = new DbContextOptionsBuilder<ForwardOnlyDeferralDbContext>()
+            .UseSqlite(connection)
+            .UseAutoCompute()
+            .Options;
+
+        await using (var setupDbContext = new ForwardOnlyDeferralDbContext(options))
+        {
+            await setupDbContext.Database.EnsureCreatedAsync();
+
+            var product = new SharedProduct { Active = false };
+            var orders = Enumerable.Range(0, 2).Select(_ => new SharedOrder
+            {
+                Items = [new SharedOrderItem { Product = product }]
+            }).ToArray();
+
+            setupDbContext.SharedOrders.AddRange(orders);
+            await setupDbContext.SaveChangesAsync();
+        }
+
+        await using var dbContext = new ForwardOnlyDeferralDbContext(options);
+        var order1 = await dbContext.SharedOrders
+            .Include(e => e.Items)
+            .ThenInclude(i => i.Product)
+            .OrderBy(e => e.Id)
+            .FirstAsync();
+
+        var productToChange = order1.Items.Single().Product!;
+        productToChange.Active = true;
+        await dbContext.SaveChangesAsync();
+
+        var allOrders = await dbContext.SharedOrders
+            .OrderBy(e => e.Id)
+            .ToArrayAsync();
+
+        // Both orders should be updated because LoadedEntities is set on the
+        // forward navigation (Order.Items), not on the inverse (OrderItem.Order).
+        // The inverse navigation determines propagation towards root.
+        Assert.Equal(1, allOrders[0].ActiveItemsCount);
+        Assert.Equal(1, allOrders[1].ActiveItemsCount);
+    }
+
+    [Fact]
     public async Task ChangePropagationTarget_LoadedEntities_ThrowsForDeferredInverseNavigationsInSameComputed()
     {
         await using var connection = new SqliteConnection("Filename=:memory:");
@@ -166,7 +213,9 @@ public class LoadedOnlyDeferralDbContext(DbContextOptions options) : DbContext(o
         orderBuilder
             .HasMany(e => e.Items)
             .WithOne(e => e.Order);
-        orderBuilder.Navigation(e => e.Items).SetChangePropagationTarget(ChangePropagationTarget.LoadedEntities);
+        modelBuilder.Entity<SharedOrderItem>()
+            .Navigation(e => e.Order)
+            .SetChangePropagationTarget(ChangePropagationTarget.LoadedEntities);
         orderBuilder.ComputedProperty(
             e => e.ActiveItemsCount,
             e => e.Items.Count(i => i.Product != null && i.Product.Active),
@@ -341,6 +390,33 @@ public class WithoutInverseB
 public class WithoutInverseC
 {
     public int Id { get; protected set; }
+}
+
+public class ForwardOnlyDeferralDbContext(DbContextOptions options) : DbContext(options)
+{
+    public DbSet<SharedOrder> SharedOrders { get; set; } = default!;
+    public DbSet<SharedOrderItem> SharedOrderItems { get; set; } = default!;
+    public DbSet<SharedProduct> SharedProducts { get; set; } = default!;
+
+    protected override void OnModelCreating(ModelBuilder modelBuilder)
+    {
+        base.OnModelCreating(modelBuilder);
+
+        var orderBuilder = modelBuilder.Entity<SharedOrder>();
+        orderBuilder
+            .HasMany(e => e.Items)
+            .WithOne(e => e.Order);
+        // LoadedEntities on forward navigation only - should NOT affect reverse propagation
+        orderBuilder.Navigation(e => e.Items).SetChangePropagationTarget(ChangePropagationTarget.LoadedEntities);
+        orderBuilder.ComputedProperty(
+            e => e.ActiveItemsCount,
+            e => e.Items.Count(i => i.Product != null && i.Product.Active),
+            c => c.NumberIncremental());
+
+        modelBuilder.Entity<SharedOrderItem>()
+            .HasOne(e => e.Product)
+            .WithMany(e => e.OrderItems);
+    }
 }
 
 public class DeferredWithoutInverseDbContext(DbContextOptions options) : DbContext(options)
