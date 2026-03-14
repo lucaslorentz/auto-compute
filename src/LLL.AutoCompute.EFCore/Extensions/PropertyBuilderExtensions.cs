@@ -20,6 +20,11 @@ public static class PropertyBuilderExtensions
                 computedExpression,
                 changeCalculator));
 
+        // Store raw expression for hash computation during model finalization
+        propertyBuilder.Metadata.SetAnnotation(
+            AutoComputeAnnotationNames.RawExpression,
+            computedExpression);
+
         return propertyBuilder;
     }
 

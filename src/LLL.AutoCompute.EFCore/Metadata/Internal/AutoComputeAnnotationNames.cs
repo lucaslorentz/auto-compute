@@ -18,4 +18,6 @@ public static class AutoComputeAnnotationNames
     public const string ConsistencyCheck = TempPrefix + "ConsistencyCheck";
     public const string ConsistencyEquality = TempPrefix + "ConsistencyCheckEquals";
     public const string ChangePropagationTarget = Prefix + "ChangePropagationTarget";
+    public const string RawExpression = TempPrefix + "RawExpression";
+    public const string Hash = Prefix + "Hash";
 }

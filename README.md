@@ -9,6 +9,7 @@
 - [Features](#features)
 - [Getting Started](#getting-started)
 - [How It Works](#how-it-works)
+- [Migration Backfill](#migration-backfill)
 - [Explorer UI](#explorer-ui)
 - [Roadmap](#roadmap)
 - [License](#license)
@@ -142,6 +143,38 @@ modelBuilder.Entity<Person>().ComputedObserver(
 
 [Diagram](https://excalidraw.com/#json=fZqhU0GKni812toTdr2vZ,qkLdmgG9sw7w_24fgY9VOw)
 
+## Migration Backfill (Experimental)
+
+> **⚠️ Experimental:** This feature is under active development. The API and behavior may change in future releases.
+
+When a computed property is added or its expression changes, existing rows need to be updated. Auto Compute can **automatically generate UPDATE SQL** in your EF Core migrations.
+
+Disabled by default. To opt in:
+
+```csharp
+dbContextOptions.UseAutoCompute(c => c.EnableBackfillInMigrations());
+```
+
+### Example
+
+```csharp
+// Change a computed expression:
+builder.Property(e => e.Total)
+    .AutoCompute(e => e.Price * e.Quantity + e.Tax); // was: e.Price * e.Quantity
+```
+
+Running `dotnet ef migrations add UpdateTotal` generates:
+
+```csharp
+// Auto-generated backfill SQL
+migrationBuilder.Sql("UPDATE orders SET total = (price * quantity) + tax");
+```
+
+### Limitations
+
+- Expressions that reference **navigation properties** (e.g., `e.Order.Price`) may not be translatable by `ExecuteUpdate` in EF Core 8/9. EF Core 10+ adds support for navigations in `ExecuteUpdate`. In those cases, a comment is generated and you need to write the UPDATE SQL manually.
+- The database must be **running** during `dotnet ef migrations add` since SQL is captured via an interceptor.
+
 ## Explorer UI
 
 A **web-based dashboard** for inspecting your Auto Compute setup at runtime — browse entity schemas, check consistency, fix stale data, and visualize change propagation flows.
@@ -203,6 +236,7 @@ The default filter already includes only public, non-static, parameterless, non-
 - [x] Methods to query inconsistent entities
 - [x] Methods to fix inconsistent entities
 - [x] Web-based UI for schema introspection, consistency check and fix
+- [x] Automatic migration backfill SQL generation
 - [ ] Async queue-based update for hot computed properties
   - [ ] Throttled update - Update X seconds after the first change
   - [ ] Debounced update - Update X seconds after the last change

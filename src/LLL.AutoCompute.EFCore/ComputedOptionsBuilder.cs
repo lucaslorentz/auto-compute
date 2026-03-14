@@ -10,6 +10,7 @@ public class ComputedOptionsBuilder
     private readonly DbContextOptionsBuilder _optionsBuilder;
     private bool _enableUpdateComputedsOnSave = true;
     private bool _enableNotifyObserversOnSave = true;
+    private bool _enableMigrationBackfill = false;
 
     public ComputedOptionsBuilder(DbContextOptionsBuilder optionsBuilder)
     {
@@ -43,9 +44,22 @@ public class ComputedOptionsBuilder
         return this;
     }
 
+    public ComputedOptionsBuilder EnableBackfillInMigrations(bool enable = true)
+    {
+        _enableMigrationBackfill = enable;
+        return this;
+    }
+
     internal ComputedOptionsExtension Build()
     {
-        _optionsBuilder.AddInterceptors(new ComputedSaveChangesInterceptor(_enableUpdateComputedsOnSave, _enableNotifyObserversOnSave));
+        _extension.EnableBackfillInMigrations = _enableMigrationBackfill;
+        var interceptors = new List<Microsoft.EntityFrameworkCore.Diagnostics.IInterceptor>
+        {
+            new ComputedSaveChangesInterceptor(_enableUpdateComputedsOnSave, _enableNotifyObserversOnSave)
+        };
+        if (_enableMigrationBackfill && EF.IsDesignTime)
+            interceptors.Add(new SqlCaptureInterceptor());
+        _optionsBuilder.AddInterceptors(interceptors);
         return _extension;
     }
 }
