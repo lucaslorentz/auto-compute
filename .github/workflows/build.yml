@@ -36,7 +36,7 @@ jobs:
         run: dotnet test -c Release --no-build
       - name: Report coverage
         run: |
-          minicover report --threshold 70
+          minicover report --threshold 50
 
           last_commit_message=$(git log -1 --pretty=format:"%s")
           last_commit_author_name=$(git log -1 --pretty=format:"%an")

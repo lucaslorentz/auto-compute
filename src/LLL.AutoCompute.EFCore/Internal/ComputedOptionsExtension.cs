@@ -4,6 +4,7 @@ using LLL.AutoCompute.EFCore.Metadata.Conventions;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
 using Microsoft.EntityFrameworkCore.Metadata.Conventions.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace LLL.AutoCompute.EFCore.Internal;
@@ -18,6 +19,8 @@ public class ComputedOptionsExtension : IDbContextOptionsExtension
 
     public IList<Func<LambdaExpression, LambdaExpression>> ExpressionModifiers { get; } = [];
 
+    public bool EnableBackfillInMigrations { get; set; }
+
     public void ApplyServices(IServiceCollection services)
     {
         services.AddSingleton(s => new Func<IModel, IComputedExpressionAnalyzer>((model) =>
@@ -29,6 +32,9 @@ public class ComputedOptionsExtension : IDbContextOptionsExtension
 
         services.AddSingleton<IConcurrentCreationCache, ConcurrentCreationMemoryCache>();
         services.AddScoped<IConventionSetPlugin, ComputedConventionSetPlugin>();
+
+        if (EnableBackfillInMigrations)
+            services.AddScoped<IMigrationsModelDiffer, AutoComputeMigrationsModelDiffer>();
     }
 
     public void Validate(IDbContextOptions options)

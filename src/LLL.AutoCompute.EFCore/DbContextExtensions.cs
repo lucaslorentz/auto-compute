@@ -247,7 +247,7 @@ public static class DbContextExtensions
         return query;
     }
 
-    internal static T PrepareComputedExpressionForDatabase<T>(this DbContext dbContext, T expression)
+    public static T PrepareComputedExpressionForDatabase<T>(this DbContext dbContext, T expression)
         where T : Expression
     {
         var analyzer = dbContext.Model.GetComputedExpressionAnalyzerOrThrow();
