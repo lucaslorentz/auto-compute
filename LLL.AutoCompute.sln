@@ -15,6 +15,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "LLL.AutoCompute.EFCore.Test
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "LLL.AutoCompute.EFCore.Explorer", "src\LLL.AutoCompute.EFCore.Explorer\LLL.AutoCompute.EFCore.Explorer.csproj", "{382B6F6E-05AC-49B2-94FE-BC40D8E184CF}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "LLL.AutoCompute.EFCore.Explorer.Tests", "test\LLL.AutoCompute.EFCore.Explorer.Tests\LLL.AutoCompute.EFCore.Explorer.Tests.csproj", "{4F8EACF8-0A61-4E8C-946D-197C832875AE}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -73,6 +75,18 @@ Global
 		{382B6F6E-05AC-49B2-94FE-BC40D8E184CF}.Release|x64.Build.0 = Release|Any CPU
 		{382B6F6E-05AC-49B2-94FE-BC40D8E184CF}.Release|x86.ActiveCfg = Release|Any CPU
 		{382B6F6E-05AC-49B2-94FE-BC40D8E184CF}.Release|x86.Build.0 = Release|Any CPU
+		{4F8EACF8-0A61-4E8C-946D-197C832875AE}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{4F8EACF8-0A61-4E8C-946D-197C832875AE}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{4F8EACF8-0A61-4E8C-946D-197C832875AE}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{4F8EACF8-0A61-4E8C-946D-197C832875AE}.Debug|x64.Build.0 = Debug|Any CPU
+		{4F8EACF8-0A61-4E8C-946D-197C832875AE}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{4F8EACF8-0A61-4E8C-946D-197C832875AE}.Debug|x86.Build.0 = Debug|Any CPU
+		{4F8EACF8-0A61-4E8C-946D-197C832875AE}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{4F8EACF8-0A61-4E8C-946D-197C832875AE}.Release|Any CPU.Build.0 = Release|Any CPU
+		{4F8EACF8-0A61-4E8C-946D-197C832875AE}.Release|x64.ActiveCfg = Release|Any CPU
+		{4F8EACF8-0A61-4E8C-946D-197C832875AE}.Release|x64.Build.0 = Release|Any CPU
+		{4F8EACF8-0A61-4E8C-946D-197C832875AE}.Release|x86.ActiveCfg = Release|Any CPU
+		{4F8EACF8-0A61-4E8C-946D-197C832875AE}.Release|x86.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -82,5 +96,6 @@ Global
 		{D2897F60-D3D3-4091-BD99-504BB54B2FE2} = {A6A7E76B-2417-4FFB-8F6E-CB8EDDE4852C}
 		{13826017-F5D8-419F-AC91-451C4486685E} = {9E9F3AD0-78B2-44D0-9B91-3F760F613064}
 		{382B6F6E-05AC-49B2-94FE-BC40D8E184CF} = {A6A7E76B-2417-4FFB-8F6E-CB8EDDE4852C}
+		{4F8EACF8-0A61-4E8C-946D-197C832875AE} = {9E9F3AD0-78B2-44D0-9B91-3F760F613064}
 	EndGlobalSection
 EndGlobal
