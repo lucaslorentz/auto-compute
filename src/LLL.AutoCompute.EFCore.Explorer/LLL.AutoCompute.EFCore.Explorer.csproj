@@ -16,10 +16,36 @@
 
   <ItemGroup>
     <PackageReference Include="Microsoft.SourceLink.GitHub" Version="8.0.0" PrivateAssets="All"/>
-    <PackageReference Include="Microsoft.Extensions.FileProviders.Embedded" Version="10.0.0" Condition="'$(TargetFramework)' == 'net10.0'" />
-    <PackageReference Include="Microsoft.Extensions.FileProviders.Embedded" Version="9.0.0" Condition="'$(TargetFramework)' == 'net9.0'" />
-    <PackageReference Include="Microsoft.Extensions.FileProviders.Embedded" Version="8.0.0" Condition="'$(TargetFramework)' == 'net8.0'" />
+    <PackageReference Include="Microsoft.Extensions.FileProviders.Embedded" Version="10.0.0" Condition="'$(TargetFramework)' == 'net10.0'" GeneratePathProperty="true" />
+    <PackageReference Include="Microsoft.Extensions.FileProviders.Embedded" Version="9.0.0" Condition="'$(TargetFramework)' == 'net9.0'" GeneratePathProperty="true" />
+    <PackageReference Include="Microsoft.Extensions.FileProviders.Embedded" Version="8.0.0" Condition="'$(TargetFramework)' == 'net8.0'" GeneratePathProperty="true" />
   </ItemGroup>
+
+  <!--
+    NuGet's framework reduction suppresses build assets (props/targets) from
+    Microsoft.Extensions.FileProviders.Embedded for TFMs where the assembly is
+    provided by the Microsoft.AspNetCore.App shared framework (the assets become _._).
+    This strips the manifest-generation MSBuild targets from those inner builds,
+    so GenerateEmbeddedFilesManifest silently produces no manifest XML.
+    Detect this via EmbeddedFilesManifestFileName (set by the package props) and
+    re-import the build props/targets explicitly for affected TFMs.
+
+    The .targets import happens in the project body (before SDK targets), so its
+    PrepareResourceNamesDependsOn modification gets overwritten by the SDK.
+    _EnsureManifestInputsCalculated bridges that gap by running before
+    AssignTargetPaths (a PrepareResourceNames dependency), ensuring the manifest
+    is added to EmbeddedResource before resource metadata is assigned.
+    See: https://github.com/dotnet/aspnetcore/issues/63719
+  -->
+  <Import Project="$(PkgMicrosoft_Extensions_FileProviders_Embedded)/build/netstandard2.0/Microsoft.Extensions.FileProviders.Embedded.props"
+          Condition="'$(TargetFramework)' != ''" />
+  <Import Project="$(PkgMicrosoft_Extensions_FileProviders_Embedded)/build/netstandard2.0/Microsoft.Extensions.FileProviders.Embedded.targets"
+          Condition="'$(TargetFramework)' != ''" />
+
+  <Target Name="_EnsureManifestInputsCalculated"
+          BeforeTargets="AssignTargetPaths"
+          DependsOnTargets="_CalculateEmbeddedFilesManifestInputs"
+          Condition="'$(TargetFramework)' != ''" />
 
   <ItemGroup>
     <FrameworkReference Include="Microsoft.AspNetCore.App" />
