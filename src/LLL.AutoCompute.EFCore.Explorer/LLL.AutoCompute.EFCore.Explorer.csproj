@@ -29,11 +29,17 @@
     <ProjectReference Include="..\LLL.AutoCompute.EFCore\LLL.AutoCompute.EFCore.csproj" />
   </ItemGroup>
 
+  <!--
+    npm install/build runs before DispatchToInnerBuilds (outer build, TargetFramework is empty)
+    to avoid parallel npm executions across TFMs racing on node_modules.
+    The !Exists check is a fallback for single-TFM builds (e.g. dotnet build -f net9.0)
+    where DispatchToInnerBuilds is not invoked.
+  -->
   <Target Name="NpmInstall" BeforeTargets="NpmBuild" Inputs="ClientApp/package.json" Outputs="ClientApp/node_modules/.package-lock.json">
     <Exec Command="npm install" WorkingDirectory="ClientApp" />
   </Target>
 
-  <Target Name="NpmBuild" BeforeTargets="BeforeBuild" Inputs="ClientApp/src/**;ClientApp/index.html;ClientApp/vite.config.ts;ClientApp/tsconfig.json" Outputs="wwwroot/index.html">
+  <Target Name="NpmBuild" BeforeTargets="DispatchToInnerBuilds;BeforeBuild" Condition="'$(TargetFramework)' == '' or !Exists('wwwroot/index.html')" Inputs="ClientApp/src/**;ClientApp/index.html;ClientApp/vite.config.ts;ClientApp/tsconfig.json" Outputs="wwwroot/index.html">
     <Exec Command="npm run build" WorkingDirectory="ClientApp" />
   </Target>
 
