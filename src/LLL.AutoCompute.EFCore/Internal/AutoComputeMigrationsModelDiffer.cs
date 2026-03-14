@@ -153,33 +153,36 @@ public class AutoComputeMigrationsModelDiffer(
         }
         var propSelector = Expression.Lambda<Func<TEntity, TProperty>>(propAccess, eParam);
 
-        // 3. Build SetPropertyCalls expression: s => s.SetProperty(e => e.Prop, computedExpr)
-        //    SetProperty takes Func<> params. LambdaExpression.Type returns the delegate type
-        //    (e.g. Func<T,P>), so passing lambdas directly to Expression.Call works.
-        var sParam = Expression.Parameter(typeof(SetPropertyCalls<TEntity>), "s");
-
-        var setPropertyMethod = typeof(SetPropertyCalls<TEntity>)
-            .GetMethods()
-            .First(m => m.Name == "SetProperty"
-                && m.IsGenericMethodDefinition
-                && m.GetParameters().Length == 2
-                && m.GetParameters()[1].ParameterType.IsGenericType
-                && m.GetParameters()[1].ParameterType.GetGenericTypeDefinition() == typeof(Func<,>))
-            .MakeGenericMethod(typeof(TProperty));
-
-        var setPropertyCall = Expression.Call(
-            sParam,
-            setPropertyMethod,
-            propSelector,
-            preparedExpr);
-
-        var setPropertyCallsExpr = Expression.Lambda<Func<SetPropertyCalls<TEntity>, SetPropertyCalls<TEntity>>>(
-            setPropertyCall, sParam);
-
-        // 4. Capture SQL via interceptor
+        // 3. Call ExecuteUpdate with SetProperty
         using (SqlCaptureInterceptor.StartCapture())
         {
+#if NET10_0_OR_GREATER
+            // EF Core 10: ExecuteUpdate takes Action<UpdateSettersBuilder<T>>
+            dbContext.Set<TEntity>().ExecuteUpdate(s => s.SetProperty(propSelector, preparedExpr));
+#else
+            // EF Core 8/9: ExecuteUpdate takes Expression<Func<SetPropertyCalls<T>, SetPropertyCalls<T>>>
+            var sParam = Expression.Parameter(typeof(SetPropertyCalls<TEntity>), "s");
+
+            var setPropertyMethod = typeof(SetPropertyCalls<TEntity>)
+                .GetMethods()
+                .First(m => m.Name == "SetProperty"
+                    && m.IsGenericMethodDefinition
+                    && m.GetParameters().Length == 2
+                    && m.GetParameters()[1].ParameterType.IsGenericType
+                    && m.GetParameters()[1].ParameterType.GetGenericTypeDefinition() == typeof(Func<,>))
+                .MakeGenericMethod(typeof(TProperty));
+
+            var setPropertyCall = Expression.Call(
+                sParam,
+                setPropertyMethod,
+                propSelector,
+                preparedExpr);
+
+            var setPropertyCallsExpr = Expression.Lambda<Func<SetPropertyCalls<TEntity>, SetPropertyCalls<TEntity>>>(
+                setPropertyCall, sParam);
+
             dbContext.Set<TEntity>().ExecuteUpdate(setPropertyCallsExpr);
+#endif
         }
 
         return SqlCaptureInterceptor.CapturedSql
