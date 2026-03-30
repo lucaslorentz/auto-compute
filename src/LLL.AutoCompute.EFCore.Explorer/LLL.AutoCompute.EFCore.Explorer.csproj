@@ -27,8 +27,8 @@
     provided by the Microsoft.AspNetCore.App shared framework (the assets become _._).
     This strips the manifest-generation MSBuild targets from those inner builds,
     so GenerateEmbeddedFilesManifest silently produces no manifest XML.
-    Detect this via EmbeddedFilesManifestFileName (set by the package props) and
-    re-import the build props/targets explicitly for affected TFMs.
+    Detect this via _FileProviderTaskAssembly (set by the package props) and
+    re-import the build props/targets explicitly only when NuGet skipped them.
 
     The .targets import happens in the project body (before SDK targets), so its
     PrepareResourceNamesDependsOn modification gets overwritten by the SDK.
@@ -37,10 +37,13 @@
     is added to EmbeddedResource before resource metadata is assigned.
     See: https://github.com/dotnet/aspnetcore/issues/63719
   -->
+  <PropertyGroup Condition="'$(TargetFramework)' != ''">
+    <_NeedsExplicitFileProviderImport Condition="'$(_FileProviderTaskAssembly)' == ''">true</_NeedsExplicitFileProviderImport>
+  </PropertyGroup>
   <Import Project="$(PkgMicrosoft_Extensions_FileProviders_Embedded)/build/netstandard2.0/Microsoft.Extensions.FileProviders.Embedded.props"
-          Condition="'$(TargetFramework)' != ''" />
+          Condition="'$(_NeedsExplicitFileProviderImport)' == 'true'" />
   <Import Project="$(PkgMicrosoft_Extensions_FileProviders_Embedded)/build/netstandard2.0/Microsoft.Extensions.FileProviders.Embedded.targets"
-          Condition="'$(TargetFramework)' != ''" />
+          Condition="'$(_NeedsExplicitFileProviderImport)' == 'true'" />
 
   <Target Name="_EnsureManifestInputsCalculated"
           BeforeTargets="AssignTargetPaths"
