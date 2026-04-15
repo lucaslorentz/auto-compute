@@ -3,6 +3,8 @@
 *.user
 *.userosscache
 *.sln.docstates
+*.lscache
+*.lscache?
 
 # Dotnet
 bin/
