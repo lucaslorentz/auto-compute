@@ -251,39 +251,116 @@ public class EFCoreObservedNavigation(
 
         if (Member is ISkipNavigation skipNavigation && skipNavigation.JoinEntityType.IsAssignableFrom(entityEntry.Metadata))
         {
-            var dependentToPrincipal = skipNavigation.ForeignKey.DependentToPrincipal!;
-            var joinReferenceToOther = skipNavigation.Inverse.ForeignKey.DependentToPrincipal;
-            var dependentToPrincipalEntry = entityEntry.Navigation(dependentToPrincipal);
-            var otherReferenceEntry = entityEntry.Reference(joinReferenceToOther!);
+            await CollectJoinEntryChangesAsync(skipNavigation, entityEntry, changes);
+        }
+    }
 
-            if (entityEntry.State == EntityState.Added
-                || entityEntry.State == EntityState.Deleted
+    private async Task CollectJoinEntryChangesAsync(
+        ISkipNavigation skipNavigation,
+        EntityEntry joinEntry,
+        EFCoreChangeset changes)
+    {
+        var dependentToPrincipal = skipNavigation.ForeignKey.DependentToPrincipal;
+        var joinReferenceToOther = skipNavigation.Inverse?.ForeignKey.DependentToPrincipal;
+
+        // Join entities are not required to have navigations back to the principals
+        if (dependentToPrincipal is null || joinReferenceToOther is null)
+        {
+            await CollectJoinEntryChangesFromForeignKeysAsync(skipNavigation, joinEntry, changes);
+            return;
+        }
+
+        var dependentToPrincipalEntry = joinEntry.Navigation(dependentToPrincipal);
+        var otherReferenceEntry = joinEntry.Reference(joinReferenceToOther);
+
+        if (joinEntry.State == EntityState.Added
+            || joinEntry.State == EntityState.Deleted
+            || dependentToPrincipalEntry.IsModified)
+        {
+            if (!dependentToPrincipalEntry.IsLoaded && joinEntry.State != EntityState.Detached)
+                await dependentToPrincipalEntry.LoadAsync();
+
+            if (joinEntry.State == EntityState.Added
                 || dependentToPrincipalEntry.IsModified)
             {
-                if (!dependentToPrincipalEntry.IsLoaded && entityEntry.State != EntityState.Detached)
-                    await dependentToPrincipalEntry.LoadAsync();
-
-                if (entityEntry.State == EntityState.Added
-                    || dependentToPrincipalEntry.IsModified)
+                foreach (var entity in dependentToPrincipalEntry.GetCurrentEntities())
                 {
-                    foreach (var entity in dependentToPrincipalEntry.GetCurrentEntities())
-                    {
-                        foreach (var otherEntity in otherReferenceEntry.GetCurrentEntities())
-                            changes.RegisterNavigationAdded(Member, entity, otherEntity);
-                    }
+                    foreach (var otherEntity in otherReferenceEntry.GetCurrentEntities())
+                        changes.RegisterNavigationAdded(Member, entity, otherEntity);
                 }
+            }
 
-                if (entityEntry.State == EntityState.Deleted
-                    || dependentToPrincipalEntry.IsModified)
+            if (joinEntry.State == EntityState.Deleted
+                || dependentToPrincipalEntry.IsModified)
+            {
+                foreach (var entity in dependentToPrincipalEntry.GetOriginalEntities())
                 {
-                    foreach (var entity in dependentToPrincipalEntry.GetOriginalEntities())
-                    {
-                        foreach (var otherEntity in otherReferenceEntry.GetOriginalEntities())
-                            changes.RegisterNavigationRemoved(Member, entity, otherEntity);
-                    }
+                    foreach (var otherEntity in otherReferenceEntry.GetOriginalEntities())
+                        changes.RegisterNavigationRemoved(Member, entity, otherEntity);
                 }
             }
         }
+    }
+
+    private async Task CollectJoinEntryChangesFromForeignKeysAsync(
+        ISkipNavigation skipNavigation,
+        EntityEntry joinEntry,
+        EFCoreChangeset changes)
+    {
+        if (skipNavigation.Inverse is null)
+            return;
+
+        var toPrincipalForeignKey = skipNavigation.ForeignKey;
+        var toOtherForeignKey = skipNavigation.Inverse.ForeignKey;
+
+        if (joinEntry.State == EntityState.Added
+            || joinEntry.State == EntityState.Modified)
+        {
+            var entity = await FindPrincipalAsync(joinEntry, toPrincipalForeignKey, joinEntry.CurrentValues);
+            var otherEntity = await FindPrincipalAsync(joinEntry, toOtherForeignKey, joinEntry.CurrentValues);
+
+            if (entity is not null && otherEntity is not null)
+                changes.RegisterNavigationAdded(Member, entity, otherEntity);
+        }
+
+        if (joinEntry.State == EntityState.Deleted
+            || joinEntry.State == EntityState.Modified)
+        {
+            var entity = await FindPrincipalAsync(joinEntry, toPrincipalForeignKey, joinEntry.OriginalValues);
+            var otherEntity = await FindPrincipalAsync(joinEntry, toOtherForeignKey, joinEntry.OriginalValues);
+
+            if (entity is not null && otherEntity is not null)
+                changes.RegisterNavigationRemoved(Member, entity, otherEntity);
+        }
+    }
+
+    private static async Task<object?> FindPrincipalAsync(
+        EntityEntry joinEntry,
+        IForeignKey foreignKey,
+        PropertyValues joinValues)
+    {
+        // Principal keys are stable, so tracked principals are matched on their current values
+        foreach (var principalEntry in joinEntry.Context.EntityEntriesOfType(foreignKey.PrincipalEntityType))
+        {
+            if (foreignKey.IsConnected(principalEntry.CurrentValues, joinValues))
+                return principalEntry.Entity;
+        }
+
+        if (!foreignKey.PrincipalKey.IsPrimaryKey())
+            return null;
+
+        // Load principals that are not tracked yet, like LoadAsync does for the navigation above
+        var keyValues = new object?[foreignKey.Properties.Count];
+        for (var i = 0; i < foreignKey.Properties.Count; i++)
+        {
+            var keyValue = joinValues[foreignKey.Properties[i]];
+            if (keyValue is null)
+                return null;
+
+            keyValues[i] = keyValue;
+        }
+
+        return await joinEntry.Context.FindAsync(foreignKey.PrincipalEntityType.ClrType, keyValues);
     }
 
     public async Task<IReadOnlyList<ObservedNavigationChange>> GetChangesAsync(ComputedInput input)

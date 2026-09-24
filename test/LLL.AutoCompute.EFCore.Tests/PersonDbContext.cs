@@ -13,6 +13,8 @@ public class Person
     public virtual IList<Person> FriendsInverse { get; protected set; } = [];
     public virtual IList<FriendsJoin> FriendsJoin { get; protected set; } = [];
     public virtual IList<FriendsJoin> FriendsInverseJoin { get; protected set; } = [];
+    public virtual IList<Person> Colleagues { get; protected set; } = [];
+    public virtual IList<Person> ColleaguesInverse { get; protected set; } = [];
     public virtual IList<Person> Relatives { get; protected set; } = [];
     public virtual IList<Person> RelativesInverse { get; protected set; } = [];
     public virtual IList<RelativesJoin> RelativesJoin { get; protected set; } = [];
@@ -27,6 +29,7 @@ public class Person
     public virtual int NumberOfOrangeAndBlackPets { get; protected set; }
     public virtual string? Description { get; protected set; }
     public virtual int FriendsCount { get; protected set; }
+    public virtual int ColleaguesCount { get; protected set; }
     public virtual int RelativesCount { get; protected set; }
     public virtual int DistinctFriendRelativesCount { get; protected set; }
 }
@@ -96,6 +99,15 @@ class PersonDbContext(
                 r => r.HasOne<Person>(x => x.FromPerson).WithMany(x => x.FriendsJoin)
             );
 
+        // Join entity without navigations, the shape EF Core creates by default
+        personBuilder.HasMany(e => e.Colleagues)
+            .WithMany(e => e.ColleaguesInverse)
+            .UsingEntity<Dictionary<string, object>>(
+                "ColleaguesJoin",
+                l => l.HasOne<Person>().WithMany().HasForeignKey("ToPersonId"),
+                r => r.HasOne<Person>().WithMany().HasForeignKey("FromPersonId")
+            );
+
         personBuilder.HasMany(e => e.Relatives)
             .WithMany(e => e.RelativesInverse)
             .UsingEntity<RelativesJoin>(
@@ -137,6 +149,11 @@ class PersonDbContext(
                 .Count(),
             c => parameters.UseIncrementalComputation ? c.NumberIncremental() : c.CurrentValue());
 
+        personBuilder.ComputedProperty(
+            p => p.ColleaguesCount,
+            p => p.Colleagues.Count,
+            c => parameters.UseIncrementalComputation ? c.NumberIncremental() : c.CurrentValue());
+
         personBuilder.ComputedProperty(p => p.Description, p => p.FullName + " (" + p.NumberOfPets + " pets)");
 
         var petBuilder = modelBuilder.Entity<Pet>();
@@ -165,6 +182,9 @@ class PersonDbContext(
             FirstName = "Jane",
             LastName = "Doe",
             Friends = {
+                personA
+            },
+            Colleagues = {
                 personA
             }
         };

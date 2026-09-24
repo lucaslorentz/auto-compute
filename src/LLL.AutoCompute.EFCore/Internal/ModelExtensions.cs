@@ -404,7 +404,7 @@ public static class ModelExtensions
             && skipNavigation.IsRelated(entry, relatedEntry);
     }
 
-    private static bool IsConnected(
+    public static bool IsConnected(
         this IForeignKey foreignKey,
         PropertyValues principalValues,
         PropertyValues dependentValues)
