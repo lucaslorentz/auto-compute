@@ -1,5 +1,5 @@
 ﻿using System.Linq.Expressions;
-using FluentAssertions;
+using AwesomeAssertions;
 
 namespace LLL.AutoCompute.EFCore.Tests.Changes.Incremental;
 

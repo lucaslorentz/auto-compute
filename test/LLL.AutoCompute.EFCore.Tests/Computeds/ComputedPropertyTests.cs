@@ -1,4 +1,4 @@
-﻿using FluentAssertions;
+﻿using AwesomeAssertions;
 
 namespace LLL.AutoCompute.EFCore.Tests.Computeds;
 

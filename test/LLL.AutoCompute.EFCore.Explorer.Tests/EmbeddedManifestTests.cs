@@ -1,4 +1,4 @@
-using FluentAssertions;
+using AwesomeAssertions;
 using Microsoft.Extensions.FileProviders;
 
 namespace LLL.AutoCompute.EFCore.Explorer.Tests;
