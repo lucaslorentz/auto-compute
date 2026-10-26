@@ -46,6 +46,43 @@ person.Pets.Add(new Pet { Type = PetType.Cat }); // Add to navigation collection
 dbContext.SaveChanges(); // NumberOfCats is automatically recalculated!
 ```
 
+### 📝 Declarative Computed Properties
+**Define calculations directly on your entities** with `[AutoComputed]`.  
+*A single source of truth, with no Fluent registration needed.*
+
+```csharp
+using LLL.AutoCompute.EFCore;
+
+public partial class Person
+{
+    public int Id { get; set; }
+    public ICollection<Pet> Pets { get; set; } = [];
+
+    [AutoComputed]
+    public int NumberOfCats => Pets.Count(p => p.Type == PetType.Cat);
+}
+```
+
+With `UseAutoCompute()` enabled, Auto Compute maps the property to a regular database column and updates it during `SaveChanges()`, including when related entities change.
+
+**Example Usage** - Query the stored value or calculate from loaded dependencies:
+```csharp
+var people = await dbContext.People
+    .Where(p => p.NumberOfCats > 2)
+    .OrderByDescending(p => p.NumberOfCats)
+    .ToListAsync(); // Uses the stored column
+
+var person = people.First();
+await dbContext.Entry(person).Collection(p => p.Pets).LoadAsync();
+var count = person.NumberOfCats; // Uses the C# getter
+```
+
+**Limitations & Notes:**
+
+- Reference `LLL.AutoCompute.EFCore` in the project defining the entity so its bundled source generator runs.
+- Use getter-only properties on non-generic `partial` classes, with an expression-bodied getter or a single `return` statement. Expressions must support C# expression trees and Auto Compute dependency analysis.
+- The getter evaluates in-memory data. Unloaded or partially loaded dependencies can produce a different result from the stored column; lazy loading can trigger queries.
+
 ### ⚡ Incremental Updates
 **Optimize performance** by updating values without loading entire collections.  
 *Perfect for large collections.*

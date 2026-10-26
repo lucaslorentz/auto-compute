@@ -17,6 +17,7 @@ public class ComputedConventionSetPlugin(
         var extension = contextOptions.FindExtension<ComputedOptionsExtension>();
         var enableBackfill = extension?.EnableBackfillInMigrations ?? false;
 
+        conventionSet.Add(new AutoComputedAttributeConvention());
         conventionSet.Add(new DesignTimeComputedConvention(analyzerFactory, enableBackfill));
         conventionSet.Add(new ComputedRuntimeConvention(analyzerFactory));
 

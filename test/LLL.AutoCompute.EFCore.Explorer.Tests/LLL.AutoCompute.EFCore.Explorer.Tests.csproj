@@ -21,6 +21,18 @@
 
   <ItemGroup>
     <ProjectReference Include="..\..\src\LLL.AutoCompute.EFCore.Explorer\LLL.AutoCompute.EFCore.Explorer.csproj" />
+    <ProjectReference Include="..\..\src\LLL.AutoCompute.EFCore.Generators\LLL.AutoCompute.EFCore.Generators.csproj"
+                      OutputItemType="Analyzer" ReferenceOutputAssembly="false" />
+  </ItemGroup>
+
+  <ItemGroup Condition="'$(TargetFramework)' == 'net10.0'">
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Sqlite" Version="10.0.5" />
+  </ItemGroup>
+  <ItemGroup Condition="'$(TargetFramework)' == 'net9.0'">
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Sqlite" Version="9.0.21" />
+  </ItemGroup>
+  <ItemGroup Condition="'$(TargetFramework)' == 'net8.0'">
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Sqlite" Version="8.0.11" />
   </ItemGroup>
 
 </Project>

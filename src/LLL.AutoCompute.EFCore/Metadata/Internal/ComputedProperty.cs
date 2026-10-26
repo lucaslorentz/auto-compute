@@ -1,4 +1,5 @@
 ﻿using System.Linq.Expressions;
+using LLL.AutoCompute.EFCore.Internal;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.ChangeTracking;
 using Microsoft.EntityFrameworkCore.Metadata;
@@ -11,7 +12,9 @@ public class ComputedProperty<TEntity, TProperty>(
 ) : ComputedMember<TEntity, TProperty>(changesProvider)
     where TEntity : class
 {
-    private readonly Func<TEntity, TProperty> _compiledExpression = ((Expression<Func<TEntity, TProperty>>)changesProvider.Expression).Compile();
+    private readonly Func<TEntity, TProperty> _compiledExpression =
+        ((Expression<Func<TEntity, TProperty>>)new ReadStoredAutoComputedValuesVisitor(property.DeclaringType.Model)
+            .Visit(changesProvider.Expression)!).Compile();
 
     public new IComputedChangesProvider<TEntity, TProperty> ChangesProvider => changesProvider;
     public override IProperty Property => property;

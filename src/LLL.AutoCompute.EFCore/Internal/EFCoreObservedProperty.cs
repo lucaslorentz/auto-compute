@@ -29,7 +29,7 @@ public class EFCoreObservedProperty(
         if (change is not null)
             return change.OriginalValue;
 
-        return currentValueGetter();
+        return ReadCurrentValue(ent, currentValueGetter);
     }
 
     protected override object? GetCurrentValue(ComputedInput input, object ent, Func<object> currentValueGetter)
@@ -39,8 +39,13 @@ public class EFCoreObservedProperty(
         if (entityState == ObservedEntityState.Removed)
             throw new Exception($"Cannot access property '{Member.DeclaringType.ShortName()}.{Member.Name}' current value for a deleted entity");
 
-        return currentValueGetter();
+        return ReadCurrentValue(ent, currentValueGetter);
     }
+
+    private object? ReadCurrentValue(object entity, Func<object> currentValueGetter)
+        => property[AutoComputeAnnotationNames.Declarative] is true
+            ? property.GetGetter().GetClrValueUsingContainingEntity(entity)
+            : currentValueGetter();
 
     public override async Task CollectChangesAsync(DbContext dbContext, EFCoreChangeset changes)
     {

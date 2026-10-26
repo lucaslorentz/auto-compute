@@ -13,7 +13,9 @@ public class ComputedNavigation<TEntity, TProperty>(
 ) : ComputedMember<TEntity, TProperty>(changesProvider), IComputedNavigationBuilder<TEntity, TProperty>
     where TEntity : class
 {
-    private readonly Func<TEntity, TProperty> _compiledExpression = ((Expression<Func<TEntity, TProperty>>)changesProvider.Expression).Compile();
+    private readonly Func<TEntity, TProperty> _compiledExpression =
+        ((Expression<Func<TEntity, TProperty>>)new ReadStoredAutoComputedValuesVisitor(navigationBase.DeclaringType.Model)
+            .Visit(changesProvider.Expression)!).Compile();
 
     public new IComputedChangesProvider<TEntity, TProperty> ChangesProvider => changesProvider;
     public override INavigationBase Property => navigationBase;
