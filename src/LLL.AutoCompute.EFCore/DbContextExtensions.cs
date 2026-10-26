@@ -16,6 +16,15 @@ namespace LLL.AutoCompute.EFCore;
 
 public static class DbContextExtensions
 {
+    /// <summary>
+    /// Prepares an AutoCompute expression for compilation by reading persisted computed
+    /// dependencies from their backing fields instead of invoking their C# getters.
+    /// Use the original expression for database queries.
+    /// </summary>
+    public static T PrepareComputedExpressionForInMemory<T>(this DbContext dbContext, T expression)
+        where T : Expression
+        => (T)new ReadStoredAutoComputedValuesVisitor(dbContext.Model).Visit(expression)!;
+
     public static DbContextOptionsBuilder UseAutoCompute(
         this DbContextOptionsBuilder optionsBuilder,
         Action<ComputedOptionsBuilder>? configureOptions = null)

@@ -19,6 +19,10 @@
 
   <ItemGroup>
     <ProjectReference Include="..\LLL.AutoCompute\LLL.AutoCompute.csproj" />
+    <ProjectReference Include="..\LLL.AutoCompute.EFCore.Generators\LLL.AutoCompute.EFCore.Generators.csproj"
+                      OutputItemType="Analyzer" ReferenceOutputAssembly="false" PrivateAssets="all" />
+    <None Include="..\LLL.AutoCompute.EFCore.Generators\bin\$(Configuration)\netstandard2.0\LLL.AutoCompute.EFCore.Generators.dll"
+          Pack="true" PackagePath="analyzers/dotnet/cs" Visible="false" />
   </ItemGroup>
 
   <ItemGroup Condition="'$(TargetFramework)' == 'net10.0'">

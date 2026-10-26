@@ -20,4 +20,5 @@ public static class AutoComputeAnnotationNames
     public const string ChangePropagationTarget = Prefix + "ChangePropagationTarget";
     public const string RawExpression = TempPrefix + "RawExpression";
     public const string Hash = Prefix + "Hash";
+    public const string Declarative = Prefix + "Declarative";
 }

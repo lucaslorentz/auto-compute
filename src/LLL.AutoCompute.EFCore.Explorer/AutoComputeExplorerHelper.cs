@@ -338,7 +338,7 @@ public static class AutoComputeExplorerHelper
                     var compiled = _compiledComputedsCache.GetOrAdd(cacheKey, _ =>
                     {
                         var lambda = computedMember.ChangesProvider.Expression;
-                        return lambda.Compile();
+                        return dbContext.PrepareComputedExpressionForInMemory(lambda).Compile();
                     });
                     try
                     {
@@ -352,7 +352,7 @@ public static class AutoComputeExplorerHelper
                     var isConsistentLambda = _compiledConsistencyCheckersCache.GetOrAdd(cacheKey, _ =>
                     {
                         var lambda = computedMember.GetIsMemberConsistentLambda(dbContext);
-                        return lambda.Compile();
+                        return dbContext.PrepareComputedExpressionForInMemory(lambda).Compile();
                     });
                     try
                     {
